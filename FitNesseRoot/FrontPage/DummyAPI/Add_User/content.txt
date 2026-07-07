@@ -2,4 +2,4 @@
 
 !|fixtures.PostRequestFixture|
 |url|bodyJson|statusCodes?|responseBody?|
-|https://dummyjson.com/users/add|{"firstName":"John","lastName":"Doe","age":30}|201||
+|${BASE_URL}/users/add|{"firstName":"John","lastName":"Doe","age":30}|201||

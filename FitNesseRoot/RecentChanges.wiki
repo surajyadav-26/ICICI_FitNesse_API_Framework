@@ -1,3 +1,15 @@
+|FrontPage.DummyAPI.Add_User||16:42:25 Tue, Jul 07, 2026|
+|VariablePage||16:13:59 Tue, Jul 07, 2026|
+|FrontPage.DummyAPI.Update_User||11:08:40 Tue, Jul 07, 2026|
+|FrontPage.DummyAPI.Search_User||11:08:26 Tue, Jul 07, 2026|
+|FrontPage.DummyAPI.Search_Product||11:08:14 Tue, Jul 07, 2026|
+|FrontPage.DummyAPI.Get_User_by_Id||11:07:59 Tue, Jul 07, 2026|
+|FrontPage.DummyAPI.Get_Logged_User_Profile||11:07:44 Tue, Jul 07, 2026|
+|FrontPage.DummyAPI.Get_All_User||11:07:22 Tue, Jul 07, 2026|
+|FrontPage.DummyAPI.Get_All_Products||11:06:26 Tue, Jul 07, 2026|
+|FrontPage.DummyAPI.End_to_End_Flow||11:06:09 Tue, Jul 07, 2026|
+|FrontPage.DummyAPI.Delete_User||11:05:28 Tue, Jul 07, 2026|
+|FrontPage.DummyAPI.AuthenticateUser||11:05:10 Tue, Jul 07, 2026|
 |FrontPage.Sanity.Delete|admin|13:36:14 Wed, Jul 01, 2026|
 |FrontPage.Demo|admin|13:33:39 Wed, Jul 01, 2026|
 |FrontPage.Demo.Delete||13:32:42 Wed, Jul 01, 2026|
@@ -16,7 +28,6 @@
 |FrontPage.Regression.Reg_login|admin|16:54:50 Tue, Jun 30, 2026|
 |FrontPage.Demo.login|admin|16:27:17 Tue, Jun 30, 2026|
 |FrontPage.Sanity.loginTrubi|admin|14:10:42 Tue, Jun 30, 2026|
-|VariablePage|admin|12:55:46 Tue, Jun 30, 2026|
 |FrontPage.Smoke.TruCap_Login|admin|12:52:56 Tue, Jun 30, 2026|
 |FrontPage.Regression.TruBI_login|admin|12:41:02 Tue, Jun 30, 2026|
 |FrontPage.Regression.TruBI|admin|12:40:20 Tue, Jun 30, 2026|

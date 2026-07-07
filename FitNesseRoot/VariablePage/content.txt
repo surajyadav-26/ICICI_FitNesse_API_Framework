@@ -1,2 +1,1 @@
 !define BASE_URL {https://dummyjson.com}
-!define TEST_SYSTEM {slim}

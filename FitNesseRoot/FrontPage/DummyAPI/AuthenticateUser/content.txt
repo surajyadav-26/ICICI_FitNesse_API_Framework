@@ -2,4 +2,4 @@
 
 !|fixtures.AuthFixture|
 |tokenUrl|bodyJson|tokenField|generateToken?|statusCode?|responseBody?|
-|https://dummyjson.com/auth/login|{"username":"emilys","password":"emilyspass"}|accessToken|true|200|||
+|${BASE_URL}/auth/login|{"username":"emilys","password":"emilyspass"}|accessToken|true|200|||

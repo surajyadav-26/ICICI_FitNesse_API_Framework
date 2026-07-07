@@ -45,7 +45,7 @@
   border: none;
   white-space: nowrap !important;
 }
-.ici-run-btn:hover { background: #E06336; color: #fff; text-decoration: none; }
+.ici-run-btn:hover { background: #7E1322; color: #fff; text-decoration: none; }
 
 /* ── Branded Toggle Segment Styling ────────────────── */
 .ici-toggle-group {
@@ -104,7 +104,7 @@
 .ici-suite-card:hover {
   transform: translateY(-4px) !important;
   box-shadow: 0 6px 16px rgba(0,0,0,0.08) !important;
-  border-top-color: #E06336 !important;
+  border-top-color: #A6192E !important;
 }
 .ici-suite-card.test-case-card {
   border-top-color: #64748b !important; /* Grey top border for standalone test cases */
@@ -169,7 +169,7 @@
   color: #fff !important;
 }
 .ici-card-btn.run:hover {
-  background: #E06336 !important;
+  background: #7E1322 !important;
 }
 .ici-card-btn.open {
   background: #f8fafc !important;
@@ -265,7 +265,7 @@
   color: #fff !important;
 }
 .ici-list-btn.run:hover {
-  background: #E06336 !important;
+  background: #7E1322 !important;
 }
 .ici-list-btn.open {
   background: #f8fafc !important;

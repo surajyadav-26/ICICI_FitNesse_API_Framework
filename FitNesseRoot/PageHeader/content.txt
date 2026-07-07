@@ -10,25 +10,43 @@ body { padding-top: 0 !important; margin-top: 0 !important; }
      LOGIN OVERLAY
      ═══════════════════════════════════════════════════ -->
 <div id="icici-login-overlay">
-  <div id="icici-login-box">
-    <div id="icici-login-logo">
-      <img src="/files/images/icici-prudential-logo.png" alt="ICICI Prudential" onerror="this.style.display='none'">
-      <div id="icici-login-title">ICICI Prudential</div>
-      <div id="icici-login-subtitle">AML — API Test Automation Framework</div>
+  <!-- Left Side: AML Branding & Background -->
+  <div id="icici-login-left">
+    <div id="icici-login-left-content">
+      <div id="icici-aml-badge">AML COMPLIANCE</div>
+      <h1 id="icici-aml-title">Anti-Money Laundering</h1>
+      <p id="icici-aml-desc">Enterprise Test Automation Suite for ICICI Prudential AML & Compliance Systems. Securing financial integrations and validating automated detection gateways with extreme precision.</p>
+      
+      <div id="icici-aml-features">
+        <div class="aml-feature-item">🛡️ Transaction Monitoring Gateways</div>
+        <div class="aml-feature-item">👤 KYC & Customer Due Diligence APIs</div>
+        <div class="aml-feature-item">📊 Real-time Sanctions Screening</div>
+      </div>
     </div>
-    <div id="icici-login-form">
-      <div id="icici-login-error"></div>
-      <div class="icici-field">
-        <label for="icici-username">Username</label>
-        <input type="text" id="icici-username" placeholder="Enter username" autocomplete="username">
+  </div>
+  
+  <!-- Right Side: Clean Login Form -->
+  <div id="icici-login-right">
+    <div id="icici-login-box">
+      <div id="icici-login-logo" style="background: #ffffff; padding: 28px 32px 22px; display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; text-align: center !important; border-bottom: 4px solid #A6192E;">
+        <img src="/files/fitnesse/icici/img/icici-logo.png" alt="ICICI Prudential" style="height: 68px; width: auto; object-fit: contain; display: block !important; margin: 0 auto 12px !important;" onerror="this.src='/files/images/icici-prudential-logo.png'">
+        <div id="icici-login-title" style="color:#A6192E; font-size:18px; font-weight:700; letter-spacing:.5px; text-align: center !important; width: 100% !important; display: block !important;">ICICI Prudential AML</div>
+        <div id="icici-login-subtitle" style="margin-top: 4px; color:#58595B; font-size:12px; font-weight:600; text-align: center !important; width: 100% !important; display: block !important;">API Test Automation Framework</div>
       </div>
-      <div class="icici-field">
-        <label for="icici-password">Password</label>
-        <input type="password" id="icici-password" placeholder="Enter password" autocomplete="current-password">
-      </div>
-      <button id="icici-login-btn" onclick="iciLogin()">Sign In</button>
-      <div id="icici-login-hint">
-        Authorised users only &nbsp;|&nbsp; Contact QA Admin for access
+      <div id="icici-login-form">
+        <div id="icici-login-error"></div>
+        <div class="icici-field">
+          <label for="icici-username">Username</label>
+          <input type="text" id="icici-username" placeholder="Enter username" autocomplete="username" autofocus>
+        </div>
+        <div class="icici-field">
+          <label for="icici-password">Password</label>
+          <input type="password" id="icici-password" placeholder="Enter password" autocomplete="current-password">
+        </div>
+        <button id="icici-login-btn" onclick="iciLogin()">Login</button>
+        <div id="icici-login-hint">
+          Authorised users only &nbsp;|&nbsp; Contact QA Admin for access
+        </div>
       </div>
     </div>
   </div>
@@ -42,10 +60,10 @@ body { padding-top: 0 !important; margin-top: 0 !important; }
   <!-- Left: logo + title -->
   <div class="icici-header-left">
     <img src="/files/images/icici-prudential-logo.png" alt="ICICI Prudential"
-         class="icici-header-logo-img" onerror="this.style.display='none'">
+         class="icici-header-logo-img" onerror="this.src='/files/fitnesse/icici/img/icici-logo.png'">
     <div class="icici-header-text">
-      <div class="icici-header-title">ICICI Prudential</div>
-      <div class="icici-header-subtitle">AML &mdash; API Test Automation Framework</div>
+      <div class="icici-header-title">ICICI Prudential AML</div>
+      <div class="icici-header-subtitle">API Test Automation Framework</div>
     </div>
   </div>
 
@@ -123,26 +141,109 @@ body { padding-top: 0 !important; margin-top: 0 !important; }
 /* ── Login Overlay ──────────────────────────────────── */
 #icici-login-overlay {
   position: fixed; inset: 0;
-  background: linear-gradient(135deg, #A6192E 0%, #004A80 60%, #003060 100%);
-  display: flex; align-items: center; justify-content: center;
+  display: flex;
+  flex-direction: row !important;
+  height: 100vh !important;
+  width: 100vw !important;
   z-index: 99999;
+}
+#icici-login-left {
+  flex: 1.25 !important;
+  background: linear-gradient(135deg, rgba(0, 48, 96, 0.9) 0%, rgba(126, 19, 34, 0.95) 100%), 
+              url('https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=1200&q=80') no-repeat center center / cover !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: flex-start !important;
+  padding: 8% 6% !important;
+  color: #fff !important;
+  text-align: left !important;
+  box-sizing: border-box !important;
+}
+#icici-login-left-content {
+  max-width: 520px !important;
+  text-align: left !important;
+}
+#icici-aml-badge {
+  display: inline-block !important;
+  background: #E06336 !important;
+  color: #fff !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  padding: 4px 10px !important;
+  border-radius: 4px !important;
+  letter-spacing: 1px !important;
+  margin-bottom: 20px !important;
+  text-transform: uppercase !important;
+}
+#icici-aml-title {
+  font-size: 38px !important;
+  font-weight: 800 !important;
+  color: #fff !important;
+  margin: 0 0 16px 0 !important;
+  line-height: 1.2 !important;
+  font-family: Arial, sans-serif !important;
+  letter-spacing: -0.5px !important;
+}
+#icici-aml-desc {
+  font-size: 15px !important;
+  line-height: 1.6 !important;
+  color: rgba(255,255,255,0.9) !important;
+  margin-bottom: 30px !important;
+  font-family: Arial, sans-serif !important;
+}
+#icici-aml-features {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+}
+.aml-feature-item {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  color: rgba(255,255,255,0.95) !important;
+  font-family: Arial, sans-serif !important;
+}
+#icici-login-right {
+  flex: 0.75 !important;
+  background: #f8fafc !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 40px !important;
+  box-sizing: border-box !important;
+  overflow-y: auto !important;
 }
 #icici-login-box {
   background: #ffffff;
   border-radius: 10px;
-  box-shadow: 0 8px 40px rgba(0,0,0,0.35);
-  width: 380px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+  width: 100%;
+  max-width: 420px; /* Increased from 380px for a more robust split-screen look and to support wider logos */
   overflow: hidden;
+  border: 1px solid #e2e8f0;
 }
 #icici-login-logo {
-  background: linear-gradient(135deg, #A6192E 0%, #7E1322 100%);
+  background: #ffffff;
   padding: 28px 32px 22px;
-  text-align: center;
-  border-bottom: 4px solid #E06336;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  border-bottom: 4px solid #A6192E;
 }
-#icici-login-logo img { height: 48px; margin-bottom: 10px; display: block; margin: 0 auto 10px; }
-#icici-login-title    { color:#fff; font-size:18px; font-weight:700; letter-spacing:.5px; }
-#icici-login-subtitle { color:rgba(255,255,255,.75); font-size:12px; margin-top:3px; }
+#icici-login-logo img {
+  width: auto !important;
+  max-width: 100% !important;
+  height: 68px !important;
+  display: block !important;
+  margin: 0 auto 12px !important;
+}
+#icici-login-title    { color:#A6192E; font-size:18px; font-weight:700; letter-spacing:.5px; text-align: center !important; width: 100% !important; }
+#icici-login-subtitle { color:#58595B; font-size:12px; margin-top:3px; font-weight:600; text-align: center !important; width: 100% !important; }
 #icici-login-form     { padding: 28px 32px 24px; text-align: left !important; }
 .icici-field          { margin-bottom: 16px; text-align: left !important; }
 .icici-field label    { display:block !important; text-align: left !important; font-size:12px; font-weight:600; color:#555; margin-bottom:5px; text-transform:uppercase; letter-spacing:.4px; }
@@ -155,44 +256,141 @@ body { padding-top: 0 !important; margin-top: 0 !important; }
 }
 #icici-login-btn:hover { background:#7E1322; }
 #icici-login-error {
-  color:#A6192E; font-size:13px; margin-bottom:12px; min-height:18px;
+  color:#EF4444; font-size:13px; margin-bottom:12px; min-height:18px;
   font-weight:600; text-align:center;
 }
 #icici-login-hint {
   text-align:center; font-size:11px; color:#999; margin-top:14px;
 }
 
+@media (max-width: 900px) {
+  #icici-login-overlay { flex-direction: column !important; }
+  #icici-login-left { display: none !important; }
+  #icici-login-right { flex: 1 !important; width: 100vw !important; height: 100vh !important; }
+}
+
 /* ── Header Banner ──────────────────────────────────── */
 .icici-header-banner {
   display: flex !important;
   align-items: center;
-  background: linear-gradient(90deg, #A6192E 0%, #7E1322 30%, #004A80 70%, #003060 100%);
+  background: linear-gradient(90deg, #7E1322 0%, #A6192E 40%, #E06336 100%);
   border-bottom: 3px solid #E06336;
-  padding: 0 20px;
-  min-height: 64px;
-  gap: 16px;
+  padding: 0 16px !important;
+  min-height: 60px;
+  gap: 12px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.3);
   position: relative;
   z-index: 9000;
 }
-.icici-header-left   { display:flex; align-items:center; gap:12px; flex-shrink:0; }
-.icici-header-logo-img { height:38px; }
-.icici-header-title  { color:#fff; font-size:15px; font-weight:700; line-height:1.2; }
-.icici-header-subtitle { color:rgba(255,255,255,.7); font-size:10px; text-transform:uppercase; letter-spacing:.6px; }
+.icici-header-left   { display:flex; align-items:center; gap:8px; flex-shrink:0; }
+.icici-header-logo-img { height:32px; }
+.icici-header-title  { color:#fff; font-size:14px; font-weight:700; line-height:1.2; }
+.icici-header-subtitle { color:rgba(255,255,255,.7); font-size:9.5px; text-transform:uppercase; letter-spacing:.4px; }
 
 /* Centre nav */
-.icici-header-nav    { display:flex; align-items:center; gap:4px; flex:1; justify-content:center; flex-wrap:nowrap !important; }
+.icici-header-nav {
+  display: flex !important;
+  align-items: center;
+  gap: 3px !important;
+  flex: 1;
+  justify-content: flex-start !important; /* Left-aligned to prevent any symmetrical flex clipping/cropping! */
+  margin-left: 20px !important; /* Elegant spacing next to logo text */
+  flex-wrap: nowrap !important; /* Forces single row, absolutely NO wrapping! */
+  overflow: visible !important; /* Absolutely NO self-contained scrollbars! */
+}
 .icici-nav-btn {
   color:#fff; background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.25);
-  border-radius:4px; padding:5px 8px !important; font-size:12px; font-weight:500;
+  border-radius:4px; padding:4px 8px !important; font-size:11.5px; font-weight:500;
   cursor:pointer; text-decoration:none; transition:background .18s;
-  display:inline-block; white-space:nowrap !important;
+  display:inline-block;
+  white-space: nowrap !important;
 }
 .icici-nav-btn:hover { background:rgba(255,255,255,.22); color:#fff; text-decoration:none; }
 .icici-nav-btn.admin-only { border-color:#E06336; }
 
 /* Right side */
-.icici-header-right  { display:flex; align-items:center; gap:8px; flex-shrink:0; }
+.icici-header-right  { display:flex; align-items:center; gap:6px; flex-shrink:0; }
+
+/* ── Responsive Layout overrides (prevent horizontal overflow) ── */
+@media (min-width: 769px) and (max-width: 1350px) {
+  .icici-header-banner {
+    padding: 0 10px !important;
+    min-height: 52px !important;
+    gap: 8px !important;
+  }
+  .icici-header-left {
+    gap: 6px !important;
+  }
+  .icici-header-logo-img {
+    height: 24px !important;
+  }
+  .icici-header-title {
+    font-size: 13px !important;
+  }
+  .icici-header-subtitle {
+    display: none !important; /* Hide long subtitle to save 200px+ of horizontal space! */
+  }
+  .icici-header-nav {
+    gap: 2px !important;
+    justify-content: flex-start !important; /* Left-align the buttons under narrower widths so horizontal scroll works perfectly */
+  }
+  .icici-nav-btn {
+    padding: 4px 5px !important;
+    font-size: 11px !important;
+  }
+  .icici-header-right {
+    gap: 6px !important;
+  }
+  .ici-nav-env-container {
+    padding: 3px 6px !important;
+    gap: 4px !important;
+    margin-right: 2px !important;
+  }
+  .ici-nav-env-label {
+    font-size: 10px !important;
+  }
+  .ici-nav-env-select {
+    font-size: 11px !important;
+  }
+  .icici-user-chip {
+    padding: 4px 8px !important;
+    gap: 4px !important;
+  }
+  #icici-user-display {
+    font-size: 11px !important;
+  }
+  .icici-role-badge {
+    font-size: 9px !important;
+    padding: 1px 5px !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .icici-header-banner {
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 14px !important;
+  }
+  .icici-header-left {
+    flex: 1 1 100% !important;
+    justify-content: center !important;
+    text-align: center !important;
+  }
+  .icici-header-right {
+    flex: 1 1 100% !important;
+    justify-content: center !important;
+    margin-left: 0 !important;
+    width: 100% !important;
+  }
+  .icici-profile-container {
+    margin-left: 0 !important;
+  }
+  .icici-header-nav {
+    border-top: 1px dashed rgba(255,255,255,0.15);
+    padding-top: 8px;
+    width: 100% !important;
+  }
+}
 .icici-profile-container { position: relative !important; display: inline-block !important; }
 
 .icici-user-chip     { display:flex; align-items:center; gap:6px; background:rgba(255,255,255,.12); border-radius:20px; padding:5px 12px; cursor: pointer; user-select: none; transition: background 0.15s; }
@@ -273,7 +471,7 @@ body { padding-top: 0 !important; margin-top: 0 !important; }
   padding: 0 4px !important;
 }
 .ici-nav-env-select option {
-  background: #004A80 !important;
+  background: #7E1322 !important;
   color: #fff !important;
 }
 .ici-nav-env-btn {
@@ -299,7 +497,7 @@ body { padding-top: 0 !important; margin-top: 0 !important; }
 .ici-modal-box {
   background: #fff; border-radius: 8px; width: 550px; padding: 28px 32px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.25);
-  border-top: 4px solid #E06336;
+  border-top: 4px solid #A6192E;
   text-align: left !important;
 }
 .ici-modal-title { font-size: 18px; font-weight: 700; color: #2c2c2c; margin-bottom: 16px; font-family: Arial, sans-serif; }
@@ -307,15 +505,245 @@ body { padding-top: 0 !important; margin-top: 0 !important; }
 .ici-env-table th, .ici-env-table td { text-align: left; padding: 8px 10px; font-size: 13px; border-bottom: 1px solid #eee; font-family: Arial, sans-serif; }
 .ici-env-table th { font-weight: 700; color: #555; text-transform: uppercase; font-size: 11px; }
 .ici-env-input { width: 100%; padding: 6px 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; font-size: 12px; font-family: Arial, sans-serif; }
-.ici-env-input:focus { border-color: #E06336; outline: none; }
+.ici-env-input:focus { border-color: #A6192E; outline: none; }
 .ici-row-btn { background: transparent; border: none; font-size: 15px; cursor: pointer; padding: 4px; }
 .ici-row-btn:hover { transform: scale(1.15); }
 .ici-modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; border-top: 1px solid #eee; padding-top: 16px; }
 .ici-modal-btn { padding: 8px 16px; border-radius: 4px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; font-family: Arial, sans-serif; }
 .ici-modal-btn.cancel { background: #eee; color: #333; }
 .ici-modal-btn.cancel:hover { background: #ddd; }
-.ici-modal-btn.save { background: #E06336; color: #fff; }
-.ici-modal-btn.save:hover { background: #c0441a; }
+.ici-modal-btn.save { background: #A6192E; color: #fff; }
+.ici-modal-btn.save:hover { background: #7E1322; }
+
+/* ── Dynamic Test Output Styling ────────────────────── */
+.ici-master-summary-banner {
+  padding: 16px 20px !important;
+  border-radius: 8px !important;
+  font-family: Arial, sans-serif !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  margin-bottom: 24px !important;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15) !important;
+  color: #fff !important;
+  flex-wrap: wrap !important;
+  gap: 12px !important;
+}
+.ici-banner-pass {
+  background: linear-gradient(135deg, #15803D 0%, #16A34A 100%) !important;
+  border: 1px solid #16A34A !important;
+}
+.ici-banner-fail {
+  background: linear-gradient(135deg, #7E1322 0%, #A6192E 100%) !important;
+  border: 1px solid #A6192E !important;
+}
+.ici-banner-title {
+  font-size: 16px !important;
+  font-weight: 800 !important;
+  letter-spacing: .3px !important;
+}
+.ici-banner-badges {
+  display: flex !important;
+  gap: 8px !important;
+  flex-wrap: wrap !important;
+}
+.ici-pill {
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  padding: 4px 10px !important;
+  border-radius: 20px !important;
+  text-transform: uppercase !important;
+  letter-spacing: .4px !important;
+  color: #fff !important;
+  border: 1px solid rgba(255,255,255,0.2) !important;
+}
+.ici-pill-right { background: rgba(255,255,255,0.12) !important; }
+.ici-pill-wrong { background: rgba(0,0,0,0.25) !important; }
+.ici-pill-ignored { background: rgba(255,255,255,0.08) !important; }
+.ici-pill-exception { background: #E06336 !important; }
+
+/* Test Summaries list */
+.ici-summary-li {
+  list-style: none !important;
+  padding: 0 !important;
+  margin-bottom: 8px !important;
+}
+.ici-summary-row-content {
+  display: flex !important;
+  align-items: center !important;
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  border-left: 4px solid #cbd5e1 !important;
+  border-radius: 6px !important;
+  padding: 10px 16px !important;
+  font-family: Arial, sans-serif !important;
+  font-size: 13px !important;
+  gap: 12px !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.03) !important;
+}
+.ici-row-status {
+  font-size: 10px !important;
+  font-weight: 800 !important;
+  padding: 2px 8px !important;
+  border-radius: 4px !important;
+  color: #fff !important;
+}
+.ici-row-status.pass { background: #16A34A !important; }
+.ici-row-status.fail { background: #A6192E !important; }
+.ici-row-name { font-weight: 700 !important; color: #1E293B !important; flex: 1 !important; }
+.ici-row-duration { color: #64748B !important; font-size: 12px !important; font-weight: 600 !important; }
+.ici-row-counts { font-size: 11px !important; font-weight: 700 !important; color: #475569 !important; }
+.c-right { color: #16A34A !important; }
+.c-wrong { color: #A6192E !important; }
+.c-ignored { color: #475569 !important; }
+
+/* Inline Response Cell Wrapper */
+.ici-response-wrapper {
+  position: relative !important;
+  display: block !important;
+  width: 100% !important;
+}
+.ici-inspect-btn-inline {
+  background: transparent !important; /* Matches dynamic UI background perfectly! */
+  color: #A6192E !important; /* Premium corporate Maroon icon! */
+  border: 1px solid #cbd5e1 !important; /* Subtle, clean border matching the table grid! */
+  border-radius: 4px !important;
+  font-size: 12px !important;
+  font-weight: bold !important;
+  padding: 2px 6px !important;
+  cursor: pointer !important;
+  transition: background 0.15s, color 0.15s !important;
+  font-family: Arial, sans-serif !important;
+  box-shadow: none !important;
+  display: inline-block !important;
+  line-height: 1.2 !important;
+}
+.ici-inspect-btn-inline:hover {
+  background: #f1f5f9 !important; /* Soft gray highlight on hover! */
+  color: #7E1322 !important;
+}
+.ici-stop-btn {
+  background: #A6192E !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 4px !important;
+  font-size: 11px !important;
+  font-weight: bold !important;
+  padding: 4px 10px !important;
+  cursor: pointer !important;
+  font-family: Arial, sans-serif !important;
+  transition: background 0.15s !important;
+  flex-shrink: 0 !important;
+  line-height: 1.2 !important;
+}
+.ici-stop-btn:hover {
+  background: #7E1322 !important;
+}
+.ici-simple-pre {
+  background: transparent !important; /* No background! */
+  border: none !important; /* No border! */
+  padding: 0 !important;
+  margin: 0 !important;
+  font-family: monospace !important;
+  font-size: 11px !important;
+  color: #000000 !important; /* Pure black text! */
+}
+
+/* ── Modernize All FitNesse Tables Natively! ── */
+table, .fit_table, .instructions, .collapsible {
+  width: auto !important; /* Fit content dynamically based on data, no forced stretching! */
+  max-width: 100% !important; /* Prevent overflowing horizontally beyond page! */
+  min-width: 350px !important; /* Elegant minimum width boundary */
+  border-collapse: collapse !important;
+  margin: 16px 0 !important;
+  font-family: Arial, sans-serif !important;
+  font-size: 13px !important;
+  border-radius: 8px !important;
+  overflow: hidden !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.03) !important;
+  border: 1px solid #e2e8f0 !important;
+}
+table tr th, .fit_table tr th, .instructions tr th {
+  background: linear-gradient(135deg, #7E1322 0%, #A6192E 100%) !important;
+  color: #ffffff !important;
+  text-transform: uppercase !important;
+  font-size: 11px !important;
+  letter-spacing: .5px !important;
+  padding: 12px 16px !important;
+  border: 1px solid rgba(255,255,255,0.1) !important;
+  white-space: nowrap !important; /* Headers should never wrap or compact adjacent columns! */
+}
+table tr td, .fit_table tr td, .instructions tr td {
+  padding: 12px 16px !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #334155 !important;
+  background: #ffffff !important;
+  line-height: 1.5 !important;
+  word-break: break-word !important; /* Wrap long strings (like raw parameters) cleanly! */
+}
+/* Let columns self-size organically as per their data, with no hardcoded pixel widths! */
+table tr td:nth-child(1), .fit_table tr td:nth-child(1), .instructions tr td:nth-child(1) {
+  white-space: nowrap !important; /* URL Column: fits standard URLs perfectly on a single line! */
+}
+table tr td:nth-child(3), .fit_table tr td:nth-child(3), .instructions tr td:nth-child(3) {
+  text-align: center !important;
+  white-space: nowrap !important; /* statusCodes Column: compact and clean! */
+}
+table tr td:has(.ici-response-wrapper) {
+  width: auto !important; /* responseBody: self-contained single-line truncated preview! */
+}
+table tr:hover td, .fit_table tr:hover td {
+  background: #f8fafc !important;
+}
+
+/* Slim table pass/fail status cells */
+.pass, .right {
+  background: #dcfce7 !important;
+  color: #15803d !important;
+  font-weight: 700 !important;
+}
+.fail, .wrong {
+  background: #fee2e2 !important;
+  color: #b91c1c !important;
+  font-weight: 700 !important;
+}
+.ignore {
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+}
+
+/* ── SPA Desktop Dashboard Layout (Block Browser Scroll ONLY on Test/Suite pages!) ── */
+html.ici-spa-layout-html, body.ici-spa-layout {
+  height: 100vh !important;
+  max-height: 100vh !important;
+  overflow: hidden !important;
+}
+
+body.ici-spa-layout article {
+  height: calc(100vh - 64px) !important;
+  max-height: calc(100vh - 64px) !important;
+  overflow-y: auto !important;
+  overflow-x: auto !important;
+  padding: 24px !important;
+  box-sizing: border-box !important;
+}
+
+/* ── Processing State Animations ── */
+.ici-spin {
+  display: inline-block !important;
+  animation: iciRotate 2s linear infinite !important;
+}
+.ici-pulse {
+  animation: iciPulse 1.5s ease-in-out infinite !important;
+}
+@keyframes iciRotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+@keyframes iciPulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
 </style>
 
 <!-- ═══════════════════════════════════════════════════
@@ -360,9 +788,10 @@ body { padding-top: 0 !important; margin-top: 0 !important; }
     admin: [
       { label: "Home",          href: function(){ return "/"; } },
       { label: "▶ Run",         href: "#", action: function(){ location.href = getRunUrl(); } },
+      { label: "📊 Report",     href: "/files/report.html", target: "_blank" },
       { label: "✎ Edit",        href: function(){ return p() + "?edit"; },       adminOnly: true },
-      { label: "+ Add Child",   href: function(){ return p() + "?new"; },        adminOnly: true },
-      { label: "❌ Delete Page", href: function(){ return p() + "?deletePage"; }, adminOnly: true },
+      { label: "+ Add Test",    href: function(){ return p() + "?new"; },        adminOnly: true },
+      { label: "❌ Delete",     href: function(){ return p() + "?deletePage"; }, adminOnly: true },
       { label: "⚙ Tools",       href: function(){ return p() + "?refactor"; },   adminOnly: true },
       { label: "☰ Properties",  href: function(){ return p() + "?properties"; }, adminOnly: true },
       { label: "📋 Page History", href: function(){ return p() + "?pageHistory"; } }
@@ -370,6 +799,7 @@ body { padding-top: 0 !important; margin-top: 0 !important; }
     user: [
       { label: "Home",          href: function(){ return "/"; } },
       { label: "▶ Run",         href: "#", action: function(){ location.href = getRunUrl(); } },
+      { label: "📊 Report",     href: "/files/report.html", target: "_blank" },
       { label: "📋 Page History", href: function(){ return p() + "?pageHistory"; } }
     ]
   };
@@ -433,8 +863,12 @@ body { padding-top: 0 !important; margin-top: 0 !important; }
     if (!nav) return;
     nav.innerHTML = "";
     
-    // Prepend a beautiful Back Button ONLY if we are currently viewing the Execution Log!
-    if (/[?&]executionLog/.test(location.search)) {
+    // Check if we have a parent suite page path (contains a dot ".")
+    var hasParentPath = p().indexOf(".") > -1;
+    var isExecutionLog = /[?&]executionLog/.test(location.search);
+    
+    if (isExecutionLog) {
+      // Prepend Back Button to go back from Execution Log to the active test page!
       var backBtn = document.createElement("a");
       backBtn.href = p();
       backBtn.className = "icici-nav-btn admin-only";
@@ -442,6 +876,20 @@ body { padding-top: 0 !important; margin-top: 0 !important; }
       backBtn.style.borderColor = "#E06336";
       backBtn.style.color = "#fff";
       backBtn.style.fontWeight = "bold";
+      backBtn.style.marginRight = "4px";
+      backBtn.textContent = "⬅ Back";
+      nav.appendChild(backBtn);
+    } else if (hasParentPath) {
+      // Prepend Back Button to go back from Child page to its parent Suite page!
+      var parentPath = p().substring(0, p().lastIndexOf("."));
+      var backBtn = document.createElement("a");
+      backBtn.href = parentPath;
+      backBtn.className = "icici-nav-btn admin-only";
+      backBtn.style.background = "#E06336";
+      backBtn.style.borderColor = "#E06336";
+      backBtn.style.color = "#fff";
+      backBtn.style.fontWeight = "bold";
+      backBtn.style.marginRight = "4px";
       backBtn.textContent = "⬅ Back";
       nav.appendChild(backBtn);
     }
@@ -464,6 +912,9 @@ body { padding-top: 0 !important; margin-top: 0 !important; }
     links.forEach(function(l) {
       var a = document.createElement("a");
       a.href = typeof l.href === "function" ? l.href() : l.href;
+      if (l.target) {
+        a.target = l.target;
+      }
       if (l.action) {
         a.onclick = function(e) {
           e.preventDefault();
@@ -477,26 +928,39 @@ body { padding-top: 0 !important; margin-top: 0 !important; }
   }
 
   function showApp(session) {
-    var overlay = document.getElementById("icici-login-overlay");
-    if (overlay) overlay.style.display = "none";
+    try {
+      if (!session || !session.role) {
+        throw new Error("Invalid session data");
+      }
 
-    var banner = document.getElementById("icici-header-banner");
-    if (banner) banner.style.display = "flex";
+      var overlay = document.getElementById("icici-login-overlay");
+      if (overlay) overlay.style.display = "none";
+      document.body.style.overflow = ""; // Restore body scrolling!
 
-    var nameEl = document.getElementById("icici-user-display");
-    if (nameEl) nameEl.textContent = session.display;
+      var banner = document.getElementById("icici-header-banner");
+      if (banner) banner.style.display = "flex";
 
-    var badge = document.getElementById("icici-role-badge");
-    if (badge) {
-      badge.textContent = session.role === "admin" ? "Admin" : "Viewer";
-      badge.className = "icici-role-badge " + (session.role === "admin" ? "role-admin" : "role-user");
-    }
+      var nameEl = document.getElementById("icici-user-display");
+      if (nameEl) nameEl.textContent = session.display || "User";
 
-    buildNav(session.role);
-    populateEnvUI(); // Load Environment selector cleanly on log in!
+      var badge = document.getElementById("icici-role-badge");
+      if (badge) {
+        badge.textContent = session.role === "admin" ? "Admin" : "Viewer";
+        badge.className = "icici-role-badge " + (session.role === "admin" ? "role-admin" : "role-user");
+      }
 
-    if (session.role !== "admin") {
-      lockForReadOnly();
+      buildNav(session.role);
+      populateEnvUI(); // Load Environment selector cleanly on log in!
+
+      if (session.role !== "admin") {
+        lockForReadOnly();
+      }
+    } catch(e) {
+      console.warn("Clearing corrupted session:", e);
+      clearSession();
+      var overlay = document.getElementById("icici-login-overlay");
+      if (overlay) overlay.style.display = "flex";
+      document.body.style.overflow = "hidden";
     }
   }
 
@@ -778,10 +1242,459 @@ body { padding-top: 0 !important; margin-top: 0 !important; }
   }
   updateBrowserTabTitle();
 
+  // Fetch true suite test total on load dynamically from the static wiki contents list!
+  window._iciTotalSuiteTests = 0;
+  if (/[?&]suite/i.test(location.search)) {
+    fetch(location.pathname)
+      .then(function(res) { return res.text(); })
+      .then(function(html) {
+        var parser = new DOMParser();
+        var doc = parser.parseFromString(html, "text/html");
+        var items = doc.querySelectorAll(".contents li, table.suite tr, .toc-item");
+        if (items.length > 0) {
+          window._iciTotalSuiteTests = items.length;
+        }
+      })
+      .catch(function(err) {
+        console.warn("Failed to fetch suite total count:", err);
+      });
+  }
+
+  /* ── Dynamic Test Output & JSON Accordion Formatter ── */
+  function formatTestOutput() {
+    // Automatically apply SPA layout class on body and html if we are on a Test/Suite page
+    var isTestPage = /[?&](test|suite)/i.test(location.search);
+    if (isTestPage) {
+      document.documentElement.classList.add("ici-spa-layout-html");
+      document.body.classList.add("ici-spa-layout");
+    } else {
+      document.documentElement.classList.remove("ici-spa-layout-html");
+      document.body.classList.remove("ici-spa-layout");
+    }
+
+    // 1. Format the Master Test Summary Banner Universally!
+    var summaryEl = document.getElementById("test-summary") || document.querySelector(".test-summary");
+    if (!summaryEl) {
+      // Fallback: scan all elements on the page for one containing both "Assertions:" and "right"
+      var divs = document.querySelectorAll("div, p, h2, pre");
+      for (var i = 0; i < divs.length; i++) {
+        var txt = divs[i].textContent;
+        if (txt.indexOf("Assertions:") > -1 && txt.indexOf("right") > -1) {
+          summaryEl = divs[i];
+          break;
+        }
+      }
+    }
+
+    // ── Handle Real-Time Processing (Running) States ──
+    var runBtn = null;
+    var navBtns = document.querySelectorAll(".icici-nav-btn");
+    navBtns.forEach(function(btn) {
+      var t = btn.textContent.trim();
+      if (t.indexOf("Run") > -1 || t.indexOf("Running") > -1) {
+        runBtn = btn;
+      }
+    });
+
+    // Detect if a test run is actively executing by the presence of FitNesse's native "Stop" button in the DOM!
+    var stopBtn = document.getElementById("stop-test") || document.querySelector(".stop-test");
+    if (!stopBtn) {
+      var els = document.querySelectorAll("input, button, a");
+      for (var idx = 0; idx < els.length; idx++) {
+        var val = (els[idx].value || els[idx].textContent || "").trim();
+        if (val.indexOf("Stop") > -1) {
+          stopBtn = els[idx];
+          break;
+        }
+      }
+    }
+    var isPageRunning = stopBtn !== null;
+    
+    var progressSpinner = document.getElementById("ici-header-progress");
+    var isRunningPage = /[?&](test|suite)/i.test(location.search);
+    var hasFinished = !isPageRunning && summaryEl;
+    
+    if (isRunningPage) {
+      if (!hasFinished) {
+        // A. Toggle Header Progress Spinner to FLEX (Visible!)
+        if (progressSpinner) {
+          progressSpinner.style.display = "flex";
+        }
+
+        // B. Update Navigation Button to "⏳ Running..." with pulsing state
+        if (runBtn) {
+          runBtn.innerHTML = "⏳ Running...";
+          runBtn.style.background = "#E06336";
+          runBtn.style.borderColor = "#E06336";
+          runBtn.classList.add("ici-pulse");
+        }
+      } else {
+        // Test finished! Restore "▶ Run" state cleanly
+        if (progressSpinner) {
+          progressSpinner.style.display = "none"; // Hide progress spinner!
+        }
+        if (runBtn) {
+          runBtn.innerHTML = "▶ Run";
+          runBtn.style.background = "";
+          runBtn.style.borderColor = "";
+          runBtn.classList.remove("ici-pulse");
+        }
+      }
+    }
+
+    // 2. Format individual test summaries list (Suite Page)
+    var summariesContainer = document.getElementById("test-summaries");
+    if (summariesContainer) {
+      var summaryRows = summariesContainer.querySelectorAll("li");
+      summaryRows.forEach(function(li) {
+        if (li._formatted) return;
+        li._formatted = true;
+        li.className = "ici-summary-li";
+        
+        var text = li.innerHTML;
+        // Parse: "X right, Y wrong, Z ignored, W exceptions Name (duration seconds)"
+        var matches = text.match(/(\d+)\s+right,\s+(\d+)\s+wrong,\s+(\d+)\s+ignored,\s+(\d+)\s+exceptions\s+([a-zA-Z0-9._-]+)\s*\((.*)\)/);
+        if (matches) {
+          var r = matches[1], w = matches[2], ig = matches[3], ex = matches[4], name = matches[5], dur = matches[6];
+          var isPagePass = parseInt(w) === 0 && parseInt(ex) === 0;
+          var statusBadge = isPagePass ? '<span class="ici-row-status pass">PASS</span>' : '<span class="ici-row-status fail">FAIL</span>';
+          
+          li.innerHTML = '<div class="ici-summary-row-content">' +
+            statusBadge +
+            '<span class="ici-row-name">' + name + '</span>' +
+            '<span class="ici-row-duration">⏱️ ' + dur + '</span>' +
+            '<span class="ici-row-counts">' +
+              '<span class="c-right">' + r + ' ✔️</span> | ' +
+              '<span class="c-wrong">' + w + ' ❌</span> | ' +
+              '<span class="c-ignored">' + ig + ' 💤</span>' +
+            '</span>' +
+          '</div>';
+        }
+      });
+    }
+    
+    // 3. Scan and dynamically target ONLY the "response" column cells inside tables for an ultra-compact placeholder & expand button!
+    var tables = document.querySelectorAll("table, .fit_table, .instructions");
+    tables.forEach(function(table) {
+      var responseColIdx = -1;
+      var headerRowIdx = -1;
+      var rows = table.querySelectorAll("tr");
+      
+      // Scan the first 3 rows of the table to find the correct column headers row!
+      for (var i = 0; i < Math.min(rows.length, 3); i++) {
+        var cells = rows[i].querySelectorAll("td, th");
+        cells.forEach(function(cell, idx) {
+          var txt = cell.textContent.toLowerCase().trim();
+          if (txt.indexOf("response") > -1) {
+            responseColIdx = idx;
+            headerRowIdx = i; // Track the exact index of the column header row!
+          }
+        });
+        if (responseColIdx > -1) {
+          break; // Found the header row! Stop searching.
+        }
+      }
+      
+      // If a "response" column is successfully identified, target only its cells!
+      if (responseColIdx > -1) {
+        var rows = table.querySelectorAll("tr");
+        rows.forEach(function(row, rowIdx) {
+          if (rowIdx <= headerRowIdx) return; // Skip BOTH the fixture name row AND the column header row!
+          
+          var cells = row.querySelectorAll("td");
+          var responseCell = cells[responseColIdx];
+          if (responseCell && !responseCell._jsonFormatted) {
+            responseCell._jsonFormatted = true;
+            
+            var rawHtml = responseCell.innerHTML;
+            
+            // 1. Clean HTML tags (like <br>) and unescape HTML entities to get clean JSON text
+            var rawText = rawHtml.replace(/<br\s*\/?>/gi, "\n").replace(/<[^>]+>/g, "");
+            var txtNode = document.createElement("textarea");
+            txtNode.innerHTML = rawText;
+            var cleanText = txtNode.value.trim();
+            
+            // 2. Extract inner content if it uses double curly braces {{ ... }}
+            var isBraced = cleanText.startsWith("{{") && cleanText.endsWith("}}");
+            var jsonToParse = cleanText;
+            if (isBraced) {
+              jsonToParse = cleanText.substring(2, cleanText.length - 2).trim();
+            }
+            
+            // 3. Render a highly readable, single-line truncated preview of the actual JSON payload!
+            var singleLineText = cleanText.replace(/\s+/g, " ");
+            var preview = singleLineText;
+            if (preview.length > 45) {
+              preview = preview.substring(0, 45) + "...";
+            }
+            
+            var pretty = jsonToParse;
+            try {
+              var parsed = JSON.parse(jsonToParse);
+              if (parsed && typeof parsed === "object") {
+                pretty = JSON.stringify(parsed, null, 2);
+              }
+            } catch(e) {}
+            
+            responseCell.innerHTML = '<div class="ici-response-wrapper" style="display: flex !important; align-items: center !important; justify-content: space-between !important; gap: 8px !important; width: 100% !important;">' +
+              '<span style="font-family: monospace !important; font-size: 11px !important; color: #475569 !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; flex: 1 !important; max-width: calc(100% - 30px) !important;">' + preview + '</span>' +
+              '<button class="ici-inspect-btn-inline" onclick="iciOpenJSONInspector(this)" title="View Full Response Payload">⛶</button>' +
+              '<code style="display: none !important;">' + pretty + '</code>' +
+            '</div>';
+          }
+        });
+      }
+    });
+
+    // 4. Scan all table headers and cleanly strip the trailing '?' from their visible display!
+    var ths = document.querySelectorAll("table th, .fit_table th, .instructions th, td.leader");
+    ths.forEach(function(th) {
+      if (th._questionMarkCleaned) return;
+      th._questionMarkCleaned = true;
+      
+      var txt = th.textContent.trim();
+      if (txt.endsWith("?")) {
+        th.textContent = txt.slice(0, -1); // Strip the trailing '?' for a pristine, professional look!
+      }
+    });
+  }
+  
+  // Run formatting periodically in real-time to catch chunked streamed blocks instantly!
+  setInterval(formatTestOutput, 300);
+
+  /* ── Response Body Modal Inspector Global Controllers ── */
+  var inspectorJSONText = "";
+
+  function ensureInspectorModal() {
+    if (document.getElementById("ici-json-inspector-modal")) return;
+    
+    var modalDiv = document.createElement("div");
+    modalDiv.id = "ici-json-inspector-modal";
+    modalDiv.className = "ici-modal-overlay";
+    modalDiv.style.display = "none";
+    modalDiv.onclick = function() { iciCloseJSONInspector(); };
+    
+    modalDiv.innerHTML = '<div class="ici-modal-box" style="width: 80% !important; max-width: 900px !important; border-top: 4px solid #A6192E;" onclick="event.stopPropagation()">' +
+      '<div class="ici-modal-title" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 12px; margin-bottom: 16px;">' +
+        '<span style="font-weight: 800; color: #1E293B;">🔍 Response Body Inspector</span>' +
+        '<button onclick="iciCloseJSONInspector()" style="background: transparent; border: none; font-size: 20px; cursor: pointer;">❌</button>' +
+      '</div>' +
+      '<div style="background: #ffffff; border-radius: 6px; overflow: hidden; border: 1px solid #cbd5e1;">' +
+        '<pre id="ici-inspector-code" style="margin: 0; padding: 18px 24px; max-height: 50vh; overflow: auto; font-family: monospace; font-size: 13px; color: #000000; background: #ffffff; line-height: 1.6; text-align: left !important; white-space: pre !important;"></pre>' +
+      '</div>' +
+      '<div class="ici-modal-actions" style="margin-top: 16px; padding-top: 12px;">' +
+        '<button class="ici-modal-btn cancel" onclick="iciCloseJSONInspector()">Close</button>' +
+      '</div>' +
+    '</div>';
+    
+    document.body.appendChild(modalDiv);
+  }
+
+  window.iciOpenJSONInspector = function(btn) {
+    ensureInspectorModal();
+    var wrapper = btn.closest(".ici-response-wrapper");
+    if (!wrapper) return;
+    var codeEl = wrapper.querySelector("code");
+    if (!codeEl) return;
+    
+    inspectorJSONText = codeEl.textContent;
+    var inspectorCode = document.getElementById("ici-inspector-code");
+    if (inspectorCode) {
+      inspectorCode.textContent = inspectorJSONText;
+    }
+    
+    document.getElementById("ici-json-inspector-modal").style.display = "flex";
+    document.body.style.overflow = "hidden"; // Disable background scrolling while inspecting!
+  };
+
+  window.iciCloseJSONInspector = function() {
+    var modal = document.getElementById("ici-json-inspector-modal");
+    if (modal) modal.style.display = "none";
+    
+    // Only restore body overflow if we are not on the login screen
+    var loginOverlay = document.getElementById("icici-login-overlay");
+    if (!loginOverlay || loginOverlay.style.display === "none") {
+      document.body.style.overflow = "";
+    }
+  };
+
+  window.iciCopyInspectorJSON = function() {
+    if (!navigator.clipboard) {
+      var textArea = document.createElement("textarea");
+      textArea.value = inspectorJSONText;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textArea);
+      alert("📋 Response JSON copied to clipboard successfully!");
+      return;
+    }
+    navigator.clipboard.writeText(inspectorJSONText)
+      .then(function() {
+        alert("📋 Response JSON copied to clipboard successfully!");
+      })
+      .catch(function(err) {
+        console.error("Copy failed:", err);
+      });
+  };
+
+  window.iciDownloadInspectorJSON = function() {
+    var blob = new Blob([inspectorJSONText], { type: "application/json" });
+    var link = document.createElement("a");
+    link.download = "Response_Payload.json";
+    link.href = URL.createObjectURL(blob);
+    link.style.display = "none";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  /* ── Bulletproof Favicon Override with MutationObserver ── */
+  function overrideFavicon() {
+    var faviconUrl = "/favicon.ico";
+    
+    // Resolve faviconUrl to its absolute form once to prevent relative-to-absolute infinite loop triggers!
+    var tempA = document.createElement("a");
+    tempA.href = faviconUrl;
+    var absoluteFaviconUrl = tempA.href;
+    var normTarget = (absoluteFaviconUrl || "").split("?")[0].replace(/^https?:/, "").toLowerCase();
+    
+    function lockLink(link) {
+      if (!link || link._locked) return;
+      link._locked = true;
+      
+      // 1. Force-lock ID
+      link.id = "favicon";
+      
+      // 2. Intercept and completely block setAttribute("href", ...) and setAttribute("type", ...)
+      try {
+        var originalSetAttribute = link.setAttribute;
+        link.setAttribute = function(name, val) {
+          if (name === "href" || name === "type" || name === "rel") {
+            return; // Block any changes to these crucial attributes!
+          }
+          originalSetAttribute.call(this, name, val);
+        };
+      } catch (e) {}
+      
+      // 3. Lock href and type properties at the JS engine compiler level using getters and setters!
+      try {
+        Object.defineProperty(link, 'href', {
+          get: function() { return absoluteFaviconUrl; },
+          set: function(val) { /* Blocked! */ },
+          configurable: true
+        });
+        
+        Object.defineProperty(link, 'type', {
+          get: function() { return "image/x-icon"; },
+          set: function(val) { /* Blocked! */ },
+          configurable: true
+        });
+      } catch (e) {}
+    }
+    
+    function apply() {
+      var links = document.querySelectorAll("link[rel*='icon']");
+      
+      if (links.length === 0) {
+        var iconLink = document.createElement("link");
+        iconLink.rel = "icon";
+        iconLink.href = absoluteFaviconUrl;
+        lockLink(iconLink);
+        if (document.head) {
+          document.head.appendChild(iconLink);
+        } else {
+          document.getElementsByTagName("head")[0].appendChild(iconLink);
+        }
+        
+        var shortcutLink = document.createElement("link");
+        shortcutLink.rel = "shortcut icon";
+        shortcutLink.href = absoluteFaviconUrl;
+        lockLink(shortcutLink);
+        if (document.head) {
+          document.head.appendChild(shortcutLink);
+        } else {
+          document.getElementsByTagName("head")[0].appendChild(shortcutLink);
+        }
+      } else {
+        links.forEach(function(link) {
+          lockLink(link);
+          
+          // One-time inline sync in case it was already altered before we locked it
+          var normCurrent = (link.href || "").split("?")[0].replace(/^https?:/, "").toLowerCase();
+          var normTarget = (absoluteFaviconUrl || "").split("?")[0].replace(/^https?:/, "").toLowerCase();
+          if (normCurrent !== normTarget) {
+            try {
+              link.href = absoluteFaviconUrl;
+            } catch(e) {}
+          }
+        });
+      }
+    }
+
+    apply();
+    // Run on key loading stages
+    document.addEventListener("DOMContentLoaded", apply);
+    window.addEventListener("load", apply);
+    
+    // Set up MutationObserver to block child and attribute attempts to overwrite our favicon!
+    var target = document.documentElement;
+    if (target && typeof MutationObserver !== 'undefined') {
+      var observer = new MutationObserver(function(mutations) {
+        var needsApply = false;
+        mutations.forEach(function(mutation) {
+          if (mutation.type === 'childList') {
+            var addedNodes = Array.prototype.slice.call(mutation.addedNodes);
+            var hasIcon = addedNodes.some(function(node) {
+              return node.nodeType === 1 && node.tagName.toUpperCase() === 'LINK' && node.getAttribute('rel') && node.getAttribute('rel').indexOf('icon') !== -1;
+            });
+            if (hasIcon) needsApply = true;
+          } else if (mutation.type === 'attributes') {
+            var node = mutation.target;
+            if (node && node.nodeType === 1 && node.tagName.toUpperCase() === 'LINK') {
+              var rel = node.getAttribute('rel');
+              if (rel && rel.indexOf('icon') !== -1) {
+                var normCurrent = (node.href || "").split("?")[0].replace(/^https?:/, "").toLowerCase();
+                if (normCurrent !== normTarget) {
+                  needsApply = true;
+                }
+              }
+            }
+          }
+        });
+        if (needsApply) {
+          apply();
+        }
+      });
+      observer.observe(target, { 
+        childList: true, 
+        subtree: true, 
+        attributes: true
+      });
+    }
+    
+    // 200ms high-frequency heartbeat sweep to guarantee absolute victory over FitNesse scripts
+    setInterval(apply, 200);
+  }
+  overrideFavicon();
+
   /* ── Auto-restore session on page load ────────────────────────── */
   var existing = loadSession();
   if (existing) {
     showApp(existing);
+  } else {
+    if (document.body) {
+      document.body.style.overflow = "hidden"; // Prevent background scroll leakage when login is active!
+    } else {
+      document.addEventListener("DOMContentLoaded", function() {
+        if (document.body) document.body.style.overflow = "hidden";
+      });
+    }
+    // Focus the username field on load
+    document.addEventListener("DOMContentLoaded", function() {
+      var uField = document.getElementById("icici-username");
+      if (uField) uField.focus();
+    });
   }
 
 })();

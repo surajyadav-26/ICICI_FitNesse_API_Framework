@@ -1,7 +1,0 @@
----
-LastModifyingUser: admin
-Test
----
-!|fixtures.DeleteRequestFixture|
-|url|contentType|authorization|requestBody|statusCodes?|responseBody?|
-|!-https://reqres.in/api/users/2-!|!-application/json-!|||-!|204||

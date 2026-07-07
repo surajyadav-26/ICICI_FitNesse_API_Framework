@@ -23,5 +23,26 @@ def extract_json_field(data: dict, key: str) -> str:
                 val = val[int(part)] if isinstance(val, list) else val[part]
             return str(val)
         return str(data.get(key, "key not found"))
-    except (KeyError, IndexError, TypeError, AttributeError):
+    except (KeyError, IndexError, TypeError, AttributeError, ValueError):
+        return "key not found"
+
+import xml.etree.ElementTree as ET
+
+def extract_xml_field(xml_text: str, xpath_query: str) -> str:
+    """Extracts a value from an XML string using an XPath-style expression."""
+    if not xpath_query:
+        return "no key set"
+    try:
+        # Parse XML root
+        root = ET.fromstring(xml_text.strip())
+        # Try retrieving text directly
+        val = root.findtext(xpath_query)
+        if val is not None:
+            return str(val).strip()
+        # Fallback to finding element and returning text
+        elem = root.find(xpath_query)
+        if elem is not None:
+            return (elem.text or "").strip()
+        return "key not found"
+    except Exception:
         return "key not found"

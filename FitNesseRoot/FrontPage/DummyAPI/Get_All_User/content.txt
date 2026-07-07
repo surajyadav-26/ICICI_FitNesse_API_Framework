@@ -2,4 +2,4 @@
 
 !|fixtures.GetRequestFixture|
 |url|key|statusCodes?|jsonValue?|responseBody?|
-|https://dummyjson.com/users|total|200|208||
+|${BASE_URL}/users|total|200|208||

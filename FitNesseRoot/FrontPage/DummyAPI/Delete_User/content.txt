@@ -2,4 +2,4 @@
 
 !|fixtures.DeleteRequestFixture|
 |url|statusCodes?|responseBody?|
-|https://dummyjson.com/users/1|200||
+|${BASE_URL}/users/1|200||

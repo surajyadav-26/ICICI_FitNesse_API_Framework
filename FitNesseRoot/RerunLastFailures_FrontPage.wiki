@@ -1,0 +1,11 @@
+---
+Help: Lists tests failed during last run, so they can be run again (without running all tests that passed).
+Suite
+---
+
+!note This page is automatically generated when running tests. It will be overwritten by the next Suite or Test execution.
+
+Tests failed (first failure was at 2026-07-06T16:55:21.722):
+
+!see [[FrontPage.DummyAPI.Search_Product][.FrontPage.DummyAPI.Search_Product]]
+!see [[FrontPage.Sanity.loginTrubi][.FrontPage.Sanity.loginTrubi]]

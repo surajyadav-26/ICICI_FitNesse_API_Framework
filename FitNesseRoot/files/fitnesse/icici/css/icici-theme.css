@@ -1,20 +1,20 @@
-/* ICICI Bank Theme for FitNesse */
-
+/* FitNesse Blue Theme */
+ 
 /* Navbar */
 .icici-navbar {
-  background: linear-gradient(135deg, #E87722 0%, #D4681A 100%) !important;
-  border-bottom: 3px solid #7A1F2E !important;
+  background: linear-gradient(135deg, #1E3A8A 0%, #0F172A 100%) !important;
+  border-bottom: 3px solid #2563EB !important;
 }
-
+ 
 .icici-brand img {
   height: 36px;
 }
-
+ 
 /* Hide the default FitNesse logo */
 .navbar-brand {
   background-image: none !important;
 }
-
+ 
 /* Nav links */
 .navbar .nav-link,
 .navbar a,
@@ -27,114 +27,114 @@ nav .nav-link,
 .navbar-nav > li > a {
   color: #FFFFFF !important;
 }
-
+ 
 .navbar .nav-link:hover,
 .navbar a:hover,
 nav a:hover {
-  color: #FEF0E5 !important;
+  color: #EFF6FF !important;
 }
-
+ 
 /* Dropdown menu items (Tools, Add) */
 .dropdown-menu a,
 .dropdown-menu .dropdown-item,
 .dropdown-menu li a,
 .navbar .dropdown-menu a,
 nav .dropdown-menu a {
-  color: #B85C1B !important;
+  color: #1E3A8A !important;
   background-color: #FFFFFF !important;
 }
-
+ 
 .dropdown-menu a:hover,
 .dropdown-menu .dropdown-item:hover,
 .dropdown-menu li a:hover,
 .navbar .dropdown-menu a:hover,
 nav .dropdown-menu a:hover {
-  color: #7A1F2E !important;
-  background-color: #FEF0E5 !important;
+  color: #2563EB !important;
+  background-color: #EFF6FF !important;
 }
-
+ 
 /* Headings */
 h1, h2, h3, h4, h5, h6 {
-  color: #B85C1B;
+  color: #1E3A8A;
 }
-
+ 
 h1 {
-  border-bottom: 2px solid #E87722;
+  border-bottom: 2px solid #2563EB;
   padding-bottom: 8px;
 }
-
+ 
 /* Links */
 a {
-  color: #E87722;
+  color: #2563EB;
 }
-
+ 
 a:hover {
-  color: #7A1F2E;
+  color: #1D4ED8;
 }
-
+ 
 /* Breadcrumb */
 .breadcrumb {
-  background-color: #FEF0E5 !important;
+  background-color: #EFF6FF !important;
 }
-
+ 
 .breadcrumb a,
 .breadcrumb li,
 .breadcrumb .breadcrumb-item,
 .breadcrumb .breadcrumb-item a,
 .breadcrumb span {
-  color: #B85C1B !important;
+  color: #1E3A8A !important;
 }
-
+ 
 .breadcrumb .breadcrumb-item.active {
-  color: #7A1F2E !important;
+  color: #2563EB !important;
 }
-
+ 
 .breadcrumb a:hover,
 .breadcrumb .breadcrumb-item a:hover {
-  color: #7A1F2E !important;
+  color: #2563EB !important;
 }
-
+ 
 /* Body */
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background-color: #FFFAF5;
+  background-color: #F8FAFC;
 }
-
+ 
 /* Table headers */
 table.hash_table th,
 table.decision_table th,
 table th {
-  background-color: #e89622 !important;
+  background-color: #1E3A8A !important;
   color: #FFFFFF !important;
 }
-
+ 
 /* Buttons */
 .btn-primary {
-  background-color: #E87722 !important;
-  border-color: #B85C1B !important;
+  background-color: #2563EB !important;
+  border-color: #1D4ED8 !important;
 }
-
+ 
 .btn-primary:hover {
-  background-color: #B85C1B !important;
+  background-color: #1D4ED8 !important;
 }
-
+ 
 /* Pass/Fail */
 .pass, .right, td.pass {
-  background-color: #30873b !important;
+  background-color: #16A34A !important;
   color: #FFFFFF !important;
 }
-
+ 
 .fail, .wrong, td.fail {
-  background-color: #F8D7DA !important;
+  background-color: #FEE2E2 !important;
 }
-
+ 
 /* Test result ribbon (pass) */
 .test-summary, .summary, .alert-success, .test-output-name {
-  background-color: #30873b !important;
+  background-color: #16A34A !important;
   color: #FFFFFF !important;
-  border-color: #28a745 !important;
+  border-color: #15803D !important;
 }
-
+ 
 .test-summary a, .summary a, .alert-success a {
   color: #FFFFFF !important;
   text-decoration: underline;

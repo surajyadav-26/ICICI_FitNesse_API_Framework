@@ -3,8 +3,8 @@
 # End-to-End API Scenario Flow
 !|fixtures.AuthFixture|
 |tokenUrl|bodyJson|tokenField|generateToken?|statusCode?|
-|https://dummyjson.com/auth/login|{"username":"emilys","password":"emilyspass"}|accessToken|true|200|
+|${BASE_URL}/auth/login|{"username":"emilys","password":"emilyspass"}|accessToken|true|200|
 
 !|fixtures.GetRequestFixture|
 |url|key|statusCodes?|jsonValue?|
-|https://dummyjson.com/auth/me|id|200|1|
+|${BASE_URL}/auth/me|id|200|1|

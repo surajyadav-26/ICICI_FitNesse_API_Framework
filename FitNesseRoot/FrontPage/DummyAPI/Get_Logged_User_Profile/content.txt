@@ -3,9 +3,9 @@
 # 1. First authenticate emilys and cache her Bearer Token dynamically
 !|fixtures.AuthFixture|
 |tokenUrl|bodyJson|tokenField|generateToken?|statusCode?|
-|https://dummyjson.com/auth/login|{"username":"emilys","password":"emilyspass"}|accessToken|true|200|
+|${BASE_URL}/auth/login|{"username":"emilys","password":"emilyspass"}|accessToken|true|200|
 
 # 2. Call auth/me. GetRequestFixture will automatically retrieve the token and inject the Authorization header!
 !|fixtures.GetRequestFixture|
 |url|key|statusCodes?|jsonValue?|responseBody?|
-|https://dummyjson.com/auth/me|email|200|emily.johnson@x.dummyjson.com||
+|${BASE_URL}/auth/me|email|200|emily.johnson@x.dummyjson.com||

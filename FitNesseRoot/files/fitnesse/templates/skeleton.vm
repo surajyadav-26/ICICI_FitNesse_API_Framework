@@ -4,7 +4,7 @@
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
 
-  <title>ICICI Bank - $title</title>
+  <title>ICICI Prudential AML - $title</title>
   <!--[if lt IE 9]>
    <script>
     document.createElement('header');
@@ -15,8 +15,8 @@
    </script>
   <![endif]-->
 
-  <link rel="shortcut icon" type="image/x-icon" href="${contextRoot}files/icici-theme/favicon.ico" />
-  <link rel="icon" type="image/x-icon" href="${contextRoot}files/icici-theme/favicon.ico" />
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+  <link rel="icon" type="image/x-icon" href="/favicon.ico" />
   <link rel="stylesheet" type="text/css" href="${contextRoot}files/fitnesse/css/fitnesse_wiki.css" />
   <link rel="stylesheet" type="text/css" href="${contextRoot}files/fitnesse/css/fitnesse_pages.css" />
   <link rel="stylesheet" type="text/css" href="${contextRoot}files/fitnesse/wysiwyg/wysiwyg.css" media="screen"/>

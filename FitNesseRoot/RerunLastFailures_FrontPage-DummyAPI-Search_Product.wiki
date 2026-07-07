@@ -5,6 +5,6 @@ Suite
 
 !note This page is automatically generated when running tests. It will be overwritten by the next Suite or Test execution.
 
-Tests failed (first failure was at 2026-06-30T17:13:26.631):
+Tests failed (first failure was at 2026-07-07T11:12:38.143):
 
-!see [[FrontPage.Sanity.loginTrubi][.FrontPage.Sanity.loginTrubi]]
+!see [[FrontPage.DummyAPI.Search_Product][.FrontPage.DummyAPI.Search_Product]]

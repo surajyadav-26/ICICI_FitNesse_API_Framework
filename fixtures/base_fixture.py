@@ -19,6 +19,11 @@ class BaseRequestFixture:
         self._key: str = ""
         self._expected_codes: List[int] = []
         self._basic_auth_header: str = ""
+        self._custom_headers: dict = {}
+        self._ssl_verify: bool = True
+        self._response_headers: dict = {}
+        self._header_lookup_key: str = ""
+        self._file_path: str = ""
 
         self._executed: bool = False
         self._actual_status_code: int = 0
@@ -79,6 +84,9 @@ class BaseRequestFixture:
                 if token:
                     headers["Authorization"] = f"Bearer {token}"
 
+            # Inject custom headers if set
+            headers.update(self._custom_headers)
+
             unescaped_body = html.unescape(self._body_json)
             
             # Log Request
@@ -87,15 +95,32 @@ class BaseRequestFixture:
             start = time.perf_counter()
             
             # Perform POST / PUT / PATCH natively with dictionary payloads if available!
-            if method in ("POST", "PUT", "PATCH") and unescaped_body:
+            if self._file_path:
+                try:
+                    # Open file and request
+                    with open(self._file_path, 'rb') as f:
+                        files = {'file': f}
+                        response = requests.request(method, self._url, files=files, headers=headers, timeout=15, verify=self._ssl_verify)
+                except Exception as e:
+                    logger.error(f"[Upload] Failed to open/send file {self._file_path}: {e}")
+                    raise e
+            elif method in ("POST", "PUT", "PATCH") and unescaped_body:
                 try:
                     json_payload = json.loads(unescaped_body)
-                    response = requests.request(method, self._url, json=json_payload, headers=headers, timeout=15)
+                    response = requests.request(method, self._url, json=json_payload, headers=headers, timeout=15, verify=self._ssl_verify)
                 except Exception:
-                    response = requests.request(method, self._url, data=unescaped_body.encode('utf-8'), headers=headers, timeout=15)
+                    response = requests.request(method, self._url, data=unescaped_body.encode('utf-8'), headers=headers, timeout=15, verify=self._ssl_verify)
             else:
-                response = requests.request(method, self._url, headers=headers, timeout=15)
-                
+                response = requests.request(method, self._url, headers=headers, timeout=15, verify=self._ssl_verify)
+
+            # Log equivalent cURL command for developers
+            try:
+                curl_cmd = self._generate_curl_command(method, headers)
+                logger.info(f"[cURL Replicator] {curl_cmd}")
+            except Exception as e:
+                logger.debug(f"Failed to generate cURL command: {e}")
+
+            self._response_headers = dict(response.headers)
             self._response_time_ms = int((time.perf_counter() - start) * 1000)
             self._actual_status_code = response.status_code
             self._response_body = response.text
@@ -109,10 +134,37 @@ class BaseRequestFixture:
             log_response(self._actual_status_code, self._response_body, dict(response.headers))
             logger.info(f"[{method}] {self._url} -> {self._actual_status_code} ({self._response_time_ms}ms)")
             
+            # Calculate assertion counts
+            right_count = 0
+            wrong_count = 0
+            if self._expected_codes:
+                if self._actual_status_code in self._expected_codes:
+                    right_count = 1
+                else:
+                    wrong_count = 1
+            else:
+                if 200 <= self._actual_status_code < 400 or self._actual_status_code == 204:
+                    right_count = 1
+                else:
+                    wrong_count = 1
+
             # Auto-generate our 3rd-party corporate HTML report dynamically on the fly!
             try:
-                from core.report_generator import generate_html_report
-                generate_html_report()
+                from core.report_generator import add_record
+                add_record({
+                    "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+                    "method": method,
+                    "url": self._url,
+                    "status_code": self._actual_status_code,
+                    "response_time_ms": self._response_time_ms,
+                    "curl": self._generate_curl_command(method, headers),
+                    "request_body": unescaped_body or "",
+                    "response_body": self._response_body or "",
+                    "right": right_count,
+                    "wrong": wrong_count,
+                    "ignored": 0,
+                    "exceptions": 0
+                })
             except Exception as e:
                 logger.error(f"[Report] Failed to trigger report generator: {e}")
             
@@ -121,6 +173,25 @@ class BaseRequestFixture:
 
         except Exception as e:
             logger.error(f"[{method}] Unexpected exception [{self._url}]: {str(e)}")
+            # Log as exception to the report generator!
+            try:
+                from core.report_generator import add_record
+                add_record({
+                    "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+                    "method": method,
+                    "url": self._url,
+                    "status_code": 0,
+                    "response_time_ms": 0,
+                    "curl": self._generate_curl_command(method, self._custom_headers) if hasattr(self, '_custom_headers') else f"curl -X {method} \"{self._url}\"",
+                    "request_body": self._body_json or "",
+                    "response_body": f"exception: {str(e)}",
+                    "right": 0,
+                    "wrong": 0,
+                    "ignored": 0,
+                    "exceptions": 1
+                })
+            except Exception:
+                pass
             return False
 
     def executed(self) -> bool:
@@ -152,7 +223,60 @@ class BaseRequestFixture:
         return f"{self._actual_status_code} (expected: {self._expected_codes})"
 
     def response_field(self) -> str:
+        body_stripped = self._response_body.strip()
+        if body_stripped.startswith("<") and body_stripped.endswith(">"):
+            from .json_utils import extract_xml_field
+            return extract_xml_field(self._response_body, self._key)
         return extract_json_field(self._response_body_json, self._key)
 
     def json_value(self) -> str:
         return self.response_field()
+
+    def set_header(self, name: str, value: str) -> None:
+        """Sets a custom HTTP header for the request."""
+        self._custom_headers[name] = html.unescape(value)
+
+    def setHeader(self, name: str, value: str) -> None:
+        self.set_header(name, value)
+
+    def set_ssl_verify(self, verify: str) -> None:
+        """Enables/Disables SSL Certificate verification. Set to 'false' to bypass self-signed SSL warnings in UAT."""
+        self._ssl_verify = verify.strip().lower() != "false"
+
+    def setSslVerify(self, verify: str) -> None:
+        self.set_ssl_verify(verify)
+
+    def set_header_lookup(self, key: str) -> None:
+        """Sets the header key to look up in the response headers (e.g. 'Content-Type')."""
+        self._header_lookup_key = key
+
+    def setHeaderLookup(self, key: str) -> None:
+        self.set_header_lookup(key)
+
+    def response_header(self) -> str:
+        """Returns the value of the looked-up response header, or 'header not found'."""
+        if not self._header_lookup_key:
+            return "no header key set"
+        return self._response_headers.get(self._header_lookup_key, "header not found")
+
+    def responseHeader(self) -> str:
+        return self.response_header()
+
+    def set_file_path(self, path: str) -> None:
+        """Sets the file path to upload for multipart/form-data."""
+        self._file_path = html.unescape(path)
+
+    def setFilePath(self, path: str) -> None:
+        self.set_file_path(path)
+
+    def _generate_curl_command(self, method: str, headers: dict) -> str:
+        """Generates equivalent cURL command for debugging."""
+        curl = f"curl -s -X {method} \"{self._url}\""
+        for k, v in headers.items():
+            curl += f" -H \"{k}: {v}\""
+        if self._file_path:
+            curl += f" -F \"file=@{self._file_path}\""
+        elif method in ("POST", "PUT", "PATCH") and self._body_json:
+            body = html.unescape(self._body_json).replace('"', '\\"')
+            curl += f" -d \"{body}\""
+        return curl

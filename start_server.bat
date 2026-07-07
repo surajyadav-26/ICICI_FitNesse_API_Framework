@@ -21,9 +21,10 @@ echo [WARNING] Running using system-wide Python.
 goto clean_ports
 
 :clean_ports
-:: Automatically terminate any old Java/FitNesse processes currently holding port 8080
-echo [INFO] Scanning and clearing port 8080 to prevent server conflicts...
+:: Automatically terminate any old Java/FitNesse/Mock processes currently holding port 8080 or 8089
+echo [INFO] Scanning and clearing ports 8080 and 8089 to prevent server conflicts...
 for /f "tokens=5" %%a in ('netstat -aon ^| findstr :8080') do taskkill /f /pid %%a >nul 2>&1
+for /f "tokens=5" %%a in ('netstat -aon ^| findstr :8089') do taskkill /f /pid %%a >nul 2>&1
 goto check_java
 
 :check_java
@@ -50,4 +51,4 @@ start /b .venv\Scripts\python "%~dp0core\fitnesse_watcher.py"
 
 echo [INFO] Press Ctrl+C in this terminal to stop the server.
 echo ---------------------------------------------------------------------
-java -cp "%~dp0fitnesse-standalone.jar;%~dp0." fitnesseMain.FitNesseMain -p 8080 -a "%~dp0passwords.txt"
+java -cp "%~dp0.;%~dp0fitnesse-standalone.jar" fitnesseMain.FitNesseMain -p 8080 -a "%~dp0passwords.txt"

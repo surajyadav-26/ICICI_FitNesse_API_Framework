@@ -21,6 +21,7 @@ class AuthFixture:
         self._token_field: str = "token"
         self._expected_codes: List[int] = []
         self._basic_auth_header: str = ""
+        self._ssl_verify: bool = True
         
         self._actual_status_code: int = 0
         self._response_body: str = ""
@@ -107,10 +108,10 @@ class AuthFixture:
             try:
                 # NATIVE JSON serialization to match Postman! 🟢
                 json_payload = json.loads(unescaped_body)
-                response = requests.post(self._token_url, json=json_payload, headers=headers, timeout=15)
+                response = requests.post(self._token_url, json=json_payload, headers=headers, timeout=15, verify=self._ssl_verify)
             except Exception:
                 # Fallback to raw data bytes
-                response = requests.post(self._token_url, data=unescaped_body.encode('utf-8'), headers=headers, timeout=15)
+                response = requests.post(self._token_url, data=unescaped_body.encode('utf-8'), headers=headers, timeout=15, verify=self._ssl_verify)
                 
             self._response_time_ms = int((time.perf_counter() - start) * 1000)
             self._actual_status_code = response.status_code
@@ -140,10 +141,37 @@ class AuthFixture:
             AuthFixture._auth_token = token
             logger.info("[Auth] Token acquired successfully.")
             
+            # Calculate assertion counts
+            right_count = 0
+            wrong_count = 0
+            if self._expected_codes:
+                if self._actual_status_code in self._expected_codes:
+                    right_count = 1
+                else:
+                    wrong_count = 1
+            else:
+                if 200 <= self._actual_status_code < 400 or self._actual_status_code == 204:
+                    right_count = 1
+                else:
+                    wrong_count = 1
+
             # Auto-generate our 3rd-party corporate HTML report dynamically on the fly!
             try:
-                from core.report_generator import generate_html_report
-                generate_html_report()
+                from core.report_generator import add_record
+                add_record({
+                    "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+                    "method": "POST",
+                    "url": self._token_url,
+                    "status_code": self._actual_status_code,
+                    "response_time_ms": self._response_time_ms,
+                    "curl": f"curl -s -X POST \"{self._token_url}\" -H \"Content-Type: application/json\" -d \"{self._body_json.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace(chr(34), '%22')}\"",
+                    "request_body": unescaped_body or "",
+                    "response_body": self._response_body or "",
+                    "right": right_count,
+                    "wrong": wrong_count,
+                    "ignored": 0,
+                    "exceptions": 0
+                })
             except Exception as e:
                 logger.error(f"[Report] Failed to trigger report generator: {e}")
                 
@@ -151,12 +179,66 @@ class AuthFixture:
 
         except requests.exceptions.Timeout:
             logger.error(f"[Auth] Timeout [{self._token_url}]")
+            try:
+                from core.report_generator import add_record
+                add_record({
+                    "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+                    "method": "POST",
+                    "url": self._token_url,
+                    "status_code": 0,
+                    "response_time_ms": 0,
+                    "curl": f"curl -s -X POST \"{self._token_url}\"",
+                    "request_body": self._body_json or "",
+                    "response_body": "timeout exception",
+                    "right": 0,
+                    "wrong": 0,
+                    "ignored": 0,
+                    "exceptions": 1
+                })
+            except Exception:
+                pass
             return False
         except requests.exceptions.ConnectionError as e:
             logger.error(f"[Auth] Connection error [{self._token_url}]: {e}")
+            try:
+                from core.report_generator import add_record
+                add_record({
+                    "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+                    "method": "POST",
+                    "url": self._token_url,
+                    "status_code": 0,
+                    "response_time_ms": 0,
+                    "curl": f"curl -s -X POST \"{self._token_url}\"",
+                    "request_body": self._body_json or "",
+                    "response_body": f"connection error: {str(e)}",
+                    "right": 0,
+                    "wrong": 0,
+                    "ignored": 0,
+                    "exceptions": 1
+                })
+            except Exception:
+                pass
             return False
         except Exception as e:
             logger.error(f"[Auth] Exception: {e}")
+            try:
+                from core.report_generator import add_record
+                add_record({
+                    "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+                    "method": "POST",
+                    "url": self._token_url,
+                    "status_code": 0,
+                    "response_time_ms": 0,
+                    "curl": f"curl -s -X POST \"{self._token_url}\"",
+                    "request_body": self._body_json or "",
+                    "response_body": f"exception: {str(e)}",
+                    "right": 0,
+                    "wrong": 0,
+                    "ignored": 0,
+                    "exceptions": 1
+                })
+            except Exception:
+                pass
             return False
 
     # Getters/Assertions mapped to columns
@@ -186,3 +268,10 @@ class AuthFixture:
             return f"\n{{{{\n{pretty_json}\n}}}}\n"
         except Exception:
             return f"\n{{{{\n{self._response_body}\n}}}}\n"
+
+    def set_ssl_verify(self, verify: str) -> None:
+        """Enables/Disables SSL Certificate verification for login request. Set to 'false' to bypass self-signed SSL warnings in UAT."""
+        self._ssl_verify = verify.strip().lower() != "false"
+
+    def setSslVerify(self, verify: str) -> None:
+        self.set_ssl_verify(verify)

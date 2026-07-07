@@ -7,3 +7,5 @@ from .delete_request_fixture import DeleteRequestFixture
 from .head_request_fixture import HeadRequestFixture
 from .options_request_fixture import OptionsRequestFixture
 from .mock_server_fixture import MockServerFixture
+from .websocket_fixture import WebSocketFixture
+from .grpc_request_fixture import GrpcRequestFixture

@@ -1,4 +1,5 @@
 !define TEST_SYSTEM {slim}
 !define slim.port {8085}
+!define SLIM_VERSION {0.1}
 !define COMMAND_PATTERN {python -m waferslim.server --syspath .;%p}
 !include -c .VariablePage
