@@ -1,0 +1,263 @@
+name: FitNesse API Test Suite
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    # Run tests every day at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      test_suite:
+        description: 'Test suite to run (e.g., FrontPage.Sanity, FrontPage.Smoke)'
+        required: false
+        default: 'FrontPage'
+      environment:
+        description: 'Test environment'
+        required: true
+        type: choice
+        options:
+          - dev
+          - staging
+          - uat
+        default: 'dev'
+
+env:
+  PYTHON_VERSION: '3.10'
+
+jobs:
+  api-tests:
+    name: Run FitNesse API Tests
+    runs-on: windows-latest
+    timeout-minutes: 30
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Install Python Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Configure Test Environment
+        shell: powershell
+        run: |
+          # Set environment variables based on selected environment
+          $env:TEST_ENV = "${{ github.event.inputs.environment || 'dev' }}"
+          echo "TEST_ENV=$env:TEST_ENV" >> $env:GITHUB_ENV
+          
+          # Configure base URLs for different environments
+          switch ($env:TEST_ENV) {
+            "dev" {
+              echo "BASE_URL=https://dev-api.example.com" >> $env:GITHUB_ENV
+              echo "MOCK_SERVER_URL=http://localhost:8089" >> $env:GITHUB_ENV
+            }
+            "staging" {
+              echo "BASE_URL=https://staging-api.example.com" >> $env:GITHUB_ENV
+            }
+            "uat" {
+              echo "BASE_URL=https://uat-api.example.com" >> $env:GITHUB_ENV
+            }
+          }
+
+      - name: Start FitNesse Server (Background)
+        shell: powershell
+        run: |
+          # Start FitNesse server in background
+          $env:PYTHONPATH = $PWD
+          Start-Process -NoNewWindow -FilePath "java" -ArgumentList @(
+            "-cp", ".\fitnesse-standalone.jar", 
+            "fitnesseMain.FitNesseMain", 
+            "-p", "8080", 
+            "-e", "0"
+          ) -RedirectStandardOutput fitnesse_output.log -RedirectStandardError fitnesse_error.log
+          
+          # Wait for FitNesse to start
+          $maxRetries = 30
+          $retryCount = 0
+          do {
+            Start-Sleep -Seconds 2
+            $retryCount++
+            try {
+              $response = Invoke-WebRequest -Uri "http://localhost:8080" -UseBasicParsing -TimeoutSec 2
+              if ($response.StatusCode -eq 200) {
+                Write-Host "✅ FitNesse server is ready!"
+                break
+              }
+            } catch {
+              Write-Host "⏳ Waiting for FitNesse to start... ($retryCount/$maxRetries)"
+            }
+          } while ($retryCount -lt $maxRetries)
+          
+          if ($retryCount -eq $maxRetries) {
+            Write-Error "❌ FitNesse server failed to start"
+            exit 1
+          }
+
+      - name: Run FitNesse Test Suite
+        shell: powershell
+        run: |
+          $testSuite = "${{ github.event.inputs.test_suite || 'FrontPage' }}"
+          $testUrl = "http://localhost:8080/$testSuite?suite&format=json"
+          
+          Write-Host "🧪 Running test suite: $testSuite"
+          Write-Host "📍 Test URL: $testUrl"
+          
+          try {
+            $response = Invoke-WebRequest -Uri $testUrl -UseBasicParsing -TimeoutSec 600
+            $testResults = $response.Content | ConvertFrom-Json
+            
+            # Extract results
+            $right = $testResults.finalCounts.right
+            $wrong = $testResults.finalCounts.wrong
+            $exceptions = $testResults.finalCounts.exceptions
+            $ignores = $testResults.finalCounts.ignores
+            
+            Write-Host ""
+            Write-Host "📊 Test Results Summary:"
+            Write-Host "✅ Passed: $right"
+            Write-Host "❌ Failed: $wrong"
+            Write-Host "⚠️  Exceptions: $exceptions"
+            Write-Host "⏭️  Ignored: $ignores"
+            Write-Host ""
+            
+            # Save results to file for artifact
+            $testResults | ConvertTo-Json -Depth 10 | Out-File -FilePath "test_results.json"
+            
+            # Fail the build if there are failures or exceptions
+            if ($wrong -gt 0 -or $exceptions -gt 0) {
+              Write-Error "❌ Tests failed! Failures: $wrong, Exceptions: $exceptions"
+              exit 1
+            }
+            
+            Write-Host "✅ All tests passed!"
+          } catch {
+            Write-Error "❌ Failed to run tests: $_"
+            exit 1
+          }
+
+      - name: Copy Test Results
+        if: always()
+        shell: powershell
+        run: |
+          # Create artifacts directory
+          New-Item -ItemType Directory -Force -Path test-artifacts
+          
+          # Copy test results
+          if (Test-Path "FitNesseRoot\files\testResults") {
+            Copy-Item -Path "FitNesseRoot\files\testResults\*" -Destination test-artifacts -Recurse -Force
+          }
+          
+          # Copy HTML report if exists
+          if (Test-Path "FitNesseRoot\files\report.html") {
+            Copy-Item -Path "FitNesseRoot\files\report.html" -Destination test-artifacts -Force
+          }
+          
+          # Copy logs
+          if (Test-Path "logs") {
+            Copy-Item -Path "logs\*" -Destination test-artifacts -Recurse -Force
+          }
+          
+          # Copy FitNesse logs
+          if (Test-Path "fitnesse_output.log") {
+            Copy-Item -Path "fitnesse_output.log" -Destination test-artifacts -Force
+          }
+          if (Test-Path "fitnesse_error.log") {
+            Copy-Item -Path "fitnesse_error.log" -Destination test-artifacts -Force
+          }
+
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ github.run_number }}
+          path: test-artifacts/
+          retention-days: 30
+
+      - name: Upload HTML Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: html-report-${{ github.run_number }}
+          path: FitNesseRoot/files/report.html
+          retention-days: 30
+          if-no-files-found: ignore
+
+      - name: Generate Test Summary
+        if: always()
+        shell: powershell
+        run: |
+          if (Test-Path "test_results.json") {
+            $results = Get-Content "test_results.json" | ConvertFrom-Json
+            $right = $results.finalCounts.right
+            $wrong = $results.finalCounts.wrong
+            $exceptions = $results.finalCounts.exceptions
+            
+            $summary = @"
+          ## 🧪 FitNesse API Test Results
+          
+          **Environment:** ${{ github.event.inputs.environment || 'dev' }}
+          **Test Suite:** ${{ github.event.inputs.test_suite || 'FrontPage' }}
+          
+          | Metric | Count |
+          |--------|-------|
+          | ✅ Passed | $right |
+          | ❌ Failed | $wrong |
+          | ⚠️ Exceptions | $exceptions |
+          | ⏭️ Ignored | $($results.finalCounts.ignores) |
+          
+          **Status:** $(if ($wrong -eq 0 -and $exceptions -eq 0) { '✅ SUCCESS' } else { '❌ FAILED' })
+          "@
+            
+            $summary | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8
+          }
+
+      - name: Notify on Failure
+        if: failure()
+        shell: powershell
+        run: |
+          Write-Host "❌ Test execution failed!"
+          Write-Host "📋 Check the artifacts for detailed results"
+          Write-Host "🔗 Workflow: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+  # Optional: Deploy reports to GitHub Pages
+  deploy-reports:
+    name: Deploy Test Reports to GitHub Pages
+    needs: api-tests
+    if: github.ref == 'refs/heads/main' && success()
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
+    
+    steps:
+      - name: Download HTML Report
+        uses: actions/download-artifact@v4
+        with:
+          name: html-report-${{ github.run_number }}
+          path: ./reports
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./reports
+          destination_dir: reports/${{ github.run_number }}

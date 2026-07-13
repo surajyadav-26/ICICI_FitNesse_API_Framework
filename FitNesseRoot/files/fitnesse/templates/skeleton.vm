@@ -15,8 +15,9 @@
    </script>
   <![endif]-->
 
-  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
-  <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+  <link rel="shortcut icon" type="image/x-icon" href="/files/fitnesse/icici/img/icici-favicon.ico" />
+  <link rel="icon" type="image/x-icon" href="/files/fitnesse/icici/img/icici-favicon.ico" />
+  <link rel="apple-touch-icon" href="/files/fitnesse/icici/img/icici-favicon.ico" />
   <link rel="stylesheet" type="text/css" href="${contextRoot}files/fitnesse/css/fitnesse_wiki.css" />
   <link rel="stylesheet" type="text/css" href="${contextRoot}files/fitnesse/css/fitnesse_pages.css" />
   <link rel="stylesheet" type="text/css" href="${contextRoot}files/fitnesse/wysiwyg/wysiwyg.css" media="screen"/>

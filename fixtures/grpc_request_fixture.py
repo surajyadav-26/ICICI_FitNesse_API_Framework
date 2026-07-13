@@ -28,7 +28,12 @@ class GrpcRequestFixture:
 
     # Setters
     def set_endpoint(self, endpoint: str) -> None:
-        self._endpoint = html.unescape(endpoint).strip()
+        self._endpoint = html.unescape(endpoint).strip() if endpoint else ""
+        # Validate gRPC endpoint format (typically host:port)
+        if not self._endpoint:
+            logger.warning("[gRPC] Endpoint is empty. Request will fail.")
+        elif ":" not in self._endpoint:
+            logger.warning(f"[gRPC] Endpoint should be in format 'host:port': {self._endpoint}")
 
     def setEndpoint(self, endpoint: str) -> None:
         self.set_endpoint(endpoint)
@@ -71,6 +76,14 @@ class GrpcRequestFixture:
 
     # Execution
     def execute(self) -> bool:
+        # Validate endpoint before making request
+        if not self._endpoint:
+            logger.error("[gRPC] Cannot execute request: Endpoint is empty")
+            return False
+        if ":" not in self._endpoint:
+            logger.error(f"[gRPC] Cannot execute request: Invalid endpoint format (expected host:port): {self._endpoint}")
+            return False
+            
         try:
             logger.info(f"[gRPC] Dynamic invocation: Stub={self._service_stub_name}, Method={self._method_name} on {self._endpoint}")
             

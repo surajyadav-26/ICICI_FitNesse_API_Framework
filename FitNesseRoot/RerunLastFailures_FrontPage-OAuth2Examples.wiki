@@ -5,6 +5,6 @@ Suite
 
 !note This page is automatically generated when running tests. It will be overwritten by the next Suite or Test execution.
 
-Tests failed (first failure was at 2026-07-13T14:47:48.632):
+Tests failed (first failure was at 2026-07-13T12:34:43.919):
 
-!see [[FrontPage.DummyAPI.Search_Product][.FrontPage.DummyAPI.Search_Product]]
+!see [[FrontPage.OAuth2Examples][.FrontPage.OAuth2Examples]]

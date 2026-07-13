@@ -24,6 +24,9 @@ class BaseRequestFixture:
         self._response_headers: dict = {}
         self._header_lookup_key: str = ""
         self._file_path: str = ""
+        self._timeout: int = 15
+        self._max_retries: int = 0
+        self._retry_delay: float = 1.0
 
         self._executed: bool = False
         self._actual_status_code: int = 0
@@ -33,7 +36,12 @@ class BaseRequestFixture:
 
     # Setters (Supporting both camelCase and snake_case natively for compatibility!)
     def set_url(self, url: str) -> None:
-        self._url = url
+        self._url = url.strip() if url else ""
+        # Validate URL format
+        if not self._url:
+            logger.warning("[Validation] URL is empty. Request will fail.")
+        elif not (self._url.startswith("http://") or self._url.startswith("https://")):
+            logger.warning(f"[Validation] URL should start with http:// or https://: {self._url}")
     def setUrl(self, url: str) -> None:
         self.set_url(url)
 
@@ -72,127 +80,211 @@ class BaseRequestFixture:
     def setStatusCodes(self, codes: str) -> None:
         self.set_status_codes(codes)
 
-    def _make_request(self, method: str) -> bool:
+    def set_timeout(self, seconds: str) -> None:
+        """Sets request timeout in seconds. Default is 15 seconds. Useful for slow APIs or large file uploads."""
         try:
-            headers: dict = {}
-            
-            # Use Basic Auth if specified, otherwise fall back to cached Bearer Token
-            if self._basic_auth_header:
-                headers["Authorization"] = self._basic_auth_header
-            else:
-                token = AuthFixture.get_stored_token()
-                if token:
-                    headers["Authorization"] = f"Bearer {token}"
+            self._timeout = int(seconds)
+            logger.debug(f"Timeout set to {self._timeout} seconds")
+        except ValueError:
+            logger.warning(f"Invalid timeout value: '{seconds}', using default 15s")
+            self._timeout = 15
+    def setTimeout(self, seconds: str) -> None:
+        self.set_timeout(seconds)
 
-            # Inject custom headers if set
-            headers.update(self._custom_headers)
+    def set_retries(self, retries: str) -> None:
+        """Sets maximum number of retry attempts for failed requests. Default is 0 (no retries). Useful for flaky endpoints."""
+        try:
+            self._max_retries = int(retries)
+            logger.debug(f"Max retries set to {self._max_retries}")
+        except ValueError:
+            logger.warning(f"Invalid retries value: '{retries}', using default 0")
+            self._max_retries = 0
+    def setRetries(self, retries: str) -> None:
+        self.set_retries(retries)
 
-            unescaped_body = html.unescape(self._body_json)
-            
-            # Log Request
-            log_request(method, self._url, headers=headers, payload=unescaped_body or None)
+    def set_retry_delay(self, seconds: str) -> None:
+        """Sets delay between retries in seconds. Default is 1.0 second. Uses exponential backoff (multiplies by 2 each retry)."""
+        try:
+            self._retry_delay = float(seconds)
+            logger.debug(f"Retry delay set to {self._retry_delay}s")
+        except ValueError:
+            logger.warning(f"Invalid retry delay value: '{seconds}', using default 1.0s")
+            self._retry_delay = 1.0
+    def setRetryDelay(self, seconds: str) -> None:
+        self.set_retry_delay(seconds)
 
-            start = time.perf_counter()
-            
-            # Perform POST / PUT / PATCH natively with dictionary payloads if available!
-            if self._file_path:
-                try:
-                    # Open file and request
-                    with open(self._file_path, 'rb') as f:
-                        files = {'file': f}
-                        response = requests.request(method, self._url, files=files, headers=headers, timeout=15, verify=self._ssl_verify)
-                except Exception as e:
-                    logger.error(f"[Upload] Failed to open/send file {self._file_path}: {e}")
-                    raise e
-            elif method in ("POST", "PUT", "PATCH") and unescaped_body:
-                try:
-                    json_payload = json.loads(unescaped_body)
-                    response = requests.request(method, self._url, json=json_payload, headers=headers, timeout=15, verify=self._ssl_verify)
-                except Exception:
-                    response = requests.request(method, self._url, data=unescaped_body.encode('utf-8'), headers=headers, timeout=15, verify=self._ssl_verify)
-            else:
-                response = requests.request(method, self._url, headers=headers, timeout=15, verify=self._ssl_verify)
-
-            # Log equivalent cURL command for developers
-            try:
-                curl_cmd = self._generate_curl_command(method, headers)
-                logger.info(f"[cURL Replicator] {curl_cmd}")
-            except Exception as e:
-                logger.debug(f"Failed to generate cURL command: {e}")
-
-            self._response_headers = dict(response.headers)
-            self._response_time_ms = int((time.perf_counter() - start) * 1000)
-            self._actual_status_code = response.status_code
-            self._response_body = response.text
-
-            try:
-                self._response_body_json = response.json()
-            except Exception:
-                self._response_body_json = {}
-
-            # Log Response
-            log_response(self._actual_status_code, self._response_body, dict(response.headers))
-            logger.info(f"[{method}] {self._url} -> {self._actual_status_code} ({self._response_time_ms}ms)")
-            
-            # Calculate assertion counts
-            right_count = 0
-            wrong_count = 0
-            if self._expected_codes:
-                if self._actual_status_code in self._expected_codes:
-                    right_count = 1
-                else:
-                    wrong_count = 1
-            else:
-                if 200 <= self._actual_status_code < 400 or self._actual_status_code == 204:
-                    right_count = 1
-                else:
-                    wrong_count = 1
-
-            # Auto-generate our 3rd-party corporate HTML report dynamically on the fly!
-            try:
-                from core.report_generator import add_record
-                add_record({
-                    "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-                    "method": method,
-                    "url": self._url,
-                    "status_code": self._actual_status_code,
-                    "response_time_ms": self._response_time_ms,
-                    "curl": self._generate_curl_command(method, headers),
-                    "request_body": unescaped_body or "",
-                    "response_body": self._response_body or "",
-                    "right": right_count,
-                    "wrong": wrong_count,
-                    "ignored": 0,
-                    "exceptions": 0
-                })
-            except Exception as e:
-                logger.error(f"[Report] Failed to trigger report generator: {e}")
-            
-            self._executed = True
-            return True
-
+    def _record_to_report(self, method: str, url: str, status_code: int, response_time_ms: int, 
+                          curl_cmd: str, request_body: str, response_body: str, 
+                          right: int = 0, wrong: int = 0, exceptions: int = 0) -> None:
+        """Shared helper to record request details to the HTML report generator."""
+        try:
+            from core.report_generator import add_record
+            add_record({
+                "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+                "method": method,
+                "url": url,
+                "status_code": status_code,
+                "response_time_ms": response_time_ms,
+                "curl": curl_cmd,
+                "request_body": request_body,
+                "response_body": response_body,
+                "right": right,
+                "wrong": wrong,
+                "ignored": 0,
+                "exceptions": exceptions
+            })
         except Exception as e:
-            logger.error(f"[{method}] Unexpected exception [{self._url}]: {str(e)}")
-            # Log as exception to the report generator!
-            try:
-                from core.report_generator import add_record
-                add_record({
-                    "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-                    "method": method,
-                    "url": self._url,
-                    "status_code": 0,
-                    "response_time_ms": 0,
-                    "curl": self._generate_curl_command(method, self._custom_headers) if hasattr(self, '_custom_headers') else f"curl -X {method} \"{self._url}\"",
-                    "request_body": self._body_json or "",
-                    "response_body": f"exception: {str(e)}",
-                    "right": 0,
-                    "wrong": 0,
-                    "ignored": 0,
-                    "exceptions": 1
-                })
-            except Exception:
-                pass
+            logger.error(f"[Report] Failed to trigger report generator: {e}")
+
+    def _calculate_assertion_counts(self, status_code: int, expected_codes: list) -> tuple:
+        """Calculate right/wrong counts based on status code validation."""
+        right_count = 0
+        wrong_count = 0
+        if expected_codes:
+            if status_code in expected_codes:
+                right_count = 1
+            else:
+                wrong_count = 1
+        else:
+            if 200 <= status_code < 400 or status_code == 204:
+                right_count = 1
+            else:
+                wrong_count = 1
+        return right_count, wrong_count
+
+    def _make_request(self, method: str) -> bool:
+        # Validate URL before making request
+        if not self._url:
+            logger.error("[Validation] Cannot execute request: URL is empty")
             return False
+        if not (self._url.startswith("http://") or self._url.startswith("https://")):
+            logger.error(f"[Validation] Cannot execute request: Invalid URL format: {self._url}")
+            return False
+        
+        # Retry loop with exponential backoff
+        last_exception = None
+        for attempt in range(self._max_retries + 1):
+            if attempt > 0:
+                delay = self._retry_delay * (2 ** (attempt - 1))  # Exponential backoff
+                logger.info(f"[Retry] Attempt {attempt + 1}/{self._max_retries + 1} after {delay}s delay...")
+                time.sleep(delay)
+            
+            try:
+                headers: dict = {}
+                
+                # Use Basic Auth if specified, otherwise fall back to cached Bearer Token
+                if self._basic_auth_header:
+                    headers["Authorization"] = self._basic_auth_header
+                else:
+                    token = AuthFixture.get_stored_token()
+                    if token:
+                        headers["Authorization"] = f"Bearer {token}"
+
+                # Inject custom headers if set
+                headers.update(self._custom_headers)
+
+                unescaped_body = html.unescape(self._body_json)
+                
+                # Log Request
+                log_request(method, self._url, headers=headers, payload=unescaped_body or None)
+
+                start = time.perf_counter()
+                
+                # Perform POST / PUT / PATCH natively with dictionary payloads if available!
+                if self._file_path:
+                    try:
+                        # Open file and request
+                        with open(self._file_path, 'rb') as f:
+                            files = {'file': f}
+                            response = requests.request(method, self._url, files=files, headers=headers, timeout=self._timeout, verify=self._ssl_verify)
+                    except Exception as e:
+                        logger.error(f"[Upload] Failed to open/send file {self._file_path}: {e}")
+                        raise e
+                elif method in ("POST", "PUT", "PATCH") and unescaped_body:
+                    try:
+                        json_payload = json.loads(unescaped_body)
+                        response = requests.request(method, self._url, json=json_payload, headers=headers, timeout=self._timeout, verify=self._ssl_verify)
+                    except Exception:
+                        response = requests.request(method, self._url, data=unescaped_body.encode('utf-8'), headers=headers, timeout=self._timeout, verify=self._ssl_verify)
+                else:
+                    response = requests.request(method, self._url, headers=headers, timeout=self._timeout, verify=self._ssl_verify)
+
+                # Log equivalent cURL command for developers
+                try:
+                    curl_cmd = self._generate_curl_command(method, headers)
+                    logger.info(f"[cURL Replicator] {curl_cmd}")
+                except Exception as e:
+                    logger.debug(f"Failed to generate cURL command: {e}")
+
+                self._response_headers = dict(response.headers)
+                self._response_time_ms = int((time.perf_counter() - start) * 1000)
+                self._actual_status_code = response.status_code
+                self._response_body = response.text
+
+                try:
+                    self._response_body_json = response.json()
+                except Exception:
+                    self._response_body_json = {}
+
+                # Log Response
+                log_response(self._actual_status_code, self._response_body, dict(response.headers))
+                logger.info(f"[{method}] {self._url} -> {self._actual_status_code} ({self._response_time_ms}ms)")
+                
+                # Calculate assertion counts and record to report
+                right_count, wrong_count = self._calculate_assertion_counts(self._actual_status_code, self._expected_codes)
+                self._record_to_report(
+                    method=method,
+                    url=self._url,
+                    status_code=self._actual_status_code,
+                    response_time_ms=self._response_time_ms,
+                    curl_cmd=self._generate_curl_command(method, headers),
+                    request_body=unescaped_body or "",
+                    response_body=self._response_body or "",
+                    right=right_count,
+                    wrong=wrong_count
+                )
+                
+                self._executed = True
+                return True
+
+            except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as e:
+                last_exception = e
+                logger.warning(f"[{method}] Retryable error on attempt {attempt + 1}: {str(e)}")
+                if attempt >= self._max_retries:
+                    # Max retries exhausted
+                    logger.error(f"[{method}] Max retries ({self._max_retries}) exhausted for [{self._url}]")
+                    curl_fallback = self._generate_curl_command(method, headers) if 'headers' in locals() else f"curl -X {method} \"{self._url}\""
+                    self._record_to_report(
+                        method=method,
+                        url=self._url,
+                        status_code=0,
+                        response_time_ms=0,
+                        curl_cmd=curl_fallback,
+                        request_body=self._body_json or "",
+                        response_body=f"exception after {self._max_retries + 1} attempts: {str(last_exception)}",
+                        exceptions=1
+                    )
+                    return False
+                # Continue to next retry attempt
+                
+            except Exception as e:
+                # Non-retryable exception
+                logger.error(f"[{method}] Non-retryable exception [{self._url}]: {str(e)}")
+                curl_fallback = self._generate_curl_command(method, headers) if 'headers' in locals() else f"curl -X {method} \"{self._url}\""
+                self._record_to_report(
+                    method=method,
+                    url=self._url,
+                    status_code=0,
+                    response_time_ms=0,
+                    curl_cmd=curl_fallback,
+                    request_body=self._body_json or "",
+                    response_body=f"exception: {str(e)}",
+                    exceptions=1
+                )
+                return False
+        
+        # Should not reach here, but just in case
+        return False
 
     def executed(self) -> bool:
         return self._executed

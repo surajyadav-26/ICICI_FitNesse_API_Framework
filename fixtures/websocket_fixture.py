@@ -14,7 +14,12 @@ class WebSocketFixture:
         self._timeout_seconds: float = 5.0
 
     def set_url(self, url: str) -> None:
-        self._url = html.unescape(url).strip()
+        self._url = html.unescape(url).strip() if url else ""
+        # Validate WebSocket URL format
+        if not self._url:
+            logger.warning("[WebSocket] URL is empty. Connection will fail.")
+        elif not (self._url.startswith("ws://") or self._url.startswith("wss://")):
+            logger.warning(f"[WebSocket] URL should start with ws:// or wss://: {self._url}")
 
     def setUrl(self, url: str) -> None:
         self.set_url(url)
@@ -26,6 +31,14 @@ class WebSocketFixture:
         self.set_timeout(seconds)
 
     def connect(self) -> bool:
+        # Validate URL before connecting
+        if not self._url:
+            logger.error("[WebSocket] Cannot connect: URL is empty")
+            return False
+        if not (self._url.startswith("ws://") or self._url.startswith("wss://")):
+            logger.error(f"[WebSocket] Cannot connect: Invalid WebSocket URL format: {self._url}")
+            return False
+            
         try:
             logger.info(f"[WebSocket] Connecting to {self._url} (timeout={self._timeout_seconds}s)")
             self._ws = create_connection(self._url, timeout=self._timeout_seconds)
