@@ -1,6 +1,8 @@
 # Security and sensitive configuration files
 passwords.txt
 credentials.txt
+config.json
+config.json.*
 *.key
 *.pem
 *.cert
