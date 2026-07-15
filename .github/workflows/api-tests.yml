@@ -107,27 +107,21 @@ jobs:
           # Wait for FitNesse to start
           $maxRetries = 30
           $retryCount = 0
-          do
-          {
+          do {
             Start-Sleep -Seconds 2
             $retryCount++
-            try
-            {
+            try {
               $response = Invoke-WebRequest -Uri "http://localhost:8080" -UseBasicParsing -TimeoutSec 2
-              if ($response.StatusCode -eq 200)
-              {
+              if ($response.StatusCode -eq 200) {
                 Write-Host "✅ FitNesse server is ready!"
                 break
               }
-            }
-            catch
-            {
+            } catch {
               Write-Host "⏳ Waiting for FitNesse to start... ($retryCount/$maxRetries)"
             }
           } while ($retryCount -lt $maxRetries)
           
-          if ($retryCount -eq $maxRetries)
-          {
+          if ($retryCount -eq $maxRetries) {
             Write-Error "❌ FitNesse server failed to start"
             exit 1
           }
@@ -142,8 +136,7 @@ jobs:
           Write-Host "📍 Test URL: $testUrl"
           
           $exitCode = 0
-          try
-          {
+          try {
             $response = Invoke-WebRequest -Uri $testUrl -UseBasicParsing -TimeoutSec 600
             $testResults = $response.Content | ConvertFrom-Json
             
@@ -165,18 +158,13 @@ jobs:
             $testResults | ConvertTo-Json -Depth 10 | Out-File -FilePath "test_results.json"
             
             # Fail the build if there are failures or exceptions
-            if ($wrong -gt 0 -or $exceptions -gt 0)
-            {
+            if ($wrong -gt 0 -or $exceptions -gt 0) {
               Write-Error "❌ Tests failed! Failures: $wrong, Exceptions: $exceptions"
               $exitCode = 1
-            }
-            else
-            {
+            } else {
               Write-Host "✅ All tests passed!"
             }
-          }
-          catch
-          {
+          } catch {
             Write-Error "❌ Failed to run tests: $_"
             $exitCode = 1
           }
