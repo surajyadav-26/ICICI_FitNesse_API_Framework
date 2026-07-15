@@ -97,14 +97,24 @@ jobs:
         run: |
           # Start FitNesse server in background
           $env:PYTHONPATH = $PWD
+          
+          Write-Host "Starting FitNesse with Java..."
+          Write-Host "Working Directory: $PWD"
+          Write-Host "PYTHONPATH: $env:PYTHONPATH"
+          
+          # Start without output redirection to avoid buffering issues
           $process = Start-Process -NoNewWindow -FilePath "java" -ArgumentList @(
             "-cp", ".\fitnesse-standalone.jar", 
             "fitnesseMain.FitNesseMain", 
             "-p", "8080", 
-            "-e", "0"
-          ) -RedirectStandardOutput fitnesse_output.log -RedirectStandardError fitnesse_error.log -PassThru
+            "-e", "0",
+            "-o"
+          ) -PassThru
           
           Write-Host "FitNesse process started with PID: $($process.Id)"
+          
+          # Give FitNesse a moment to start writing logs
+          Start-Sleep -Seconds 5
           
           # Wait for FitNesse to start
           $maxRetries = 60
@@ -116,46 +126,42 @@ jobs:
           do {
             Start-Sleep -Seconds 3
             $retryCount++
+            
+            # Check if process is still running first
+            if ($process.HasExited) {
+              Write-Error "FitNesse process exited with code: $($process.ExitCode)"
+              exit 1
+            }
+            
             try {
-              $response = Invoke-WebRequest -Uri "http://localhost:8080/FrontPage" -UseBasicParsing -TimeoutSec 5
+              $response = Invoke-WebRequest -Uri "http://localhost:8080/FrontPage" -UseBasicParsing -TimeoutSec 5 -ErrorAction Stop
               if ($response.StatusCode -eq 200 -and $response.Content.Length -gt 1000) {
-                Write-Host "FitNesse server is ready! (Attempt $retryCount)"
+                Write-Host "FitNesse server is ready! (Attempt $retryCount, Content: $($response.Content.Length) bytes)"
                 $serverReady = $true
-                # Wait extra 5 seconds for full initialization
-                Write-Host "Waiting 5 seconds for complete initialization..."
-                Start-Sleep -Seconds 5
+                # Wait extra 10 seconds for full initialization
+                Write-Host "Waiting 10 seconds for complete initialization..."
+                Start-Sleep -Seconds 10
                 break
+              } else {
+                if ($retryCount % 5 -eq 0) {
+                  Write-Host "Got response but insufficient content: $($response.Content.Length) bytes"
+                }
               }
             } catch {
               if ($retryCount % 5 -eq 0) {
-                Write-Host "Waiting for FitNesse to start... ($retryCount/$maxRetries)"
-              }
-              # Check if process is still running
-              if ($process.HasExited) {
-                Write-Error "FitNesse process has exited unexpectedly!"
-                if (Test-Path "fitnesse_error.log") {
-                  Write-Host "Error log contents:"
-                  Get-Content "fitnesse_error.log"
-                }
-                exit 1
+                Write-Host "Waiting for FitNesse... ($retryCount/$maxRetries) - Error: $($_.Exception.Message)"
               }
             }
           } while ($retryCount -lt $maxRetries)
           
           if (-not $serverReady) {
-            Write-Error "FitNesse server failed to start after $maxRetries attempts"
-            if (Test-Path "fitnesse_output.log") {
-              Write-Host "Output log:"
-              Get-Content "fitnesse_output.log"
-            }
-            if (Test-Path "fitnesse_error.log") {
-              Write-Host "Error log:"
-              Get-Content "fitnesse_error.log"
-            }
+            Write-Error "FitNesse server failed to start after $maxRetries attempts ($($maxRetries * 3) seconds)"
+            Write-Host "Process Status: Running=$(-not $process.HasExited), PID=$($process.Id)"
             exit 1
           }
           
-          Write-Host "FitNesse server is running and ready for tests"
+          Write-Host "SUCCESS: FitNesse server is running and ready for tests"
+          Write-Host "Process Status: PID=$($process.Id), Running=$(-not $process.HasExited)"
 
       - name: Verify FitNesse Server
         shell: powershell
