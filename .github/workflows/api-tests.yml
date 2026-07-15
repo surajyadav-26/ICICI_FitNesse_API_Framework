@@ -102,26 +102,32 @@ jobs:
           Write-Host "Working Directory: $PWD"
           Write-Host "PYTHONPATH: $env:PYTHONPATH"
           
-          # Start without output redirection to avoid buffering issues
+          # Start FitNesse - let it write to console directly
           $process = Start-Process -NoNewWindow -FilePath "java" -ArgumentList @(
             "-cp", ".\fitnesse-standalone.jar", 
             "fitnesseMain.FitNesseMain", 
             "-p", "8080", 
-            "-e", "0",
-            "-o"
+            "-e", "0"
           ) -PassThru
           
           Write-Host "FitNesse process started with PID: $($process.Id)"
+          Write-Host "Waiting 10 seconds for initial startup..."
+          Start-Sleep -Seconds 10
           
-          # Give FitNesse a moment to start writing logs
-          Start-Sleep -Seconds 5
+          # Check if process is still alive after initial startup
+          if ($process.HasExited) {
+            Write-Error "FitNesse process exited immediately with code: $($process.ExitCode)"
+            exit 1
+          }
           
-          # Wait for FitNesse to start
+          Write-Host "Process still running after 10 seconds, checking connectivity..."
+          
+          # Wait for FitNesse to start responding
           $maxRetries = 60
           $retryCount = 0
           $serverReady = $false
           
-          Write-Host "Waiting for FitNesse server to fully initialize..."
+          Write-Host "Waiting for FitNesse server to respond on HTTP..."
           
           do {
             Start-Sleep -Seconds 3
