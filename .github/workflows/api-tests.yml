@@ -52,7 +52,7 @@ jobs:
         run: |
           git config --global core.autocrlf true
           git config --global core.longpaths true
-          Write-Host "✅ Git configured for Windows"
+          Write-Host "Git configured for Windows"
 
       - name: Set up Python ${{ env.PYTHON_VERSION }}
         uses: actions/setup-python@v5
@@ -113,16 +113,16 @@ jobs:
             try {
               $response = Invoke-WebRequest -Uri "http://localhost:8080" -UseBasicParsing -TimeoutSec 2
               if ($response.StatusCode -eq 200) {
-                Write-Host "✅ FitNesse server is ready!"
+                Write-Host "FitNesse server is ready!"
                 break
               }
             } catch {
-              Write-Host "⏳ Waiting for FitNesse to start... ($retryCount/$maxRetries)"
+              Write-Host "Waiting for FitNesse to start... ($retryCount/$maxRetries)"
             }
           } while ($retryCount -lt $maxRetries)
           
           if ($retryCount -eq $maxRetries) {
-            Write-Error "❌ FitNesse server failed to start"
+            Write-Error "FitNesse server failed to start"
             exit 1
           }
 
@@ -132,8 +132,8 @@ jobs:
           $testSuite = "${{ github.event.inputs.test_suite || 'FrontPage' }}"
           $testUrl = "http://localhost:8080/$testSuite?suite&format=json"
           
-          Write-Host "🧪 Running test suite: $testSuite"
-          Write-Host "📍 Test URL: $testUrl"
+          Write-Host "Running test suite: $testSuite"
+          Write-Host "Test URL: $testUrl"
           
           $exitCode = 0
           try {
@@ -147,11 +147,11 @@ jobs:
             $ignores = $testResults.finalCounts.ignores
             
             Write-Host ""
-            Write-Host "📊 Test Results Summary:"
-            Write-Host "✅ Passed: $right"
-            Write-Host "❌ Failed: $wrong"
-            Write-Host "⚠️  Exceptions: $exceptions"
-            Write-Host "⏭️  Ignored: $ignores"
+            Write-Host "Test Results Summary:"
+            Write-Host "Passed: $right"
+            Write-Host "Failed: $wrong"
+            Write-Host "Exceptions: $exceptions"
+            Write-Host "Ignored: $ignores"
             Write-Host ""
             
             # Save results to file for artifact
@@ -159,13 +159,13 @@ jobs:
             
             # Fail the build if there are failures or exceptions
             if ($wrong -gt 0 -or $exceptions -gt 0) {
-              Write-Error "❌ Tests failed! Failures: $wrong, Exceptions: $exceptions"
+              Write-Error "Tests failed! Failures: $wrong, Exceptions: $exceptions"
               $exitCode = 1
             } else {
-              Write-Host "✅ All tests passed!"
+              Write-Host "All tests passed!"
             }
           } catch {
-            Write-Error "❌ Failed to run tests: $_"
+            Write-Error "Failed to run tests: $_"
             $exitCode = 1
           }
           
