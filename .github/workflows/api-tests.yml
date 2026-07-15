@@ -107,22 +107,29 @@ jobs:
           Write-Host "FitNesse process started with PID: $($process.Id)"
           
           # Wait for FitNesse to start
-          $maxRetries = 30
+          $maxRetries = 60
           $retryCount = 0
           $serverReady = $false
           
+          Write-Host "Waiting for FitNesse server to fully initialize..."
+          
           do {
-            Start-Sleep -Seconds 2
+            Start-Sleep -Seconds 3
             $retryCount++
             try {
-              $response = Invoke-WebRequest -Uri "http://localhost:8080" -UseBasicParsing -TimeoutSec 2
-              if ($response.StatusCode -eq 200) {
-                Write-Host "FitNesse server is ready!"
+              $response = Invoke-WebRequest -Uri "http://localhost:8080/FrontPage" -UseBasicParsing -TimeoutSec 5
+              if ($response.StatusCode -eq 200 -and $response.Content.Length -gt 1000) {
+                Write-Host "FitNesse server is ready! (Attempt $retryCount)"
                 $serverReady = $true
+                # Wait extra 5 seconds for full initialization
+                Write-Host "Waiting 5 seconds for complete initialization..."
+                Start-Sleep -Seconds 5
                 break
               }
             } catch {
-              Write-Host "Waiting for FitNesse to start... ($retryCount/$maxRetries)"
+              if ($retryCount % 5 -eq 0) {
+                Write-Host "Waiting for FitNesse to start... ($retryCount/$maxRetries)"
+              }
               # Check if process is still running
               if ($process.HasExited) {
                 Write-Error "FitNesse process has exited unexpectedly!"
