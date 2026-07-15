@@ -24,6 +24,12 @@ on:
           - uat
         default: 'dev'
 
+# Required permissions for actions
+permissions:
+  contents: read
+  actions: read
+  checks: write
+
 env:
   PYTHON_VERSION: '3.10'
 
@@ -35,9 +41,18 @@ jobs:
     
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
+          clean: true
+          persist-credentials: true
+
+      - name: Configure Git for Windows
+        shell: powershell
+        run: |
+          git config --global core.autocrlf true
+          git config --global core.longpaths true
+          Write-Host "✅ Git configured for Windows"
 
       - name: Set up Python ${{ env.PYTHON_VERSION }}
         uses: actions/setup-python@v5
@@ -92,21 +107,27 @@ jobs:
           # Wait for FitNesse to start
           $maxRetries = 30
           $retryCount = 0
-          do {
+          do
+          {
             Start-Sleep -Seconds 2
             $retryCount++
-            try {
+            try
+            {
               $response = Invoke-WebRequest -Uri "http://localhost:8080" -UseBasicParsing -TimeoutSec 2
-              if ($response.StatusCode -eq 200) {
+              if ($response.StatusCode -eq 200)
+              {
                 Write-Host "✅ FitNesse server is ready!"
                 break
               }
-            } catch {
+            }
+            catch
+            {
               Write-Host "⏳ Waiting for FitNesse to start... ($retryCount/$maxRetries)"
             }
           } while ($retryCount -lt $maxRetries)
           
-          if ($retryCount -eq $maxRetries) {
+          if ($retryCount -eq $maxRetries)
+          {
             Write-Error "❌ FitNesse server failed to start"
             exit 1
           }
@@ -120,7 +141,9 @@ jobs:
           Write-Host "🧪 Running test suite: $testSuite"
           Write-Host "📍 Test URL: $testUrl"
           
-          try {
+          $exitCode = 0
+          try
+          {
             $response = Invoke-WebRequest -Uri $testUrl -UseBasicParsing -TimeoutSec 600
             $testResults = $response.Content | ConvertFrom-Json
             
@@ -142,16 +165,23 @@ jobs:
             $testResults | ConvertTo-Json -Depth 10 | Out-File -FilePath "test_results.json"
             
             # Fail the build if there are failures or exceptions
-            if ($wrong -gt 0 -or $exceptions -gt 0) {
+            if ($wrong -gt 0 -or $exceptions -gt 0)
+            {
               Write-Error "❌ Tests failed! Failures: $wrong, Exceptions: $exceptions"
-              exit 1
+              $exitCode = 1
             }
-            
-            Write-Host "✅ All tests passed!"
-          } catch {
-            Write-Error "❌ Failed to run tests: $_"
-            exit 1
+            else
+            {
+              Write-Host "✅ All tests passed!"
+            }
           }
+          catch
+          {
+            Write-Error "❌ Failed to run tests: $_"
+            $exitCode = 1
+          }
+          
+          exit $exitCode
 
       - name: Copy Test Results
         if: always()
@@ -190,6 +220,8 @@ jobs:
           name: test-results-${{ github.run_number }}
           path: test-artifacts/
           retention-days: 30
+          if-no-files-found: warn
+          compression-level: 6
 
       - name: Upload HTML Report
         if: always()
@@ -199,6 +231,7 @@ jobs:
           path: FitNesseRoot/files/report.html
           retention-days: 30
           if-no-files-found: ignore
+          compression-level: 6
 
       - name: Generate Test Summary
         if: always()
