@@ -232,19 +232,19 @@ jobs:
             $exceptions = $results.finalCounts.exceptions
             
             $summary = @"
-          ## 🧪 FitNesse API Test Results
+          ## FitNesse API Test Results
           
           **Environment:** ${{ github.event.inputs.environment || 'dev' }}
           **Test Suite:** ${{ github.event.inputs.test_suite || 'FrontPage' }}
           
           | Metric | Count |
           |--------|-------|
-          | ✅ Passed | $right |
-          | ❌ Failed | $wrong |
-          | ⚠️ Exceptions | $exceptions |
-          | ⏭️ Ignored | $($results.finalCounts.ignores) |
+          | Passed | $right |
+          | Failed | $wrong |
+          | Exceptions | $exceptions |
+          | Ignored | $($results.finalCounts.ignores) |
           
-          **Status:** $(if ($wrong -eq 0 -and $exceptions -eq 0) { '✅ SUCCESS' } else { '❌ FAILED' })
+          **Status:** $(if ($wrong -eq 0 -and $exceptions -eq 0) { 'SUCCESS' } else { 'FAILED' })
           "@
             
             $summary | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8
@@ -254,9 +254,9 @@ jobs:
         if: failure()
         shell: powershell
         run: |
-          Write-Host "❌ Test execution failed!"
-          Write-Host "📋 Check the artifacts for detailed results"
-          Write-Host "🔗 Workflow: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          Write-Host "Test execution failed!"
+          Write-Host "Check the artifacts for detailed results"
+          Write-Host "Workflow: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
   # Optional: Deploy reports to GitHub Pages
   deploy-reports:
