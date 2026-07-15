@@ -130,7 +130,7 @@ jobs:
         shell: powershell
         run: |
           $testSuite = "${{ github.event.inputs.test_suite || 'FrontPage' }}"
-          $testUrl = "http://localhost:8080/$testSuite?suite&format=json"
+          $testUrl = "http://localhost:8080/${testSuite}?suite&format=json"
           
           Write-Host "Running test suite: $testSuite"
           Write-Host "Test URL: $testUrl"
