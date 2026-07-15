@@ -154,21 +154,63 @@ jobs:
         shell: powershell
         run: |
           Write-Host "Verifying FitNesse server connectivity..."
+          
+          $connected = $false
           try {
             $response = Invoke-WebRequest -Uri "http://localhost:8080" -UseBasicParsing -TimeoutSec 5
             Write-Host "Server response status: $($response.StatusCode)"
             Write-Host "Server is accessible and ready for tests"
+            $connected = $true
           } catch {
-            Write-Error "Failed to connect to FitNesse server: $_"
-            Write-Host "Checking FitNesse logs..."
+            Write-Host "Failed to connect to FitNesse server: $_"
+            $connected = $false
+          }
+          
+          if (-not $connected) {
+            Write-Host ""
+            Write-Host "=========================================="
+            Write-Host "CHECKING FITNESSE LOGS FOR DIAGNOSTICS"
+            Write-Host "=========================================="
+            Write-Host ""
+            
             if (Test-Path "fitnesse_output.log") {
-              Write-Host "=== FitNesse Output Log ==="
-              Get-Content "fitnesse_output.log" | Select-Object -Last 50
+              Write-Host "=== FITNESSE OUTPUT LOG (Last 100 lines) ==="
+              Get-Content "fitnesse_output.log" -ErrorAction SilentlyContinue | Select-Object -Last 100
+              Write-Host ""
+            } else {
+              Write-Host "fitnesse_output.log not found"
             }
+            
             if (Test-Path "fitnesse_error.log") {
-              Write-Host "=== FitNesse Error Log ==="
-              Get-Content "fitnesse_error.log"
+              Write-Host "=== FITNESSE ERROR LOG ==="
+              Get-Content "fitnesse_error.log" -ErrorAction SilentlyContinue
+              Write-Host ""
+            } else {
+              Write-Host "fitnesse_error.log not found"
             }
+            
+            # Check if Java is accessible
+            Write-Host "=== JAVA VERSION ==="
+            java -version 2>&1
+            Write-Host ""
+            
+            # Check if fitnesse jar exists
+            Write-Host "=== FITNESSE JAR STATUS ==="
+            if (Test-Path "fitnesse-standalone.jar") {
+              Write-Host "fitnesse-standalone.jar exists"
+              $jar = Get-Item "fitnesse-standalone.jar"
+              Write-Host "Size: $($jar.Length) bytes"
+            } else {
+              Write-Host "fitnesse-standalone.jar NOT FOUND!"
+            }
+            Write-Host ""
+            
+            # Check if any Java processes are running
+            Write-Host "=== JAVA PROCESSES ==="
+            Get-Process -Name "java" -ErrorAction SilentlyContinue | Format-Table Id, ProcessName, StartTime -AutoSize
+            Write-Host ""
+            
+            Write-Error "FitNesse server verification failed - see logs above"
             exit 1
           }
 
