@@ -98,36 +98,55 @@ jobs:
           # Start FitNesse server in background
           $env:PYTHONPATH = $PWD
           
-          Write-Host "Starting FitNesse with Java..."
+          Write-Host "=========================================="
+          Write-Host "STARTING FITNESSE SERVER"
+          Write-Host "=========================================="
           Write-Host "Working Directory: $PWD"
           Write-Host "PYTHONPATH: $env:PYTHONPATH"
+          Write-Host "Java Version:"
+          java -version 2>&1 | ForEach-Object { Write-Host "  $_" }
+          Write-Host ""
           
-          # Start FitNesse - let it write to console directly
-          $process = Start-Process -NoNewWindow -FilePath "java" -ArgumentList @(
-            "-cp", ".\fitnesse-standalone.jar", 
-            "fitnesseMain.FitNesseMain", 
-            "-p", "8080", 
-            "-e", "0"
-          ) -PassThru
+          # Test running FitNesse directly to see any errors
+          Write-Host "Testing FitNesse JAR..."
+          $testOutput = & java -cp ".\fitnesse-standalone.jar" fitnesseMain.FitNesseMain -? 2>&1
+          Write-Host "FitNesse help output:"
+          $testOutput | ForEach-Object { Write-Host "  $_" }
+          Write-Host ""
           
-          Write-Host "FitNesse process started with PID: $($process.Id)"
-          Write-Host "Waiting 10 seconds for initial startup..."
-          Start-Sleep -Seconds 10
+          Write-Host "Starting FitNesse as background job..."
+          # Use Start-Job instead of Start-Process for better control
+          $job = Start-Job -ScriptBlock {
+            param($workDir, $pythonPath)
+            Set-Location $workDir
+            $env:PYTHONPATH = $pythonPath
+            & java -cp ".\fitnesse-standalone.jar" fitnesseMain.FitNesseMain -p 8080 -e 0 2>&1
+          } -ArgumentList $PWD, $env:PYTHONPATH
           
-          # Check if process is still alive after initial startup
-          if ($process.HasExited) {
-            Write-Error "FitNesse process exited immediately with code: $($process.ExitCode)"
+          Write-Host "FitNesse job started with ID: $($job.Id)"
+          Write-Host "Waiting 15 seconds for initialization..."
+          Start-Sleep -Seconds 15
+          
+          # Check job status
+          $jobState = (Get-Job -Id $job.Id).State
+          Write-Host "Job State after 15 seconds: $jobState"
+          
+          if ($jobState -eq 'Failed' -or $jobState -eq 'Completed') {
+            Write-Host "Job exited! Getting output..."
+            $jobOutput = Receive-Job -Id $job.Id 2>&1
+            Write-Host "Job Output:"
+            $jobOutput | ForEach-Object { Write-Host "  $_" }
+            Remove-Job -Id $job.Id -Force
+            Write-Error "FitNesse job failed or completed unexpectedly"
             exit 1
           }
           
-          Write-Host "Process still running after 10 seconds, checking connectivity..."
+          Write-Host "Job still running, checking HTTP connectivity..."
           
-          # Wait for FitNesse to start responding
-          $maxRetries = 60
+          # Wait for FitNesse HTTP response
+          $maxRetries = 40
           $retryCount = 0
           $serverReady = $false
-          
-          Write-Host "Waiting for FitNesse server to respond on HTTP..."
           
           do {
             Start-Sleep -Seconds 3
