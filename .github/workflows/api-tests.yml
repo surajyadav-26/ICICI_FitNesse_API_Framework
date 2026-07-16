@@ -353,11 +353,12 @@ jobs:
                 $exceptions = 0
                 $ignores = 0
                 
-                # Try to match FitNesse result format
-                if ($html -match 'class=["\']?pass["\']?>\s*(\d+)') { $right = [int]$Matches[1] }
-                if ($html -match 'class=["\']?fail["\']?>\s*(\d+)') { $wrong = [int]$Matches[1] }
-                if ($html -match 'class=["\']?error["\']?>\s*(\d+)') { $exceptions = [int]$Matches[1] }
-                if ($html -match 'class=["\']?ignore["\']?>\s*(\d+)') { $ignores = [int]$Matches[1] }
+                # Try to match FitNesse result format - using simpler patterns
+                # Match: class="pass">5 or class='pass'>5
+                if ($html -match 'class=.pass.>(\d+)') { $right = [int]$Matches[1] }
+                if ($html -match 'class=.fail.>(\d+)') { $wrong = [int]$Matches[1] }
+                if ($html -match 'class=.error.>(\d+)') { $exceptions = [int]$Matches[1] }
+                if ($html -match 'class=.ignore.>(\d+)') { $ignores = [int]$Matches[1] }
                 
                 # Alternative: look for text like "5 right, 0 wrong, 0 ignored, 0 exceptions"
                 if ($right -eq 0 -and $html -match '(\d+)\s+right') { $right = [int]$Matches[1] }
