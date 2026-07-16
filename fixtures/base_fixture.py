@@ -36,17 +36,33 @@ class BaseRequestFixture:
 
     # Setters (Supporting both camelCase and snake_case natively for compatibility!)
     def set_url(self, url: str) -> None:
-        self._url = url.strip() if url else ""
-        # Validate URL format
-        if not self._url:
-            logger.warning("[Validation] URL is empty. Request will fail.")
-        elif not (self._url.startswith("http://") or self._url.startswith("https://")):
-            logger.warning(f"[Validation] URL should start with http:// or https://: {self._url}")
+        """Set request URL with validation"""
+        from core.validators import RequestValidator, ValidationError
+        
+        try:
+            self._url = RequestValidator.validate_url(url) if url else ""
+        except ValidationError as e:
+            logger.error(f"[Validation] {e}")
+            # Store invalid URL but log error
+            self._url = url.strip() if url else ""
+            
     def setUrl(self, url: str) -> None:
         self.set_url(url)
 
     def set_body_json(self, body_json: str) -> None:
-        self._body_json = body_json
+        """Set request body JSON with validation"""
+        from core.validators import RequestValidator, ValidationError
+        
+        try:
+            if body_json and body_json.strip():
+                # Validate JSON format
+                RequestValidator.validate_json(body_json)
+            self._body_json = body_json
+        except ValidationError as e:
+            logger.error(f"[Validation] {e}")
+            # Store invalid JSON but log error
+            self._body_json = body_json
+            
     def setBodyJson(self, body_json: str) -> None:
         self.set_body_json(body_json)
 

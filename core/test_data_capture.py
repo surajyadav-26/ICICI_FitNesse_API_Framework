@@ -165,63 +165,67 @@ def save_test_data(
     Returns:
         Path to the saved JSON file (relative to FitNesseRoot/files/)
     """
-    # Ensure test data directory exists
-    os.makedirs(TEST_DATA_DIR, exist_ok=True)
-    
-    # Parse JSON bodies if possible
     try:
-        request_body_json = json.loads(request_body) if request_body and request_body.strip() else None
-    except (json.JSONDecodeError, ValueError):
-        request_body_json = None
-    
-    try:
-        response_body_json = json.loads(response_body) if response_body and response_body.strip() else None
-    except (json.JSONDecodeError, ValueError):
-        response_body_json = None
-    
-    # Sanitize data
-    sanitized_req_headers = sanitize_headers(request_headers or {})
-    sanitized_resp_headers = sanitize_headers(response_headers or {})
-    sanitized_req_body = sanitize_dict(request_body_json) if request_body_json else request_body
-    sanitized_resp_body = sanitize_dict(response_body_json) if response_body_json else response_body
-    
-    # Build test data structure
-    test_data = {
-        "test_name": test_name,
-        "timestamp": timestamp,
-        "request": {
-            "method": method,
-            "url": url,
-            "headers": sanitized_req_headers,
-            "body": sanitized_req_body
-        },
-        "response": {
-            "status_code": response_status,
-            "headers": sanitized_resp_headers,
-            "body": sanitized_resp_body,
-            "duration_ms": response_time_ms
-        },
-        "assertions": assertions,
-        "metadata": {
-            "sanitized": True,
-            "captured_at": datetime.now().isoformat()
+        # Ensure test data directory exists
+        os.makedirs(TEST_DATA_DIR, exist_ok=True)
+        
+        # Parse JSON bodies if possible
+        try:
+            request_body_json = json.loads(request_body) if request_body and request_body.strip() else None
+        except (json.JSONDecodeError, ValueError):
+            request_body_json = None
+        
+        try:
+            response_body_json = json.loads(response_body) if response_body and response_body.strip() else None
+        except (json.JSONDecodeError, ValueError):
+            response_body_json = None
+        
+        # Sanitize data
+        sanitized_req_headers = sanitize_headers(request_headers or {})
+        sanitized_resp_headers = sanitize_headers(response_headers or {})
+        sanitized_req_body = sanitize_dict(request_body_json) if request_body_json else request_body
+        sanitized_resp_body = sanitize_dict(response_body_json) if response_body_json else response_body
+        
+        # Build test data structure
+        test_data = {
+            "test_name": test_name,
+            "timestamp": timestamp,
+            "request": {
+                "method": method,
+                "url": url,
+                "headers": sanitized_req_headers,
+                "body": sanitized_req_body
+            },
+            "response": {
+                "status_code": response_status,
+                "headers": sanitized_resp_headers,
+                "body": sanitized_resp_body,
+                "duration_ms": response_time_ms
+            },
+            "assertions": assertions,
+            "metadata": {
+                "sanitized": True,
+                "captured_at": datetime.now().isoformat()
+            }
         }
-    }
-    
-    # Generate unique filename
-    test_id = generate_test_id(method, url, timestamp)
-    filename = f"{test_id}.json"
-    filepath = os.path.join(TEST_DATA_DIR, filename)
-    
-    # Save JSON file
-    try:
+        
+        # Generate unique filename
+        test_id = generate_test_id(method, url, timestamp)
+        filename = f"{test_id}.json"
+        filepath = os.path.join(TEST_DATA_DIR, filename)
+        
+        # Save JSON file
         with open(filepath, 'w', encoding='utf-8') as f:
             json.dump(test_data, f, indent=2, ensure_ascii=False)
         
         # Return relative path for download link
         return f"test_data/{filename}"
+        
     except Exception as e:
+        # Log error but don't fail the test
         print(f"[ERROR] Failed to save test data: {e}")
+        import traceback
+        traceback.print_exc()
         return ""
 
 def cleanup_old_files(days: int = 7) -> int:

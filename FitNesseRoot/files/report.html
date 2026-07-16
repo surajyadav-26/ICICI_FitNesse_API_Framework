@@ -298,13 +298,39 @@
             background: #f8fafc;
             border-left: 4px solid var(--primary);
         }
+        .audit-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
         .nested-requests-container h3 {
             font-size: 14px;
             font-weight: 700;
             color: var(--text-sub);
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            margin-bottom: 16px;
+            margin: 0;
+        }
+        .download-all-btn {
+            background: linear-gradient(135deg, #0284c7 0%, #0ea5e9 100%);
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .download-all-btn:hover {
+            background: linear-gradient(135deg, #0369a1 0%, #0284c7 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
         }
         .nested-request-row {
             background: var(--bg-card);
@@ -420,6 +446,26 @@
         .copy-btn:hover {
             background: rgba(255,255,255,0.25);
         }
+        .download-json-btn {
+            background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin-left: 12px;
+            transition: all 0.2s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .download-json-btn:hover {
+            background: linear-gradient(135deg, #047857 0%, #059669 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+        }
         .body-split {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
@@ -484,6 +530,31 @@
             });
         }
 
+        function downloadAll(filePaths, testName) {
+            // Download all JSON files for a test
+            if (!filePaths || filePaths.length === 0) {
+                alert("No test data files available to download.");
+                return;
+            }
+            
+            // Download each file sequentially with small delay
+            filePaths.forEach(function(path, index) {
+                setTimeout(function() {
+                    var link = document.createElement('a');
+                    link.href = path;
+                    link.download = '';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                }, index * 200); // 200ms delay between downloads
+            });
+            
+            // Show success message
+            setTimeout(function() {
+                alert('Downloaded ' + filePaths.length + ' test data file(s) for ' + testName);
+            }, filePaths.length * 200 + 100);
+        }
+
         function filterAndSearch() {
             var searchInput = document.getElementById("search-input").value.toLowerCase();
             var activeFilter = document.querySelector(".filter-btn.active").getAttribute("data-filter");
@@ -529,7 +600,7 @@
             <div class="header-meta">
                 <strong>Active Suite:</strong> DummyAPI<br>
                 <strong>Environment:</strong> UAT Testing Portal<br>
-                <strong>Execution Duration:</strong> 19.98s
+                <strong>Execution Duration:</strong> 15.44s
             </div>
         </header>
 
@@ -603,7 +674,7 @@
                     <span class="assertion-summary">1 right</span>
                 </div>
             </td>
-            <td>2026-07-13 14:47:50</td>
+            <td>2026-07-16 12:38:49</td>
             <td>
                 <span class="status-indicator status-pass">✓ PASSED</span>
                 
@@ -612,23 +683,31 @@
         <tr id="page-details-0" class="details-row" style="display: none;">
             <td colspan="3">
                 <div class="nested-requests-container">
-                    <h3>🔍 Executed API Requests Audit Trail</h3>
+                    <div class="audit-header">
+                        <h3>🔍 Executed API Requests Audit Trail</h3>
+                        
+                <button class="download-all-btn" onclick="downloadAll(['/files/test_data/GET_f53f20b56c3a_20260716_123849.json','/files/test_data/PUT_33ec8dcec68e_20260716_123850.json'], 'DummyAPI.Update_User')">
+                    📦 Download All (2)
+                </button>
+            
+                    </div>
                     
                 <div class="nested-request-row">
                     <div class="nested-request-header" onclick="toggleRequest(0, 0)">
                         <span class="badge badge-get">GET</span>
                         <span class="nested-url" title="https://dummyjson.com/users/search?q=Emily">https://dummyjson.com/users/search?q=Emily</span>
                         <span class="status-indicator status-pass">200</span>
-                        <span class="nested-time">1133 ms</span>
+                        <span class="nested-time">947 ms</span>
+                        <a href="/files/test_data/GET_f53f20b56c3a_20260716_123849.json" download class="download-json-btn" title="Download complete test data with assertions">📥 Download JSON</a>
                     </div>
                     <div id="req-details-0-0" class="nested-request-details" style="display: none;">
                         <div class="curl-section">
                             <div class="section-header">
                                 <h4>💻 cURL Replicator Command</h4>
-                                <button class="copy-btn" onclick="copyText(decodeURIComponent('curl -s -X GET %22https://dummyjson.com/users/search?q=Emily%22 -H %22Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJlbWlseXMiLCJlbWFpbCI6ImVtaWx5LmpvaG5zb25AeC5kdW1teWpzb24uY29tIiwiZmlyc3ROYW1lIjoiRW1pbHkiLCJsYXN0TmFtZSI6IkpvaG5zb24iLCJnZW5kZXIiOiJmZW1hbGUiLCJpbWFnZSI6Imh0dHBzOi8vZHVtbXlqc29uLmNvbS9pY29uL2VtaWx5cy8xMjgiLCJpYXQiOjE3ODM5MzQyMzgsImV4cCI6MTc4MzkzNzgzOH0.LsKLyVu6OLd3h8fraFsYeXgJe7xJ5Pr6BIshcTtwxK4%22'), this, event)">📋 Copy cURL</button>
+                                <button class="copy-btn" onclick="copyText(decodeURIComponent('curl -s -X GET %22https://dummyjson.com/users/search?q=Emily%22 -H %22Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJlbWlseXMiLCJlbWFpbCI6ImVtaWx5LmpvaG5zb25AeC5kdW1teWpzb24uY29tIiwiZmlyc3ROYW1lIjoiRW1pbHkiLCJsYXN0TmFtZSI6IkpvaG5zb24iLCJnZW5kZXIiOiJmZW1hbGUiLCJpbWFnZSI6Imh0dHBzOi8vZHVtbXlqc29uLmNvbS9pY29uL2VtaWx5cy8xMjgiLCJpYXQiOjE3ODQxODU2OTgsImV4cCI6MTc4NDE4OTI5OH0.VQilhZzCZcqpAV8bkAqGP4P0WfrFF_U-KPdf26G5pcU%22'), this, event)">📋 Copy cURL</button>
                             </div>
                             <div class="code-box">
-                                <code>curl -s -X GET &quot;https://dummyjson.com/users/search?q=Emily&quot; -H &quot;Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJlbWlseXMiLCJlbWFpbCI6ImVtaWx5LmpvaG5zb25AeC5kdW1teWpzb24uY29tIiwiZmlyc3ROYW1lIjoiRW1pbHkiLCJsYXN0TmFtZSI6IkpvaG5zb24iLCJnZW5kZXIiOiJmZW1hbGUiLCJpbWFnZSI6Imh0dHBzOi8vZHVtbXlqc29uLmNvbS9pY29uL2VtaWx5cy8xMjgiLCJpYXQiOjE3ODM5MzQyMzgsImV4cCI6MTc4MzkzNzgzOH0.LsKLyVu6OLd3h8fraFsYeXgJe7xJ5Pr6BIshcTtwxK4&quot;</code>
+                                <code>curl -s -X GET &quot;https://dummyjson.com/users/search?q=Emily&quot; -H &quot;Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJlbWlseXMiLCJlbWFpbCI6ImVtaWx5LmpvaG5zb25AeC5kdW1teWpzb24uY29tIiwiZmlyc3ROYW1lIjoiRW1pbHkiLCJsYXN0TmFtZSI6IkpvaG5zb24iLCJnZW5kZXIiOiJmZW1hbGUiLCJpbWFnZSI6Imh0dHBzOi8vZHVtbXlqc29uLmNvbS9pY29uL2VtaWx5cy8xMjgiLCJpYXQiOjE3ODQxODU2OTgsImV4cCI6MTc4NDE4OTI5OH0.VQilhZzCZcqpAV8bkAqGP4P0WfrFF_U-KPdf26G5pcU&quot;</code>
                             </div>
                         </div>
                         <div class="body-split">
@@ -649,16 +728,17 @@
                         <span class="badge badge-put">PUT</span>
                         <span class="nested-url" title="https://dummyjson.com/users/1">https://dummyjson.com/users/1</span>
                         <span class="status-indicator status-pass">200</span>
-                        <span class="nested-time">2182 ms</span>
+                        <span class="nested-time">909 ms</span>
+                        <a href="/files/test_data/PUT_33ec8dcec68e_20260716_123850.json" download class="download-json-btn" title="Download complete test data with assertions">📥 Download JSON</a>
                     </div>
                     <div id="req-details-0-1" class="nested-request-details" style="display: none;">
                         <div class="curl-section">
                             <div class="section-header">
                                 <h4>💻 cURL Replicator Command</h4>
-                                <button class="copy-btn" onclick="copyText(decodeURIComponent('curl -s -X PUT %22https://dummyjson.com/users/1%22 -H %22Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJlbWlseXMiLCJlbWFpbCI6ImVtaWx5LmpvaG5zb25AeC5kdW1teWpzb24uY29tIiwiZmlyc3ROYW1lIjoiRW1pbHkiLCJsYXN0TmFtZSI6IkpvaG5zb24iLCJnZW5kZXIiOiJmZW1hbGUiLCJpbWFnZSI6Imh0dHBzOi8vZHVtbXlqc29uLmNvbS9pY29uL2VtaWx5cy8xMjgiLCJpYXQiOjE3ODM5MzQyMzgsImV4cCI6MTc4MzkzNzgzOH0.LsKLyVu6OLd3h8fraFsYeXgJe7xJ5Pr6BIshcTtwxK4%22 -d %22{\%22lastName\%22:\%22Updated\%22}%22'), this, event)">📋 Copy cURL</button>
+                                <button class="copy-btn" onclick="copyText(decodeURIComponent('curl -s -X PUT %22https://dummyjson.com/users/1%22 -H %22Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJlbWlseXMiLCJlbWFpbCI6ImVtaWx5LmpvaG5zb25AeC5kdW1teWpzb24uY29tIiwiZmlyc3ROYW1lIjoiRW1pbHkiLCJsYXN0TmFtZSI6IkpvaG5zb24iLCJnZW5kZXIiOiJmZW1hbGUiLCJpbWFnZSI6Imh0dHBzOi8vZHVtbXlqc29uLmNvbS9pY29uL2VtaWx5cy8xMjgiLCJpYXQiOjE3ODQxODU2OTgsImV4cCI6MTc4NDE4OTI5OH0.VQilhZzCZcqpAV8bkAqGP4P0WfrFF_U-KPdf26G5pcU%22 -d %22{\%22lastName\%22:\%22Updated\%22}%22'), this, event)">📋 Copy cURL</button>
                             </div>
                             <div class="code-box">
-                                <code>curl -s -X PUT &quot;https://dummyjson.com/users/1&quot; -H &quot;Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJlbWlseXMiLCJlbWFpbCI6ImVtaWx5LmpvaG5zb25AeC5kdW1teWpzb24uY29tIiwiZmlyc3ROYW1lIjoiRW1pbHkiLCJsYXN0TmFtZSI6IkpvaG5zb24iLCJnZW5kZXIiOiJmZW1hbGUiLCJpbWFnZSI6Imh0dHBzOi8vZHVtbXlqc29uLmNvbS9pY29uL2VtaWx5cy8xMjgiLCJpYXQiOjE3ODM5MzQyMzgsImV4cCI6MTc4MzkzNzgzOH0.LsKLyVu6OLd3h8fraFsYeXgJe7xJ5Pr6BIshcTtwxK4&quot; -d &quot;{\&quot;lastName\&quot;:\&quot;Updated\&quot;}&quot;</code>
+                                <code>curl -s -X PUT &quot;https://dummyjson.com/users/1&quot; -H &quot;Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJlbWlseXMiLCJlbWFpbCI6ImVtaWx5LmpvaG5zb25AeC5kdW1teWpzb24uY29tIiwiZmlyc3ROYW1lIjoiRW1pbHkiLCJsYXN0TmFtZSI6IkpvaG5zb24iLCJnZW5kZXIiOiJmZW1hbGUiLCJpbWFnZSI6Imh0dHBzOi8vZHVtbXlqc29uLmNvbS9pY29uL2VtaWx5cy8xMjgiLCJpYXQiOjE3ODQxODU2OTgsImV4cCI6MTc4NDE4OTI5OH0.VQilhZzCZcqpAV8bkAqGP4P0WfrFF_U-KPdf26G5pcU&quot; -d &quot;{\&quot;lastName\&quot;:\&quot;Updated\&quot;}&quot;</code>
                             </div>
                         </div>
                         <div class="body-split">
@@ -685,7 +765,7 @@
                     <span class="assertion-summary">1 right</span>
                 </div>
             </td>
-            <td>2026-07-13 14:47:48</td>
+            <td>2026-07-16 12:38:48</td>
             <td>
                 <span class="status-indicator status-pass">✓ PASSED</span>
                 
@@ -694,23 +774,31 @@
         <tr id="page-details-1" class="details-row" style="display: none;">
             <td colspan="3">
                 <div class="nested-requests-container">
-                    <h3>🔍 Executed API Requests Audit Trail</h3>
+                    <div class="audit-header">
+                        <h3>🔍 Executed API Requests Audit Trail</h3>
+                        
+                <button class="download-all-btn" onclick="downloadAll(['/files/test_data/GET_404454df7dc8_20260716_123847.json'], 'DummyAPI.Search_User')">
+                    📦 Download All (1)
+                </button>
+            
+                    </div>
                     
                 <div class="nested-request-row">
                     <div class="nested-request-header" onclick="toggleRequest(1, 0)">
                         <span class="badge badge-get">GET</span>
                         <span class="nested-url" title="https://dummyjson.com/products/search?q=phone">https://dummyjson.com/products/search?q=phone</span>
                         <span class="status-indicator status-pass">200</span>
-                        <span class="nested-time">1223 ms</span>
+                        <span class="nested-time">1037 ms</span>
+                        <a href="/files/test_data/GET_404454df7dc8_20260716_123847.json" download class="download-json-btn" title="Download complete test data with assertions">📥 Download JSON</a>
                     </div>
                     <div id="req-details-1-0" class="nested-request-details" style="display: none;">
                         <div class="curl-section">
                             <div class="section-header">
                                 <h4>💻 cURL Replicator Command</h4>
-                                <button class="copy-btn" onclick="copyText(decodeURIComponent('curl -s -X GET %22https://dummyjson.com/products/search?q=phone%22 -H %22Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJlbWlseXMiLCJlbWFpbCI6ImVtaWx5LmpvaG5zb25AeC5kdW1teWpzb24uY29tIiwiZmlyc3ROYW1lIjoiRW1pbHkiLCJsYXN0TmFtZSI6IkpvaG5zb24iLCJnZW5kZXIiOiJmZW1hbGUiLCJpbWFnZSI6Imh0dHBzOi8vZHVtbXlqc29uLmNvbS9pY29uL2VtaWx5cy8xMjgiLCJpYXQiOjE3ODM5MzQyMzgsImV4cCI6MTc4MzkzNzgzOH0.LsKLyVu6OLd3h8fraFsYeXgJe7xJ5Pr6BIshcTtwxK4%22'), this, event)">📋 Copy cURL</button>
+                                <button class="copy-btn" onclick="copyText(decodeURIComponent('curl -s -X GET %22https://dummyjson.com/products/search?q=phone%22 -H %22Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJlbWlseXMiLCJlbWFpbCI6ImVtaWx5LmpvaG5zb25AeC5kdW1teWpzb24uY29tIiwiZmlyc3ROYW1lIjoiRW1pbHkiLCJsYXN0TmFtZSI6IkpvaG5zb24iLCJnZW5kZXIiOiJmZW1hbGUiLCJpbWFnZSI6Imh0dHBzOi8vZHVtbXlqc29uLmNvbS9pY29uL2VtaWx5cy8xMjgiLCJpYXQiOjE3ODQxODU2OTgsImV4cCI6MTc4NDE4OTI5OH0.VQilhZzCZcqpAV8bkAqGP4P0WfrFF_U-KPdf26G5pcU%22'), this, event)">📋 Copy cURL</button>
                             </div>
                             <div class="code-box">
-                                <code>curl -s -X GET &quot;https://dummyjson.com/products/search?q=phone&quot; -H &quot;Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJlbWlseXMiLCJlbWFpbCI6ImVtaWx5LmpvaG5zb25AeC5kdW1teWpzb24uY29tIiwiZmlyc3ROYW1lIjoiRW1pbHkiLCJsYXN0TmFtZSI6IkpvaG5zb24iLCJnZW5kZXIiOiJmZW1hbGUiLCJpbWFnZSI6Imh0dHBzOi8vZHVtbXlqc29uLmNvbS9pY29uL2VtaWx5cy8xMjgiLCJpYXQiOjE3ODM5MzQyMzgsImV4cCI6MTc4MzkzNzgzOH0.LsKLyVu6OLd3h8fraFsYeXgJe7xJ5Pr6BIshcTtwxK4&quot;</code>
+                                <code>curl -s -X GET &quot;https://dummyjson.com/products/search?q=phone&quot; -H &quot;Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJlbWlseXMiLCJlbWFpbCI6ImVtaWx5LmpvaG5zb25AeC5kdW1teWpzb24uY29tIiwiZmlyc3ROYW1lIjoiRW1pbHkiLCJsYXN0TmFtZSI6IkpvaG5zb24iLCJnZW5kZXIiOiJmZW1hbGUiLCJpbWFnZSI6Imh0dHBzOi8vZHVtbXlqc29uLmNvbS9pY29uL2VtaWx5cy8xMjgiLCJpYXQiOjE3ODQxODU2OTgsImV4cCI6MTc4NDE4OTI5OH0.VQilhZzCZcqpAV8bkAqGP4P0WfrFF_U-KPdf26G5pcU&quot;</code>
                             </div>
                         </div>
                         <div class="body-split">
@@ -737,7 +825,7 @@
                     <span class="assertion-summary">0 right • <span style='color:var(--fail); font-weight:700;'>1 wrong</span></span>
                 </div>
             </td>
-            <td>2026-07-13 14:47:47</td>
+            <td>2026-07-16 12:38:46</td>
             <td>
                 <span class="status-indicator status-fail">✗ FAILED</span>
                 <div class='defect-msg'>❌ Failed 1 verification checks</div>
@@ -746,23 +834,31 @@
         <tr id="page-details-2" class="details-row" style="display: table-row;">
             <td colspan="3">
                 <div class="nested-requests-container">
-                    <h3>🔍 Executed API Requests Audit Trail</h3>
+                    <div class="audit-header">
+                        <h3>🔍 Executed API Requests Audit Trail</h3>
+                        
+                <button class="download-all-btn" onclick="downloadAll(['/files/test_data/GET_ea994a266e08_20260716_123846.json'], 'DummyAPI.Search_Product')">
+                    📦 Download All (1)
+                </button>
+            
+                    </div>
                     
                 <div class="nested-request-row">
                     <div class="nested-request-header" onclick="toggleRequest(2, 0)">
                         <span class="badge badge-get">GET</span>
                         <span class="nested-url" title="https://dummyjson.com/users/1">https://dummyjson.com/users/1</span>
                         <span class="status-indicator status-pass">200</span>
-                        <span class="nested-time">1103 ms</span>
+                        <span class="nested-time">1028 ms</span>
+                        <a href="/files/test_data/GET_ea994a266e08_20260716_123846.json" download class="download-json-btn" title="Download complete test data with assertions">📥 Download JSON</a>
                     </div>
                     <div id="req-details-2-0" class="nested-request-details" style="display: none;">
                         <div class="curl-section">
                             <div class="section-header">
                                 <h4>💻 cURL Replicator Command</h4>
-                                <button class="copy-btn" onclick="copyText(decodeURIComponent('curl -s -X GET %22https://dummyjson.com/users/1%22 -H %22Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJlbWlseXMiLCJlbWFpbCI6ImVtaWx5LmpvaG5zb25AeC5kdW1teWpzb24uY29tIiwiZmlyc3ROYW1lIjoiRW1pbHkiLCJsYXN0TmFtZSI6IkpvaG5zb24iLCJnZW5kZXIiOiJmZW1hbGUiLCJpbWFnZSI6Imh0dHBzOi8vZHVtbXlqc29uLmNvbS9pY29uL2VtaWx5cy8xMjgiLCJpYXQiOjE3ODM5MzQyMzgsImV4cCI6MTc4MzkzNzgzOH0.LsKLyVu6OLd3h8fraFsYeXgJe7xJ5Pr6BIshcTtwxK4%22'), this, event)">📋 Copy cURL</button>
+                                <button class="copy-btn" onclick="copyText(decodeURIComponent('curl -s -X GET %22https://dummyjson.com/users/1%22 -H %22Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJlbWlseXMiLCJlbWFpbCI6ImVtaWx5LmpvaG5zb25AeC5kdW1teWpzb24uY29tIiwiZmlyc3ROYW1lIjoiRW1pbHkiLCJsYXN0TmFtZSI6IkpvaG5zb24iLCJnZW5kZXIiOiJmZW1hbGUiLCJpbWFnZSI6Imh0dHBzOi8vZHVtbXlqc29uLmNvbS9pY29uL2VtaWx5cy8xMjgiLCJpYXQiOjE3ODQxODU2OTgsImV4cCI6MTc4NDE4OTI5OH0.VQilhZzCZcqpAV8bkAqGP4P0WfrFF_U-KPdf26G5pcU%22'), this, event)">📋 Copy cURL</button>
                             </div>
                             <div class="code-box">
-                                <code>curl -s -X GET &quot;https://dummyjson.com/users/1&quot; -H &quot;Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJlbWlseXMiLCJlbWFpbCI6ImVtaWx5LmpvaG5zb25AeC5kdW1teWpzb24uY29tIiwiZmlyc3ROYW1lIjoiRW1pbHkiLCJsYXN0TmFtZSI6IkpvaG5zb24iLCJnZW5kZXIiOiJmZW1hbGUiLCJpbWFnZSI6Imh0dHBzOi8vZHVtbXlqc29uLmNvbS9pY29uL2VtaWx5cy8xMjgiLCJpYXQiOjE3ODM5MzQyMzgsImV4cCI6MTc4MzkzNzgzOH0.LsKLyVu6OLd3h8fraFsYeXgJe7xJ5Pr6BIshcTtwxK4&quot;</code>
+                                <code>curl -s -X GET &quot;https://dummyjson.com/users/1&quot; -H &quot;Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJlbWlseXMiLCJlbWFpbCI6ImVtaWx5LmpvaG5zb25AeC5kdW1teWpzb24uY29tIiwiZmlyc3ROYW1lIjoiRW1pbHkiLCJsYXN0TmFtZSI6IkpvaG5zb24iLCJnZW5kZXIiOiJmZW1hbGUiLCJpbWFnZSI6Imh0dHBzOi8vZHVtbXlqc29uLmNvbS9pY29uL2VtaWx5cy8xMjgiLCJpYXQiOjE3ODQxODU2OTgsImV4cCI6MTc4NDE4OTI5OH0.VQilhZzCZcqpAV8bkAqGP4P0WfrFF_U-KPdf26G5pcU&quot;</code>
                             </div>
                         </div>
                         <div class="body-split">
@@ -789,7 +885,7 @@
                     <span class="assertion-summary">1 right</span>
                 </div>
             </td>
-            <td>2026-07-13 14:47:45</td>
+            <td>2026-07-16 12:38:45</td>
             <td>
                 <span class="status-indicator status-pass">✓ PASSED</span>
                 
@@ -798,14 +894,22 @@
         <tr id="page-details-3" class="details-row" style="display: none;">
             <td colspan="3">
                 <div class="nested-requests-container">
-                    <h3>🔍 Executed API Requests Audit Trail</h3>
+                    <div class="audit-header">
+                        <h3>🔍 Executed API Requests Audit Trail</h3>
+                        
+                <button class="download-all-btn" onclick="downloadAll(['/files/test_data/GET_004bedab99df_20260716_123845.json'], 'DummyAPI.Get_User_by_Id')">
+                    📦 Download All (1)
+                </button>
+            
+                    </div>
                     
                 <div class="nested-request-row">
                     <div class="nested-request-header" onclick="toggleRequest(3, 0)">
                         <span class="badge badge-post">POST</span>
                         <span class="nested-url" title="https://dummyjson.com/auth/login">https://dummyjson.com/auth/login</span>
                         <span class="status-indicator status-pass">200</span>
-                        <span class="nested-time">2871 ms</span>
+                        <span class="nested-time">1005 ms</span>
+                        
                     </div>
                     <div id="req-details-3-0" class="nested-request-details" style="display: none;">
                         <div class="curl-section">
@@ -824,7 +928,7 @@
                             </div>
                             <div class="body-block">
                                 <h4>📥 Response Body</h4>
-                                <pre><code>{&quot;accessToken&quot;:&quot;eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJlbWlseXMiLCJlbWFpbCI6ImVtaWx5LmpvaG5zb25AeC5kdW1teWpzb24uY29tIiwiZmlyc3ROYW1lIjoiRW1pbHkiLCJsYXN0TmFtZSI6IkpvaG5zb24iLCJnZW5kZXIiOiJmZW1hbGUiLCJpbWFnZSI6Imh0dHBzOi8vZHVtbXlqc29uLmNvbS9pY29uL2VtaWx5cy8xMjgiLCJpYXQiOjE3ODM5MzQyMzgsImV4cCI6MTc4MzkzNzgzOH0.LsKLyVu6OLd3h8fraFsYeXgJe7xJ5Pr6BIshcTtwxK4&quot;,&quot;refreshToken&quot;:&quot;eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJlbWlseXMiLCJlbWFpbCI6ImVtaWx5LmpvaG5zb25AeC5kdW1teWpzb24uY29tIiwiZmlyc3ROYW1lIjoiRW1pbHkiLCJsYXN0TmFtZSI6IkpvaG5zb24iLCJnZW5kZXIiOiJmZW1hbGUiLCJpbWFnZSI6Imh0dHBzOi8vZHVtbXlqc29uLmNvbS9pY29uL2VtaWx5cy8xMjgiLCJpYXQiOjE3ODM5MzQyMzgsImV4cCI6MTc4NjUyNjIzOH0.CZix1e3-Y8572T0NVH0IpRXzDPXmAn0NAdyruVaV6MQ&quot;,&quot;id&quot;:1,&quot;username&quot;:&quot;emilys&quot;,&quot;email&quot;:&quot;emily.johnson@x.dummyjson.com&quot;,&quot;firstName&quot;:&quot;Emily&quot;,&quot;lastName&quot;:&quot;Johnson&quot;,&quot;gender&quot;:&quot;female&quot;,&quot;image&quot;:&quot;https://dummyjson.com/icon/emilys/128&quot;}</code></pre>
+                                <pre><code>{&quot;accessToken&quot;:&quot;eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJlbWlseXMiLCJlbWFpbCI6ImVtaWx5LmpvaG5zb25AeC5kdW1teWpzb24uY29tIiwiZmlyc3ROYW1lIjoiRW1pbHkiLCJsYXN0TmFtZSI6IkpvaG5zb24iLCJnZW5kZXIiOiJmZW1hbGUiLCJpbWFnZSI6Imh0dHBzOi8vZHVtbXlqc29uLmNvbS9pY29uL2VtaWx5cy8xMjgiLCJpYXQiOjE3ODQxODU2OTcsImV4cCI6MTc4NDE4OTI5N30.3t41VAKP0bS63RGBLJ3xHWF_hyr4zT_fJnAoyFxfJv8&quot;,&quot;refreshToken&quot;:&quot;eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJlbWlseXMiLCJlbWFpbCI6ImVtaWx5LmpvaG5zb25AeC5kdW1teWpzb24uY29tIiwiZmlyc3ROYW1lIjoiRW1pbHkiLCJsYXN0TmFtZSI6IkpvaG5zb24iLCJnZW5kZXIiOiJmZW1hbGUiLCJpbWFnZSI6Imh0dHBzOi8vZHVtbXlqc29uLmNvbS9pY29uL2VtaWx5cy8xMjgiLCJpYXQiOjE3ODQxODU2OTcsImV4cCI6MTc4Njc3NzY5N30.uNYVxOfr-_UFAoh2XPEYHK5OP0zSSWCBUn50ANg091Y&quot;,&quot;id&quot;:1,&quot;username&quot;:&quot;emilys&quot;,&quot;email&quot;:&quot;emily.johnson@x.dummyjson.com&quot;,&quot;firstName&quot;:&quot;Emily&quot;,&quot;lastName&quot;:&quot;Johnson&quot;,&quot;gender&quot;:&quot;female&quot;,&quot;image&quot;:&quot;https://dummyjson.com/icon/emilys/128&quot;}</code></pre>
                             </div>
                         </div>
                     </div>
@@ -832,19 +936,51 @@
                 
                 <div class="nested-request-row">
                     <div class="nested-request-header" onclick="toggleRequest(3, 1)">
-                        <span class="badge badge-get">GET</span>
-                        <span class="nested-url" title="https://dummyjson.com/auth/me">https://dummyjson.com/auth/me</span>
+                        <span class="badge badge-post">POST</span>
+                        <span class="nested-url" title="https://dummyjson.com/auth/login">https://dummyjson.com/auth/login</span>
                         <span class="status-indicator status-pass">200</span>
-                        <span class="nested-time">1042 ms</span>
+                        <span class="nested-time">1085 ms</span>
+                        
                     </div>
                     <div id="req-details-3-1" class="nested-request-details" style="display: none;">
                         <div class="curl-section">
                             <div class="section-header">
                                 <h4>💻 cURL Replicator Command</h4>
-                                <button class="copy-btn" onclick="copyText(decodeURIComponent('curl -s -X GET %22https://dummyjson.com/auth/me%22 -H %22Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJlbWlseXMiLCJlbWFpbCI6ImVtaWx5LmpvaG5zb25AeC5kdW1teWpzb24uY29tIiwiZmlyc3ROYW1lIjoiRW1pbHkiLCJsYXN0TmFtZSI6IkpvaG5zb24iLCJnZW5kZXIiOiJmZW1hbGUiLCJpbWFnZSI6Imh0dHBzOi8vZHVtbXlqc29uLmNvbS9pY29uL2VtaWx5cy8xMjgiLCJpYXQiOjE3ODM5MzQyMzgsImV4cCI6MTc4MzkzNzgzOH0.LsKLyVu6OLd3h8fraFsYeXgJe7xJ5Pr6BIshcTtwxK4%22'), this, event)">📋 Copy cURL</button>
+                                <button class="copy-btn" onclick="copyText(decodeURIComponent('curl -s -X POST %22https://dummyjson.com/auth/login%22 -H %22Content-Type: application/json%22 -d %22{%22username%22:%22emilys%22,%22password%22:%22emilyspass%22}%22'), this, event)">📋 Copy cURL</button>
                             </div>
                             <div class="code-box">
-                                <code>curl -s -X GET &quot;https://dummyjson.com/auth/me&quot; -H &quot;Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJlbWlseXMiLCJlbWFpbCI6ImVtaWx5LmpvaG5zb25AeC5kdW1teWpzb24uY29tIiwiZmlyc3ROYW1lIjoiRW1pbHkiLCJsYXN0TmFtZSI6IkpvaG5zb24iLCJnZW5kZXIiOiJmZW1hbGUiLCJpbWFnZSI6Imh0dHBzOi8vZHVtbXlqc29uLmNvbS9pY29uL2VtaWx5cy8xMjgiLCJpYXQiOjE3ODM5MzQyMzgsImV4cCI6MTc4MzkzNzgzOH0.LsKLyVu6OLd3h8fraFsYeXgJe7xJ5Pr6BIshcTtwxK4&quot;</code>
+                                <code>curl -s -X POST &quot;https://dummyjson.com/auth/login&quot; -H &quot;Content-Type: application/json&quot; -d &quot;{%22username%22:%22emilys%22,%22password%22:%22emilyspass%22}&quot;</code>
+                            </div>
+                        </div>
+                        <div class="body-split">
+                            <div class="body-block">
+                                <h4>📤 Request Body</h4>
+                                <pre><code>{&quot;username&quot;:&quot;emilys&quot;,&quot;password&quot;:&quot;emilyspass&quot;}</code></pre>
+                            </div>
+                            <div class="body-block">
+                                <h4>📥 Response Body</h4>
+                                <pre><code>{&quot;accessToken&quot;:&quot;eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJlbWlseXMiLCJlbWFpbCI6ImVtaWx5LmpvaG5zb25AeC5kdW1teWpzb24uY29tIiwiZmlyc3ROYW1lIjoiRW1pbHkiLCJsYXN0TmFtZSI6IkpvaG5zb24iLCJnZW5kZXIiOiJmZW1hbGUiLCJpbWFnZSI6Imh0dHBzOi8vZHVtbXlqc29uLmNvbS9pY29uL2VtaWx5cy8xMjgiLCJpYXQiOjE3ODQxODU2OTgsImV4cCI6MTc4NDE4OTI5OH0.VQilhZzCZcqpAV8bkAqGP4P0WfrFF_U-KPdf26G5pcU&quot;,&quot;refreshToken&quot;:&quot;eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJlbWlseXMiLCJlbWFpbCI6ImVtaWx5LmpvaG5zb25AeC5kdW1teWpzb24uY29tIiwiZmlyc3ROYW1lIjoiRW1pbHkiLCJsYXN0TmFtZSI6IkpvaG5zb24iLCJnZW5kZXIiOiJmZW1hbGUiLCJpbWFnZSI6Imh0dHBzOi8vZHVtbXlqc29uLmNvbS9pY29uL2VtaWx5cy8xMjgiLCJpYXQiOjE3ODQxODU2OTgsImV4cCI6MTc4Njc3NzY5OH0.cTpcSU_9n616E8XaH8O_v5h5zwEbj4eTeav06q2v6Ok&quot;,&quot;id&quot;:1,&quot;username&quot;:&quot;emilys&quot;,&quot;email&quot;:&quot;emily.johnson@x.dummyjson.com&quot;,&quot;firstName&quot;:&quot;Emily&quot;,&quot;lastName&quot;:&quot;Johnson&quot;,&quot;gender&quot;:&quot;female&quot;,&quot;image&quot;:&quot;https://dummyjson.com/icon/emilys/128&quot;}</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="nested-request-row">
+                    <div class="nested-request-header" onclick="toggleRequest(3, 2)">
+                        <span class="badge badge-get">GET</span>
+                        <span class="nested-url" title="https://dummyjson.com/auth/me">https://dummyjson.com/auth/me</span>
+                        <span class="status-indicator status-pass">200</span>
+                        <span class="nested-time">968 ms</span>
+                        <a href="/files/test_data/GET_004bedab99df_20260716_123845.json" download class="download-json-btn" title="Download complete test data with assertions">📥 Download JSON</a>
+                    </div>
+                    <div id="req-details-3-2" class="nested-request-details" style="display: none;">
+                        <div class="curl-section">
+                            <div class="section-header">
+                                <h4>💻 cURL Replicator Command</h4>
+                                <button class="copy-btn" onclick="copyText(decodeURIComponent('curl -s -X GET %22https://dummyjson.com/auth/me%22 -H %22Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJlbWlseXMiLCJlbWFpbCI6ImVtaWx5LmpvaG5zb25AeC5kdW1teWpzb24uY29tIiwiZmlyc3ROYW1lIjoiRW1pbHkiLCJsYXN0TmFtZSI6IkpvaG5zb24iLCJnZW5kZXIiOiJmZW1hbGUiLCJpbWFnZSI6Imh0dHBzOi8vZHVtbXlqc29uLmNvbS9pY29uL2VtaWx5cy8xMjgiLCJpYXQiOjE3ODQxODU2OTgsImV4cCI6MTc4NDE4OTI5OH0.VQilhZzCZcqpAV8bkAqGP4P0WfrFF_U-KPdf26G5pcU%22'), this, event)">📋 Copy cURL</button>
+                            </div>
+                            <div class="code-box">
+                                <code>curl -s -X GET &quot;https://dummyjson.com/auth/me&quot; -H &quot;Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJlbWlseXMiLCJlbWFpbCI6ImVtaWx5LmpvaG5zb25AeC5kdW1teWpzb24uY29tIiwiZmlyc3ROYW1lIjoiRW1pbHkiLCJsYXN0TmFtZSI6IkpvaG5zb24iLCJnZW5kZXIiOiJmZW1hbGUiLCJpbWFnZSI6Imh0dHBzOi8vZHVtbXlqc29uLmNvbS9pY29uL2VtaWx5cy8xMjgiLCJpYXQiOjE3ODQxODU2OTgsImV4cCI6MTc4NDE4OTI5OH0.VQilhZzCZcqpAV8bkAqGP4P0WfrFF_U-KPdf26G5pcU&quot;</code>
                             </div>
                         </div>
                         <div class="body-split">
@@ -871,7 +1007,7 @@
                     <span class="assertion-summary">1 right</span>
                 </div>
             </td>
-            <td>2026-07-13 14:47:40</td>
+            <td>2026-07-16 12:38:41</td>
             <td>
                 <span class="status-indicator status-pass">✓ PASSED</span>
                 
@@ -880,23 +1016,31 @@
         <tr id="page-details-4" class="details-row" style="display: none;">
             <td colspan="3">
                 <div class="nested-requests-container">
-                    <h3>🔍 Executed API Requests Audit Trail</h3>
+                    <div class="audit-header">
+                        <h3>🔍 Executed API Requests Audit Trail</h3>
+                        
+                <button class="download-all-btn" onclick="downloadAll(['/files/test_data/GET_2b8f2ed483fa_20260716_123841.json'], 'DummyAPI.Get_Logged_User_Profile')">
+                    📦 Download All (1)
+                </button>
+            
+                    </div>
                     
                 <div class="nested-request-row">
                     <div class="nested-request-header" onclick="toggleRequest(4, 0)">
                         <span class="badge badge-get">GET</span>
                         <span class="nested-url" title="https://dummyjson.com/users">https://dummyjson.com/users</span>
                         <span class="status-indicator status-pass">200</span>
-                        <span class="nested-time">990 ms</span>
+                        <span class="nested-time">977 ms</span>
+                        <a href="/files/test_data/GET_2b8f2ed483fa_20260716_123841.json" download class="download-json-btn" title="Download complete test data with assertions">📥 Download JSON</a>
                     </div>
                     <div id="req-details-4-0" class="nested-request-details" style="display: none;">
                         <div class="curl-section">
                             <div class="section-header">
                                 <h4>💻 cURL Replicator Command</h4>
-                                <button class="copy-btn" onclick="copyText(decodeURIComponent('curl -s -X GET %22https://dummyjson.com/users%22 -H %22Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJlbWlseXMiLCJlbWFpbCI6ImVtaWx5LmpvaG5zb25AeC5kdW1teWpzb24uY29tIiwiZmlyc3ROYW1lIjoiRW1pbHkiLCJsYXN0TmFtZSI6IkpvaG5zb24iLCJnZW5kZXIiOiJmZW1hbGUiLCJpbWFnZSI6Imh0dHBzOi8vZHVtbXlqc29uLmNvbS9pY29uL2VtaWx5cy8xMjgiLCJpYXQiOjE3ODM5MzQyMzIsImV4cCI6MTc4MzkzNzgzMn0.90Qx6dKNP2OSBs7gCnkI-5XaAWatp_1p7xu-zwaoVgM%22'), this, event)">📋 Copy cURL</button>
+                                <button class="copy-btn" onclick="copyText(decodeURIComponent('curl -s -X GET %22https://dummyjson.com/users%22 -H %22Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJlbWlseXMiLCJlbWFpbCI6ImVtaWx5LmpvaG5zb25AeC5kdW1teWpzb24uY29tIiwiZmlyc3ROYW1lIjoiRW1pbHkiLCJsYXN0TmFtZSI6IkpvaG5zb24iLCJnZW5kZXIiOiJmZW1hbGUiLCJpbWFnZSI6Imh0dHBzOi8vZHVtbXlqc29uLmNvbS9pY29uL2VtaWx5cy8xMjgiLCJpYXQiOjE3ODQxODU2OTMsImV4cCI6MTc4NDE4OTI5M30.EKxROS_u-_TJ93CBkjVH3ZGKPeeJE0q8dcrgeeYNbbQ%22'), this, event)">📋 Copy cURL</button>
                             </div>
                             <div class="code-box">
-                                <code>curl -s -X GET &quot;https://dummyjson.com/users&quot; -H &quot;Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJlbWlseXMiLCJlbWFpbCI6ImVtaWx5LmpvaG5zb25AeC5kdW1teWpzb24uY29tIiwiZmlyc3ROYW1lIjoiRW1pbHkiLCJsYXN0TmFtZSI6IkpvaG5zb24iLCJnZW5kZXIiOiJmZW1hbGUiLCJpbWFnZSI6Imh0dHBzOi8vZHVtbXlqc29uLmNvbS9pY29uL2VtaWx5cy8xMjgiLCJpYXQiOjE3ODM5MzQyMzIsImV4cCI6MTc4MzkzNzgzMn0.90Qx6dKNP2OSBs7gCnkI-5XaAWatp_1p7xu-zwaoVgM&quot;</code>
+                                <code>curl -s -X GET &quot;https://dummyjson.com/users&quot; -H &quot;Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJlbWlseXMiLCJlbWFpbCI6ImVtaWx5LmpvaG5zb25AeC5kdW1teWpzb24uY29tIiwiZmlyc3ROYW1lIjoiRW1pbHkiLCJsYXN0TmFtZSI6IkpvaG5zb24iLCJnZW5kZXIiOiJmZW1hbGUiLCJpbWFnZSI6Imh0dHBzOi8vZHVtbXlqc29uLmNvbS9pY29uL2VtaWx5cy8xMjgiLCJpYXQiOjE3ODQxODU2OTMsImV4cCI6MTc4NDE4OTI5M30.EKxROS_u-_TJ93CBkjVH3ZGKPeeJE0q8dcrgeeYNbbQ&quot;</code>
                             </div>
                         </div>
                         <div class="body-split">
@@ -907,36 +1051,6 @@
                             <div class="body-block">
                                 <h4>📥 Response Body</h4>
                                 <pre><code>{&quot;users&quot;:[{&quot;id&quot;:1,&quot;firstName&quot;:&quot;Emily&quot;,&quot;lastName&quot;:&quot;Johnson&quot;,&quot;maidenName&quot;:&quot;Smith&quot;,&quot;age&quot;:29,&quot;gender&quot;:&quot;female&quot;,&quot;email&quot;:&quot;emily.johnson@x.dummyjson.com&quot;,&quot;phone&quot;:&quot;+81 965-431-3024&quot;,&quot;username&quot;:&quot;emilys&quot;,&quot;password&quot;:&quot;emilyspass&quot;,&quot;birthDate&quot;:&quot;1996-5-30&quot;,&quot;image&quot;:&quot;https://dummyjson.com/icon/emilys/128&quot;,&quot;bloodGroup&quot;:&quot;O-&quot;,&quot;height&quot;:193.24,&quot;weight&quot;:63.16,&quot;eyeColor&quot;:&quot;Green&quot;,&quot;hair&quot;:{&quot;color&quot;:&quot;Brown&quot;,&quot;type&quot;:&quot;Curly&quot;},&quot;ip&quot;:&quot;42.48.100.32&quot;,&quot;address&quot;:{&quot;address&quot;:&quot;626 Main Street&quot;,&quot;city&quot;:&quot;Phoenix&quot;,&quot;state&quot;:&quot;Mississippi&quot;,&quot;stateCode&quot;:&quot;MS&quot;,&quot;postalCode&quot;:&quot;29112&quot;,&quot;coordinates&quot;:{&quot;lat&quot;:-77.16213,&quot;lng&quot;:-92.084824},&quot;country&quot;:&quot;United States&quot;},&quot;macAddress&quot;:&quot;47:fa:41:18:ec:eb&quot;,&quot;university&quot;:&quot;University of Wisconsin--Madison&quot;,&quot;bank&quot;:{&quot;cardExpire&quot;:&quot;05/28&quot;,&quot;cardNumber&quot;:&quot;3693233511855044&quot;,&quot;cardType&quot;:&quot;Diners Club International&quot;,&quot;currency&quot;:&quot;GBP&quot;,&quot;iban&quot;:&quot;GB74MH2UZLR9TRPHYNU8F8&quot;},&quot;company&quot;:{&quot;department&quot;:&quot;Engineering&quot;,&quot;name&quot;:&quot;Dooley, Kozey and Cronin&quot;,&quot;title&quot;:&quot;Sales Manager&quot;,&quot;address&quot;:{&quot;address&quot;:&quot;263 Tenth Street&quot;,&quot;city&quot;:&quot;San Francisco&quot;,&quot;state&quot;:&quot;Wisconsin&quot;,&quot;stateCode&quot;:&quot;WI&quot;,&quot;postalCode&quot;:&quot;37657&quot;,&quot;coordinates&quot;:{&quot;lat&quot;:71.814525,&quot;lng&quot;:-161.150263},&quot;country&quot;:&quot;United States&quot;}},&quot;ein&quot;:&quot;977-175&quot;,&quot;ssn&quot;:&quot;900-590-289&quot;,&quot;userAgent&quot;:&quot;Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.93 Safari/537.36&quot;,&quot;crypto&quot;:{&quot;coin&quot;:&quot;Bitcoin&quot;,&quot;wallet&quot;:&quot;0xb9fc2fe63b2a6c003f1c324c3bfa53259162181a&quot;,&quot;network&quot;:&quot;Ethereum (ERC20)&quot;},&quot;role&quot;:&quot;admin&quot;},{&quot;id&quot;:2,&quot;firstName&quot;:&quot;Michael&quot;,&quot;lastName&quot;:&quot;Williams&quot;,&quot;maidenName&quot;:&quot;&quot;,&quot;age&quot;:36,&quot;gender&quot;:&quot;male&quot;,&quot;email&quot;:&quot;michael.williams@x.dummyjson.com&quot;,&quot;phone&quot;:&quot;+49 258-627-6644&quot;,&quot;username&quot;:&quot;michaelw&quot;,&quot;password&quot;:&quot;michaelwpass&quot;,&quot;birthDate&quot;:&quot;1989-8-10&quot;,&quot;image&quot;:&quot;https://dummyjson.com/icon/michaelw/128&quot;,&quot;bloodGroup&quot;:&quot;B+&quot;,&quot;height&quot;:186.22,&quot;weight&quot;:76.32,&quot;eyeColor&quot;:&quot;Red&quot;,&quot;hair&quot;:{&quot;color&quot;:&quot;Green&quot;,&quot;type&quot;:&quot;Straight&quot;},&quot;ip&quot;:&quot;12.13.116.142&quot;,&quot;address&quot;:{&quot;address&quot;:&quot;385 Fifth Street&quot;,&quot;city&quot;:&quot;Houston&quot;,&quot;state&quot;:&quot;Alabama&quot;,&quot;stateCode&quot;:&quot;AL&quot;,&quot;postalCode&quot;:&quot;38807&quot;,&quot;coordinates&quot;:{&quot;lat&quot;:22.815468,&quot;lng&quot;:115.608581},&quot;country&quot;:&quot;United States&quot;},&quot;macAddress&quot;:&quot;79:15:78:99:60:aa&quot;,&quot;university&quot;:&quot;Ohio State University&quot;,&quot;bank&quot;:{&quot;cardExpire&quot;:&quot;01/30&quot;,&quot;cardNumber&quot;:&quot;3530633803003665&quot;,&quot;cardType&quot;:&quot;JCB&quot;,&quot;currency&quot;:&quot;USD&quot;,&quot;iban&quot;:&quot;DE26362283149158045865&quot;},&quot;company&quot;:{&quot;department&quot;:&quot;Support&quot;,&quot;name&quot;:&quot;Spinka - Dickinson&quot;,&quot;title&quot;:&quot;Support Specialist&quot;,&quot;address&quot;:{&quot;address&quot;:&quot;395 Main Street&quot;,&quot;city&quot;:&quot;Los Angeles&quot;,&quot;state&quot;:&quot;New Hampshire&quot;,&quot;stateCode&quot;:&quot;NH&quot;,&quot;postalCode&quot;:&quot;73442&quot;,&quot;coordinates&quot;:{&quot;lat&quot;:79.098326,&quot;lng&quot;:-119.624845},&quot;country&quot;:&quot;United States&quot;}},&quot;ein&quot;:&quot;912-602&quot;,&quot;ssn&quot;:&quot;108-953-962&quot;,&quot;userAgent&quot;:&quot;Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Edge/97.0.1072.76 Safari/537.36&quot;,&quot;crypto&quot;:{&quot;coin&quot;:&quot;Bitcoin&quot;,&quot;wallet&quot;:&quot;0xb9fc2fe63b2a6c003f1c324c3bfa53259162181a&quot;,&quot;network&quot;:&quot;Ethereum (ERC20)&quot;},&quot;role&quot;:&quot;admin&quot;},{&quot;id&quot;:3,&quot;firstName&quot;:&quot;Sophia&quot;,&quot;lastName&quot;:&quot;Brown&quot;,&quot;maidenName&quot;:&quot;&quot;,&quot;age&quot;:43,&quot;gender&quot;:&quot;female&quot;,&quot;email&quot;:&quot;sophia.brown@x.dummyjson.com&quot;,&quot;phone&quot;:&quot;+81 210-652-2785&quot;,&quot;username&quot;:&quot;sophiab&quot;,&quot;password&quot;:&quot;sophiabpass&quot;,&quot;birthDate&quot;:&quot;1982-11-6&quot;,&quot;image&quot;:&quot;https://dummyjson.com/icon/sophiab/128&quot;,&quot;bloodGroup&quot;:&quot;O-&quot;,&quot;height&quot;:177.72,&quot;weight&quot;:52.6,&quot;eyeColor&quot;:&quot;Hazel&quot;,&quot;hair&quot;:{&quot;color&quot;:&quot;White&quot;,&quot;type&quot;:&quot;Wavy&quot;},&quot;ip&quot;:&quot;214.225.51.195&quot;,&quot;address&quot;:{&quot;address&quot;:&quot;1642 Ninth Street&quot;,&quot;city&quot;:&quot;Washington&quot;,&quot;state&quot;:&quot;Alabama&quot;,&quot;stateCode&quot;:&quot;AL&quot;,&quot;postalCode&quot;:&quot;32822&quot;,&quot;coordinates&quot;:{&quot;lat&quot;:45.289366,&quot;lng&quot;:46.832664},&quot;country&quot;:&quot;United States&quot;},&quot;macAddress&quot;:&quot;12:a3:d3:6f:5c:5b&quot;,&quot;university&quot;:&quot;Pepperdine University&quot;,&quot;bank&quot;:{&quot;cardExpire&quot;:&quot;10/27&quot;,&quot;cardNumber&quot;:&quot;6011212053392887&quot;,&quot;cardType&quot;:&quot;Discover&quot;,&quot;currency&quot;:&quot;EUR&quot;,&quot;iban&quot;:&quot;DE12191213468288004835&quot;},&quot;company&quot;:{&quot;department&quot;:&quot;Research and Development&quot;,&quot;name&quot;:&quot;Schiller - Zieme&quot;,&quot;title&quot;:&quot;Accountant&quot;,&quot;address&quot;:{&quot;address&quot;:&quot;1896 Washington Street&quot;,&quot;city&quot;:&quot;Dallas&quot;,&quot;state&quot;:&quot;Nevada&quot;,&quot;stateCode&quot;:&quot;NV&quot;,&quot;postalCode&quot;:&quot;88511&quot;,&quot;coordinates&quot;:{&quot;lat&quot;:20.086743,&quot;lng&quot;:-34.577107},&quot;country&quot;:&quot;United States&quot;}},&quot;ein&quot;:&quot;963-113&quot;,&quot;ssn&quot;:&quot;638-461-822&quot;,&quot;userAgent&quot;:&quot;Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Safari/537.36&quot;,&quot;crypto&quot;:{&quot;coin&quot;:&quot;Bitcoin&quot;,&quot;wallet&quot;:&quot;0xb9fc2fe63b2a6c003f1c324c3bfa53259162181a&quot;,&quot;network&quot;:&quot;Ethereum (ERC20)&quot;},&quot;role&quot;:&quot;admin&quot;},{&quot;id&quot;:4,&quot;firstName&quot;:&quot;James&quot;,&quot;lastName&quot;:&quot;Davis&quot;,&quot;maidenName&quot;:&quot;&quot;,&quot;age&quot;:46,&quot;gender&quot;:&quot;male&quot;,&quot;email&quot;:&quot;james.davis@x.dummyjson.com&quot;,&quot;phone&quot;:&quot;+49 614-958-9364&quot;,&quot;username&quot;:&quot;jamesd&quot;,&quot;password&quot;:&quot;jamesdpass&quot;,&quot;birthDate&quot;:&quot;1979-5-4&quot;,&quot;image&quot;:&quot;https://dummyjson.com/icon/jamesd/128&quot;,&quot;bloodGroup&quot;:&quot;AB+&quot;,&quot;height&quot;:193.31,&quot;weight&quot;:62.1,&quot;eyeColor&quot;:&quot;Amber&quot;,&quot;hair&quot;:{&quot;color&quot;:&quot;Blonde&quot;,&quot;type&quot;:&quot;Straight&quot;},&quot;ip&quot;:&quot;101.118.131.66&quot;,&quot;address&quot;:{&quot;address&quot;:&quot;238 Jefferson Street&quot;,&quot;city&quot;:&quot;Seattle&quot;,&quot;state&quot;:&quot;Pennsylvania&quot;,&quot;stateCode&quot;:&quot;PA&quot;,&quot;postalCode&quot;:&quot;68354&quot;,&quot;coordinates&quot;:{&quot;lat&quot;:16.782513,&quot;lng&quot;:-139.34723},&quot;country&quot;:&quot;United States&quot;},&quot;macAddress&quot;:&quot;10:7d:df:1f:97:58&quot;,&quot;university&quot;:&quot;University of Southern California&quot;,&quot;bank&quot;:{&quot;cardExpire&quot;:&quot;07/30&quot;,&quot;cardNumber&quot;:&quot;5303440212268149&quot;,&quot;cardType&quot;:&quot;Mastercard&quot;,&quot;currency&quot;:&quot;CAD&quot;,&quot;iban&quot;:&quot;DE01300746880579852937&quot;},&quot;company&quot;:{&quot;department&quot;:&quot;Support&quot;,&quot;name&quot;:&quot;Pagac and Sons&quot;,&quot;title&quot;:&quot;Research Analyst&quot;,&quot;address&quot;:{&quot;address&quot;:&quot;1622 Lincoln Street&quot;,&quot;city&quot;:&quot;Fort Worth&quot;,&quot;state&quot;:&quot;Pennsylvania&quot;,&quot;stateCode&quot;:&quot;PA&quot;,&quot;postalCode&quot;:&quot;27768&quot;,&quot;coordinates&quot;:{&quot;lat&quot;:54.91193,&quot;lng&quot;:-79.498328},&quot;country&quot;:&quot;United States&quot;}},&quot;ein&quot;:&quot;904-810&quot;,&quot;ssn&quot;:&quot;116-951-314&quot;,&quot;userAgent&quot;:&quot;Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.99 Safari/537.36&quot;,&quot;crypto&quot;:{&quot;coin&quot;:&quot;Bitcoin&quot;,&quot;wallet&quot;:&quot;0xb9fc2fe63b2a6c003f1c324c3bfa53259162181a&quot;,&quot;network&quot;:&quot;Ethereum (ERC20)&quot;},&quot;role&quot;:&quot;admin&quot;},{&quot;id&quot;:5,&quot;firstName&quot;:&quot;Emma&quot;,&quot;lastName&quot;:&quot;Miller&quot;,&quot;maidenName&quot;:&quot;Johnson&quot;,&quot;age&quot;:31,&quot;gender&quot;:&quot;female&quot;,&quot;email&quot;:&quot;emma.miller@x.dummyjson.com&quot;,&quot;phone&quot;:&quot;+91 759-776-1614&quot;,&quot;username&quot;:&quot;emmaj&quot;,&quot;password&quot;:&quot;emmajpass&quot;,&quot;birthDate&quot;:&quot;1994-6-13&quot;,&quot;image&quot;:&quot;https://dummyjson.com/icon/emmaj/128&quot;,&quot;bloodGroup&quot;:&quot;AB-&quot;,&quot;height&quot;:192.8,&quot;weight&quot;:63.62,&quot;eyeColor&quot;:&quot;Green&quot;,&quot;hair&quot;:{&quot;color&quot;:&quot;White&quot;,&quot;type&quot;:&quot;Straight&quot;},&quot;ip&quot;:&quot;224.126.22.183&quot;,&quot;address&quot;:{&quot;address&quot;:&quot;607 Fourth Street&quot;,&quot;city&quot;:&quot;Jacksonville&quot;,&quot;state&quot;:&quot;Colorado&quot;,&quot;stateCode&quot;:&quot;CO&quot;,&quot;postalCode&quot;:&quot;26593&quot;,&quot;coordinates&quot;:{&quot;lat&quot;:0.505589,&quot;lng&quot;:-157.43281},&quot;country&quot;:&quot;United States&quot;},&quot;macAddress&quot;:&quot;32:b9:7e:8d:f5:e8&quot;,&quot;university&quot;:&quot;Northeastern University&quot;,&quot;bank&quot;:{&quot;cardExpire&quot;:&quot;07/30&quot;,&quot;cardNumber&quot;:&quot;5237188057591130&quot;,&quot;cardType&quot;:&quot;Mastercard&quot;,&quot;currency&quot;:&quot;NZD&quot;,&quot;iban&quot;:&quot;DE19182355652037133559&quot;},&quot;company&quot;:{&quot;department&quot;:&quot;Human Resources&quot;,&quot;name&quot;:&quot;Graham - Gulgowski&quot;,&quot;title&quot;:&quot;Quality Assurance Engineer&quot;,&quot;address&quot;:{&quot;address&quot;:&quot;1460 Sixth Street&quot;,&quot;city&quot;:&quot;San Antonio&quot;,&quot;state&quot;:&quot;Idaho&quot;,&quot;stateCode&quot;:&quot;ID&quot;,&quot;postalCode&quot;:&quot;21965&quot;,&quot;coordinates&quot;:{&quot;lat&quot;:44.346545,&quot;lng&quot;:-26.944701},&quot;country&quot;:&quot;United States&quot;}},&quot;ein&quot;:&quot;403-505&quot;,&quot;ssn&quot;:&quot;526-210-885&quot;,&quot;userAgent&quot;:&quot;Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:97.0) Gecko/20100101 Firefox/97.0&quot;,&quot;crypto&quot;:{&quot;coin&quot;:&quot;Bitcoin&quot;,&quot;wallet&quot;:&quot;0xb9fc2fe63b2a6c003f1c324c3bfa53259162181a&quot;,&quot;network&quot;:&quot;Ethereum (ERC20)&quot;},&quot;role&quot;:&quot;admin&quot;},{&quot;id&quot;:6,&quot;firstName&quot;:&quot;Olivia&quot;,&quot;lastName&quot;:&quot;Wilson&quot;,&quot;maidenName&quot;:&quot;&quot;,&quot;age&quot;:23,&quot;gender&quot;:&quot;female&quot;,&quot;email&quot;:&quot;olivia.wilson@x.dummyjson.com&quot;,&quot;phone&quot;:&quot;+91 607-295-6448&quot;,&quot;username&quot;:&quot;oliviaw&quot;,&quot;password&quot;:&quot;oliviawpass&quot;,&quot;birthDate&quot;:&quot;2002-4-20&quot;,&quot;image&quot;:&quot;https://dummyjson.com/icon/oliviaw/128&quot;,&quot;bloodGroup&quot;:&quot;B+&quot;,&quot;height&quot;:182.61,&quot;weight&quot;:58,&quot;eyeColor&quot;:&quot;Hazel&quot;,&quot;hair&quot;:{&quot;color&quot;:&quot;Gray&quot;,&quot;type&quot;:&quot;Curly&quot;},&quot;ip&quot;:&quot;249.178.112.207&quot;,&quot;address&quot;:{&quot;address&quot;:&quot;547 First Street&quot;,&quot;city&quot;:&quot;Fort Worth&quot;,&quot;state&quot;:&quot;Tennessee&quot;,&quot;stateCode&quot;:&quot;TN&quot;,&quot;postalCode&quot;:&quot;83843&quot;,&quot;coordinates&quot;:{&quot;lat&quot;:75.32627,&quot;lng&quot;:-26.15285},&quot;country&quot;:&quot;United States&quot;},&quot;macAddress&quot;:&quot;9c:7f:ea:34:18:19&quot;,&quot;university&quot;:&quot;University of North Carolina--Chapel Hill&quot;,&quot;bank&quot;:{&quot;cardExpire&quot;:&quot;06/30&quot;,&quot;cardNumber&quot;:&quot;376320072452632&quot;,&quot;cardType&quot;:&quot;American Express&quot;,&quot;currency&quot;:&quot;NZD&quot;,&quot;iban&quot;:&quot;DE21153814367894194071&quot;},&quot;company&quot;:{&quot;department&quot;:&quot;Product Management&quot;,&quot;name&quot;:&quot;Pfannerstill Inc&quot;,&quot;title&quot;:&quot;Research Analyst&quot;,&quot;address&quot;:{&quot;address&quot;:&quot;425 Sixth Street&quot;,&quot;city&quot;:&quot;Indianapolis&quot;,&quot;state&quot;:&quot;Oklahoma&quot;,&quot;stateCode&quot;:&quot;OK&quot;,&quot;postalCode&quot;:&quot;74263&quot;,&quot;coordinates&quot;:{&quot;lat&quot;:74.986644,&quot;lng&quot;:-132.916888},&quot;country&quot;:&quot;United States&quot;}},&quot;ein&quot;:&quot;921-709&quot;,&quot;ssn&quot;:&quot;836-772-168&quot;,&quot;userAgent&quot;:&quot;Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.3 Safari/605.1.15&quot;,&quot;crypto&quot;:{&quot;coin&quot;:&quot;Bitcoin&quot;,&quot;wallet&quot;:&quot;0xb9fc2fe63b2a6c003f1c324c3bfa53259162181a&quot;,&quot;network&quot;:&quot;Ethereum (ERC20)&quot;},&quot;role&quot;:&quot;moderator&quot;},{&quot;id&quot;:7,&quot;firstName&quot;:&quot;Alexander&quot;,&quot;lastName&quot;:&quot;Jones&quot;,&quot;maidenName&quot;:&quot;&quot;,&quot;age&quot;:39,&quot;gender&quot;:&quot;male&quot;,&quot;email&quot;:&quot;alexander.jones@x.dummyjson.com&quot;,&quot;phone&quot;:&quot;+61 260-824-4986&quot;,&quot;username&quot;:&quot;alexanderj&quot;,&quot;password&quot;:&quot;alexanderjpass&quot;,&quot;birthDate&quot;:&quot;1986-10-20&quot;,&quot;image&quot;:&quot;https://dummyjson.com/icon/alexanderj/128&quot;,&quot;bloodGroup&quot;:&quot;AB-&quot;,&quot;height&quot;:153.89,&quot;weight&quot;:77.42,&quot;eyeColor&quot;:&quot;Blue&quot;,&quot;hair&quot;:{&quot;color&quot;:&quot;White&quot;,&quot;type&quot;:&quot;Straight&quot;},&quot;ip&quot;:&quot;166.204.84.32&quot;,&quot;address&quot;:{&quot;address&quot;:&quot;664 Maple Street&quot;,&quot;city&quot;:&quot;Indianapolis&quot;,&quot;state&quot;:&quot;Delaware&quot;,&quot;stateCode&quot;:&quot;DE&quot;,&quot;postalCode&quot;:&quot;86684&quot;,&quot;coordinates&quot;:{&quot;lat&quot;:35.289664,&quot;lng&quot;:7.063255},&quot;country&quot;:&quot;United States&quot;},&quot;macAddress&quot;:&quot;d2:64:58:2d:1c:46&quot;,&quot;university&quot;:&quot;University of Illinois--Urbana-Champaign&quot;,&quot;bank&quot;:{&quot;cardExpire&quot;:&quot;12/29&quot;,&quot;cardNumber&quot;:&quot;5189302549548693&quot;,&quot;cardType&quot;:&quot;Mastercard&quot;,&quot;currency&quot;:&quot;PKR&quot;,&quot;iban&quot;:&quot;DE67517655968963441488&quot;},&quot;company&quot;:{&quot;department&quot;:&quot;Engineering&quot;,&quot;name&quot;:&quot;Dickens - Beahan&quot;,&quot;title&quot;:&quot;Web Developer&quot;,&quot;address&quot;:{&quot;address&quot;:&quot;996 Eighth Street&quot;,&quot;city&quot;:&quot;Washington&quot;,&quot;state&quot;:&quot;Kansas&quot;,&quot;stateCode&quot;:&quot;KS&quot;,&quot;postalCode&quot;:&quot;27858&quot;,&quot;coordinates&quot;:{&quot;lat&quot;:-75.462366,&quot;lng&quot;:-128.025697},&quot;country&quot;:&quot;United States&quot;}},&quot;ein&quot;:&quot;638-127&quot;,&quot;ssn&quot;:&quot;722-993-925&quot;,&quot;userAgent&quot;:&quot;Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36&quot;,&quot;crypto&quot;:{&quot;coin&quot;:&quot;Bitcoin&quot;,&quot;wallet&quot;:&quot;0xb9fc2fe63b2a6c003f1c324c3bfa53259162181a&quot;,&quot;network&quot;:&quot;Ethereum (ERC20)&quot;},&quot;role&quot;:&quot;moderator&quot;},{&quot;id&quot;:8,&quot;firstName&quot;:&quot;Ava&quot;,&quot;lastName&quot;:&quot;Taylor&quot;,&quot;maidenName&quot;:&quot;&quot;,&quot;age&quot;:28,&quot;gender&quot;:&quot;female&quot;,&quot;email&quot;:&quot;ava.taylor@x.dummyjson.com&quot;,&quot;phone&quot;:&quot;+1 458-853-7877&quot;,&quot;username&quot;:&quot;avat&quot;,&quot;password&quot;:&quot;avatpass&quot;,&quot;birthDate&quot;:&quot;1997-8-25&quot;,&quot;image&quot;:&quot;https://dummyjson.com/icon/avat/128&quot;,&quot;bloodGroup&quot;:&quot;AB-&quot;,&quot;height&quot;:168.47,&quot;weight&quot;:57.08,&quot;eyeColor&quot;:&quot;Hazel&quot;,&quot;hair&quot;:{&quot;color&quot;:&quot;Red&quot;,&quot;type&quot;:&quot;Kinky&quot;},&quot;ip&quot;:&quot;150.73.197.233&quot;,&quot;address&quot;:{&quot;address&quot;:&quot;1197 First Street&quot;,&quot;city&quot;:&quot;Fort Worth&quot;,&quot;state&quot;:&quot;Rhode Island&quot;,&quot;stateCode&quot;:&quot;RI&quot;,&quot;postalCode&quot;:&quot;24771&quot;,&quot;coordinates&quot;:{&quot;lat&quot;:-81.194833,&quot;lng&quot;:-87.948158},&quot;country&quot;:&quot;United States&quot;},&quot;macAddress&quot;:&quot;8d:2e:c2:d6:e7:a8&quot;,&quot;university&quot;:&quot;University of Wisconsin--Madison&quot;,&quot;bank&quot;:{&quot;cardExpire&quot;:&quot;08/30&quot;,&quot;cardNumber&quot;:&quot;5349974103330333&quot;,&quot;cardType&quot;:&quot;Mastercard&quot;,&quot;currency&quot;:&quot;EUR&quot;,&quot;iban&quot;:&quot;FR94ZM2MMGL1EVYQE1ZLCVCFH83&quot;},&quot;company&quot;:{&quot;department&quot;:&quot;Marketing&quot;,&quot;name&quot;:&quot;Nikolaus Inc&quot;,&quot;title&quot;:&quot;Chief Executive Officer&quot;,&quot;address&quot;:{&quot;address&quot;:&quot;930 Lincoln Street&quot;,&quot;city&quot;:&quot;Austin&quot;,&quot;state&quot;:&quot;Colorado&quot;,&quot;stateCode&quot;:&quot;CO&quot;,&quot;postalCode&quot;:&quot;47592&quot;,&quot;coordinates&quot;:{&quot;lat&quot;:87.970083,&quot;lng&quot;:-42.769351},&quot;country&quot;:&quot;United States&quot;}},&quot;ein&quot;:&quot;297-762&quot;,&quot;ssn&quot;:&quot;257-419-109&quot;,&quot;userAgent&quot;:&quot;Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Safari/537.36&quot;,&quot;crypto&quot;:{&quot;coin&quot;:&quot;Bitcoin&quot;,&quot;wallet&quot;:&quot;0xb9fc2fe63b2a6c003f1c324c3bfa53259162181a&quot;,&quot;network&quot;:&quot;Ethereum (ERC20)&quot;},&quot;role&quot;:&quot;moderator&quot;},{&quot;id&quot;:9,&quot;firstName&quot;:&quot;Ethan&quot;,&quot;lastName&quot;:&quot;Martinez&quot;,&quot;maidenName&quot;:&quot;&quot;,&quot;age&quot;:34,&quot;gender&quot;:&quot;male&quot;,&quot;email&quot;:&quot;ethan.martinez@x.dummyjson.com&quot;,&quot;phone&quot;:&quot;+92 933-608-5081&quot;,&quot;username&quot;:&quot;ethanm&quot;,&quot;password&quot;:&quot;ethanmpass&quot;,&quot;birthDate&quot;:&quot;1991-2-12&quot;,&quot;image&quot;:&quot;https://dummyjson.com/icon/ethanm/128&quot;,&quot;bloodGroup&quot;:&quot;AB+&quot;,&quot;height&quot;:159.19,&quot;weight&quot;:68.81,&quot;eyeColor&quot;:&quot;Hazel&quot;,&quot;hair&quot;:{&quot;color&quot;:&quot;Purple&quot;,&quot;type&quot;:&quot;Curly&quot;},&quot;ip&quot;:&quot;63.191.127.71&quot;,&quot;address&quot;:{&quot;address&quot;:&quot;466 Pine Street&quot;,&quot;city&quot;:&quot;San Antonio&quot;,&quot;state&quot;:&quot;Louisiana&quot;,&quot;stateCode&quot;:&quot;LA&quot;,&quot;postalCode&quot;:&quot;72360&quot;,&quot;coordinates&quot;:{&quot;lat&quot;:74.074918,&quot;lng&quot;:-25.312703},&quot;country&quot;:&quot;United States&quot;},&quot;macAddress&quot;:&quot;59:e:9e:e3:29:da&quot;,&quot;university&quot;:&quot;Syracuse University&quot;,&quot;bank&quot;:{&quot;cardExpire&quot;:&quot;10/27&quot;,&quot;cardNumber&quot;:&quot;3598603288061479&quot;,&quot;cardType&quot;:&quot;JCB&quot;,&quot;currency&quot;:&quot;GBP&quot;,&quot;iban&quot;:&quot;GB26PND7D83JTW4HL6LZ71&quot;},&quot;company&quot;:{&quot;department&quot;:&quot;Support&quot;,&quot;name&quot;:&quot;Gorczany - Gottlieb&quot;,&quot;title&quot;:&quot;Legal Counsel&quot;,&quot;address&quot;:{&quot;address&quot;:&quot;1597 Oak Street&quot;,&quot;city&quot;:&quot;Chicago&quot;,&quot;state&quot;:&quot;Florida&quot;,&quot;stateCode&quot;:&quot;FL&quot;,&quot;postalCode&quot;:&quot;28100&quot;,&quot;coordinates&quot;:{&quot;lat&quot;:-67.45208,&quot;lng&quot;:-23.209886},&quot;country&quot;:&quot;United States&quot;}},&quot;ein&quot;:&quot;790-434&quot;,&quot;ssn&quot;:&quot;569-650-348&quot;,&quot;userAgent&quot;:&quot;Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36&quot;,&quot;crypto&quot;:{&quot;coin&quot;:&quot;Bitcoin&quot;,&quot;wallet&quot;:&quot;0xb9fc2fe63b2a6c003f1c324c3bfa53259162181a&quot;,&quot;network&quot;:&quot;Ethereum (ERC20)&quot;},&quot;role&quot;:&quot;moderator&quot;},{&quot;id&quot;:10,&quot;firstName&quot;:&quot;Isabella&quot;,&quot;lastName&quot;:&quot;Anderson&quot;,&quot;maidenName&quot;:&quot;Davis&quot;,&quot;age&quot;:32,&quot;gender&quot;:&quot;female&quot;,&quot;email&quot;:&quot;isabella.anderson@x.dummyjson.com&quot;,&quot;phone&quot;:&quot;+49 770-658-4885&quot;,&quot;username&quot;:&quot;isabellad&quot;,&quot;password&quot;:&quot;isabelladpass&quot;,&quot;birthDate&quot;:&quot;1993-6-10&quot;,&quot;image&quot;:&quot;https://dummyjson.com/icon/isabellad/128&quot;,&quot;bloodGroup&quot;:&quot;A-&quot;,&quot;height&quot;:150.56,&quot;weight&quot;:50.1,&quot;eyeColor&quot;:&quot;Brown&quot;,&quot;hair&quot;:{&quot;color&quot;:&quot;Blonde&quot;,&quot;type&quot;:&quot;Curly&quot;},&quot;ip&quot;:&quot;114.9.114.205&quot;,&quot;address&quot;:{&quot;address&quot;:&quot;1964 Oak Street&quot;,&quot;city&quot;:&quot;New York&quot;,&quot;state&quot;:&quot;Utah&quot;,&quot;stateCode&quot;:&quot;UT&quot;,&quot;postalCode&quot;:&quot;89352&quot;,&quot;coordinates&quot;:{&quot;lat&quot;:41.331324,&quot;lng&quot;:151.782727},&quot;country&quot;:&quot;United States&quot;},&quot;macAddress&quot;:&quot;b1:b0:d0:a2:82:80&quot;,&quot;university&quot;:&quot;California Institute of Technology (Caltech)&quot;,&quot;bank&quot;:{&quot;cardExpire&quot;:&quot;03/30&quot;,&quot;cardNumber&quot;:&quot;3602093733952858&quot;,&quot;cardType&quot;:&quot;Diners Club International&quot;,&quot;currency&quot;:&quot;USD&quot;,&quot;iban&quot;:&quot;DE12934874962442340025&quot;},&quot;company&quot;:{&quot;department&quot;:&quot;Marketing&quot;,&quot;name&quot;:&quot;Pollich - Hilpert&quot;,&quot;title&quot;:&quot;Chief Financial Officer&quot;,&quot;address&quot;:{&quot;address&quot;:&quot;1029 Adams Street&quot;,&quot;city&quot;:&quot;San Diego&quot;,&quot;state&quot;:&quot;Maryland&quot;,&quot;stateCode&quot;:&quot;MD&quot;,&quot;postalCode&quot;:&quot;63847&quot;,&quot;coordinates&quot;:{&quot;lat&quot;:-25.843393,&quot;lng&quot;:-62.692681},&quot;country&quot;:&quot;United States&quot;}},&quot;ein&quot;:&quot;127-297&quot;,&quot;ssn&quot;:&quot;902-438-728&quot;,&quot;userAgent&quot;:&quot;Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.93 Safari/537.36&quot;,&quot;crypto&quot;:{&quot;coin&quot;:&quot;Bitcoin&quot;,&quot;wallet&quot;:&quot;0xb9fc2fe63b2a6c003f1c324c3bfa53259162181a&quot;,&quot;network&quot;:&quot;Ethereum (ERC20)&quot;},&quot;role&quot;:&quot;moderator&quot;},{&quot;id&quot;:11,&quot;firstName&quot;:&quot;Liam&quot;,&quot;lastName&quot;:&quot;Garcia&quot;,&quot;maidenName&quot;:&quot;&quot;,&quot;age&quot;:30,&quot;gender&quot;:&quot;male&quot;,&quot;email&quot;:&quot;liam.garcia@x.dummyjson.com&quot;,&quot;phone&quot;:&quot;+92 870-217-6201&quot;,&quot;username&quot;:&quot;liamg&quot;,&quot;password&quot;:&quot;liamgpass&quot;,&quot;birthDate&quot;:&quot;1995-6-6&quot;,&quot;image&quot;:&quot;https://dummyjson.com/icon/liamg/128&quot;,&quot;bloodGroup&quot;:&quot;AB-&quot;,&quot;height&quot;:162.32,&quot;weight&quot;:93.16,&quot;eyeColor&quot;:&quot;Violet&quot;,&quot;hair&quot;:{&quot;color&quot;:&quot;Red&quot;,&quot;type&quot;:&quot;Wavy&quot;},&quot;ip&quot;:&quot;56.201.85.9&quot;,&quot;address&quot;:{&quot;address&quot;:&quot;576 Fifth Street&quot;,&quot;city&quot;:&quot;Denver&quot;,&quot;state&quot;:&quot;South Dakota&quot;,&quot;stateCode&quot;:&quot;SD&quot;,&quot;postalCode&quot;:&quot;57252&quot;,&quot;coordinates&quot;:{&quot;lat&quot;:-66.218177,&quot;lng&quot;:-145.340165},&quot;country&quot;:&quot;United States&quot;},&quot;macAddress&quot;:&quot;31:9a:28:8b:99:6c&quot;,&quot;university&quot;:&quot;Ohio State University&quot;,&quot;bank&quot;:{&quot;cardExpire&quot;:&quot;12/29&quot;,&quot;cardNumber&quot;:&quot;3614993744940956&quot;,&quot;cardType&quot;:&quot;Diners Club International&quot;,&quot;currency&quot;:&quot;USD&quot;,&quot;iban&quot;:&quot;DE65581882748067758114&quot;},&quot;company&quot;:{&quot;department&quot;:&quot;Services&quot;,&quot;name&quot;:&quot;Considine - Torp&quot;,&quot;title&quot;:&quot;Web Developer&quot;,&quot;address&quot;:{&quot;address&quot;:&quot;27 Cedar Street&quot;,&quot;city&quot;:&quot;Philadelphia&quot;,&quot;state&quot;:&quot;Connecticut&quot;,&quot;stateCode&quot;:&quot;CT&quot;,&quot;postalCode&quot;:&quot;79574&quot;,&quot;coordinates&quot;:{&quot;lat&quot;:-81.841588,&quot;lng&quot;:31.79423},&quot;country&quot;:&quot;United States&quot;}},&quot;ein&quot;:&quot;326-604&quot;,&quot;ssn&quot;:&quot;933-784-949&quot;,&quot;userAgent&quot;:&quot;Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.99 Safari/537.36&quot;,&quot;crypto&quot;:{&quot;coin&quot;:&quot;Bitcoin&quot;,&quot;wallet&quot;:&quot;0xb9fc2fe63b2a6c003f1c324c3bfa53259162181a&quot;,&quot;network&quot;:&quot;Ethereum (ERC20)&quot;},&quot;role&quot;:&quot;moderator&quot;},{&quot;id&quot;:12,&quot;firstName&quot;:&quot;Mia&quot;,&quot;lastName&quot;:&quot;Rodriguez&quot;,&quot;maidenName&quot;:&quot;&quot;,&quot;age&quot;:25,&quot;gender&quot;:&quot;female&quot;,&quot;email&quot;:&quot;mia.rodriguez@x.dummyjson.com&quot;,&quot;phone&quot;:&quot;+49 989-461-8403&quot;,&quot;username&quot;:&quot;miar&quot;,&quot;password&quot;:&quot;miarpass&quot;,&quot;birthDate&quot;:&quot;2000-8-4&quot;,&quot;image&quot;:&quot;https://dummyjson.com/icon/miar/128&quot;,&quot;bloodGroup&quot;:&quot;O-&quot;,&quot;height&quot;:188.08,&quot;weight&quot;:56.03,&quot;eyeColor&quot;:&quot;Blue&quot;,&quot;hair&quot;:{&quot;color&quot;:&quot;Purple&quot;,&quot;type&quot;:&quot;Wavy&quot;},&quot;ip&quot;:&quot;11.72.253.90&quot;,&quot;address&quot;:{&quot;address&quot;:&quot;1627 Sixth Street&quot;,&quot;city&quot;:&quot;Jacksonville&quot;,&quot;state&quot;:&quot;West Virginia&quot;,&quot;stateCode&quot;:&quot;WV&quot;,&quot;postalCode&quot;:&quot;41810&quot;,&quot;coordinates&quot;:{&quot;lat&quot;:24.857497,&quot;lng&quot;:-34.865429},&quot;country&quot;:&quot;United States&quot;},&quot;macAddress&quot;:&quot;53:d7:a4:6:1e:58&quot;,&quot;university&quot;:&quot;William &amp; Mary&quot;,&quot;bank&quot;:{&quot;cardExpire&quot;:&quot;02/29&quot;,&quot;cardNumber&quot;:&quot;343932350909214&quot;,&quot;cardType&quot;:&quot;American Express&quot;,&quot;currency&quot;:&quot;CAD&quot;,&quot;iban&quot;:&quot;DE77118774979880310165&quot;},&quot;company&quot;:{&quot;department&quot;:&quot;Accounting&quot;,&quot;name&quot;:&quot;Miller, Schowalter and Wisozk&quot;,&quot;title&quot;:&quot;Business Analyst&quot;,&quot;address&quot;:{&quot;address&quot;:&quot;1039 Washington Street&quot;,&quot;city&quot;:&quot;Philadelphia&quot;,&quot;state&quot;:&quot;New Jersey&quot;,&quot;stateCode&quot;:&quot;NJ&quot;,&quot;postalCode&quot;:&quot;57518&quot;,&quot;coordinates&quot;:{&quot;lat&quot;:85.455933,&quot;lng&quot;:164.246103},&quot;country&quot;:&quot;United States&quot;}},&quot;ein&quot;:&quot;754-660&quot;,&quot;ssn&quot;:&quot;749-524-124&quot;,&quot;userAgent&quot;:&quot;Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.54 Safari/537.36&quot;,&quot;crypto&quot;:{&quot;coin&quot;:&quot;Bitcoin&quot;,&quot;wallet&quot;:&quot;0xb9fc2fe63b2a6c003f1c324c3bfa53259162181a&quot;,&quot;network&quot;:&quot;Ethereum (ERC20)&quot;},&quot;role&quot;:&quot;moderator&quot;},{&quot;id&quot;:13,&quot;firstName&quot;:&quot;Noah&quot;,&quot;lastName&quot;:&quot;Hernandez&quot;,&quot;maidenName&quot;:&quot;&quot;,&quot;age&quot;:41,&quot;gender&quot;:&quot;male&quot;,&quot;email&quot;:&quot;noah.hernandez@x.dummyjson.com&quot;,&quot;phone&quot;:&quot;+49 393-605-6968&quot;,&quot;username&quot;:&quot;noahh&quot;,&quot;password&quot;:&quot;noahhpass&quot;,&quot;birthDate&quot;:&quot;1984-6-5&quot;,&quot;image&quot;:&quot;https://dummyjson.com/icon/noahh/128&quot;,&quot;bloodGroup&quot;:&quot;AB+&quot;,&quot;height&quot;:188.62,&quot;weight&quot;:69.49,&quot;eyeColor&quot;:&quot;Brown&quot;,&quot;hair&quot;:{&quot;color&quot;:&quot;Red&quot;,&quot;type&quot;:&quot;Curly&quot;},&quot;ip&quot;:&quot;169.154.126.57&quot;,&quot;address&quot;:{&quot;address&quot;:&quot;1413 Maple Street&quot;,&quot;city&quot;:&quot;New York&quot;,&quot;state&quot;:&quot;North Dakota&quot;,&quot;stateCode&quot;:&quot;ND&quot;,&quot;postalCode&quot;:&quot;73696&quot;,&quot;coordinates&quot;:{&quot;lat&quot;:-25.0377,&quot;lng&quot;:-151.70469},&quot;country&quot;:&quot;United States&quot;},&quot;macAddress&quot;:&quot;d4:fe:ae:8f:eb:a3&quot;,&quot;university&quot;:&quot;New York University (NYU)&quot;,&quot;bank&quot;:{&quot;cardExpire&quot;:&quot;03/30&quot;,&quot;cardNumber&quot;:&quot;6262462852322850&quot;,&quot;cardType&quot;:&quot;UnionPay&quot;,&quot;currency&quot;:&quot;PKR&quot;,&quot;iban&quot;:&quot;DE13437032020581217601&quot;},&quot;company&quot;:{&quot;department&quot;:&quot;Engineering&quot;,&quot;name&quot;:&quot;Botsford, Marquardt and Roberts&quot;,&quot;title&quot;:&quot;Database Administrator&quot;,&quot;address&quot;:{&quot;address&quot;:&quot;62 Third Street&quot;,&quot;city&quot;:&quot;Seattle&quot;,&quot;state&quot;:&quot;Oregon&quot;,&quot;stateCode&quot;:&quot;OR&quot;,&quot;postalCode&quot;:&quot;83474&quot;,&quot;coordinates&quot;:{&quot;lat&quot;:19.490447,&quot;lng&quot;:-13.173207},&quot;country&quot;:&quot;United States&quot;}},&quot;ein&quot;:&quot;877-628&quot;,&quot;ssn&quot;:&quot;660-847-389&quot;,&quot;userAgent&quot;:&quot;Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.54 Safari/537.36&quot;,&quot;crypto&quot;:{&quot;coin&quot;:&quot;Bitcoin&quot;,&quot;wallet&quot;:&quot;0xb9fc2fe63b2a6c003f1c324c3bfa53259162181a&quot;,&quot;network&quot;:&quot;Ethereum (ERC20)&quot;},&quot;role&quot;:&quot;moderator&quot;},{&quot;id&quot;:14,&quot;firstName&quot;:&quot;Charlotte&quot;,&quot;lastName&quot;:&quot;Lopez&quot;,&quot;maidenName&quot;:&quot;Martinez&quot;,&quot;age&quot;:37,&quot;gender&quot;:&quot;female&quot;,&quot;email&quot;:&quot;charlotte.lopez@x.dummyjson.com&quot;,&quot;phone&quot;:&quot;+44 373-953-5028&quot;,&quot;username&quot;:&quot;charlottem&quot;,&quot;password&quot;:&quot;charlottempass&quot;,&quot;birthDate&quot;:&quot;1988-6-8&quot;,&quot;image&quot;:&quot;https://dummyjson.com/icon/charlottem/128&quot;,&quot;bloodGroup&quot;:&quot;AB-&quot;,&quot;height&quot;:178.92,&quot;weight&quot;:82.46,&quot;eyeColor&quot;:&quot;Brown&quot;,&quot;hair&quot;:{&quot;color&quot;:&quot;Gray&quot;,&quot;type&quot;:&quot;Kinky&quot;},&quot;ip&quot;:&quot;119.103.95.60&quot;,&quot;address&quot;:{&quot;address&quot;:&quot;208 Second Street&quot;,&quot;city&quot;:&quot;Columbus&quot;,&quot;state&quot;:&quot;Ohio&quot;,&quot;stateCode&quot;:&quot;OH&quot;,&quot;postalCode&quot;:&quot;42044&quot;,&quot;coordinates&quot;:{&quot;lat&quot;:-44.443762,&quot;lng&quot;:-151.420561},&quot;country&quot;:&quot;United States&quot;},&quot;macAddress&quot;:&quot;f6:ff:37:aa:6c:f1&quot;,&quot;university&quot;:&quot;Northeastern University&quot;,&quot;bank&quot;:{&quot;cardExpire&quot;:&quot;12/27&quot;,&quot;cardNumber&quot;:&quot;3634388457177035&quot;,&quot;cardType&quot;:&quot;Diners Club International&quot;,&quot;currency&quot;:&quot;PKR&quot;,&quot;iban&quot;:&quot;DE54092147842698685963&quot;},&quot;company&quot;:{&quot;department&quot;:&quot;Accounting&quot;,&quot;name&quot;:&quot;Zulauf and Sons&quot;,&quot;title&quot;:&quot;Chief Executive Officer&quot;,&quot;address&quot;:{&quot;address&quot;:&quot;569 Jefferson Street&quot;,&quot;city&quot;:&quot;Los Angeles&quot;,&quot;state&quot;:&quot;Montana&quot;,&quot;stateCode&quot;:&quot;MT&quot;,&quot;postalCode&quot;:&quot;17779&quot;,&quot;coordinates&quot;:{&quot;lat&quot;:-18.371256,&quot;lng&quot;:22.566258},&quot;country&quot;:&quot;United States&quot;}},&quot;ein&quot;:&quot;364-782&quot;,&quot;ssn&quot;:&quot;255-491-479&quot;,&quot;userAgent&quot;:&quot;Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Safari/537.36&quot;,&quot;crypto&quot;:{&quot;coin&quot;:&quot;Bitcoin&quot;,&quot;wallet&quot;:&quot;0xb9fc2fe63b2a6c003f1c324c3bfa53259162181a&quot;,&quot;network&quot;:&quot;Ethereum (ERC20)&quot;},&quot;role&quot;:&quot;moderator&quot;},{&quot;id&quot;:15,&quot;firstName&quot;:&quot;William&quot;,&quot;lastName&quot;:&quot;Gonzalez&quot;,&quot;maidenName&quot;:&quot;&quot;,&quot;age&quot;:33,&quot;gender&quot;:&quot;male&quot;,&quot;email&quot;:&quot;william.gonzalez@x.dummyjson.com&quot;,&quot;phone&quot;:&quot;+81 905-252-7319&quot;,&quot;username&quot;:&quot;williamg&quot;,&quot;password&quot;:&quot;williamgpass&quot;,&quot;birthDate&quot;:&quot;1992-3-27&quot;,&quot;image&quot;:&quot;https://dummyjson.com/icon/williamg/128&quot;,&quot;bloodGroup&quot;:&quot;B-&quot;,&quot;height&quot;:173.21,&quot;weight&quot;:82.41,&quot;eyeColor&quot;:&quot;Hazel&quot;,&quot;hair&quot;:{&quot;color&quot;:&quot;Gray&quot;,&quot;type&quot;:&quot;Curly&quot;},&quot;ip&quot;:&quot;250.2.241.204&quot;,&quot;address&quot;:{&quot;address&quot;:&quot;31 Maple Street&quot;,&quot;city&quot;:&quot;San Jose&quot;,&quot;state&quot;:&quot;Utah&quot;,&quot;stateCode&quot;:&quot;UT&quot;,&quot;postalCode&quot;:&quot;78243&quot;,&quot;coordinates&quot;:{&quot;lat&quot;:8.152876,&quot;lng&quot;:113.29799},&quot;country&quot;:&quot;United States&quot;},&quot;macAddress&quot;:&quot;f5:68:28:f9:ec:89&quot;,&quot;university&quot;:&quot;Tufts University&quot;,&quot;bank&quot;:{&quot;cardExpire&quot;:&quot;05/30&quot;,&quot;cardNumber&quot;:&quot;6228256225004929&quot;,&quot;cardType&quot;:&quot;UnionPay&quot;,&quot;currency&quot;:&quot;PKR&quot;,&quot;iban&quot;:&quot;DE63711022986572448914&quot;},&quot;company&quot;:{&quot;department&quot;:&quot;Marketing&quot;,&quot;name&quot;:&quot;Spinka - Dickinson&quot;,&quot;title&quot;:&quot;Software Architect&quot;,&quot;address&quot;:{&quot;address&quot;:&quot;1538 Eighth Street&quot;,&quot;city&quot;:&quot;San Jose&quot;,&quot;state&quot;:&quot;Missouri&quot;,&quot;stateCode&quot;:&quot;MO&quot;,&quot;postalCode&quot;:&quot;29673&quot;,&quot;coordinates&quot;:{&quot;lat&quot;:24.169361,&quot;lng&quot;:-29.395167},&quot;country&quot;:&quot;United States&quot;}},&quot;ein&quot;:&quot;830-515&quot;,&quot;ssn&quot;:&quot;690-544-755&quot;,&quot;userAgent&quot;:&quot;Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.93 Safari/537.36&quot;,&quot;crypto&quot;:{&quot;coin&quot;:&quot;Bitcoin&quot;,&quot;wallet&quot;:&quot;0xb9fc2fe63b2a6c003f1c324c3bfa53259162181a&quot;,&quot;network&quot;:&quot;Ethereum (ERC20)&quot;},&quot;role&quot;:&quot;moderator&quot;},{&quot;id&quot;:16,&quot;firstName&quot;:&quot;Avery&quot;,&quot;lastName&quot;:&quot;Perez&quot;,&quot;maidenName&quot;:&quot;&quot;,&quot;age&quot;:26,&quot;gender&quot;:&quot;female&quot;,&quot;email&quot;:&quot;avery.perez@x.dummyjson.com&quot;,&quot;phone&quot;:&quot;+61 731-431-3457&quot;,&quot;username&quot;:&quot;averyp&quot;,&quot;password&quot;:&quot;averyppass&quot;,&quot;birthDate&quot;:&quot;1999-3-10&quot;,&quot;image&quot;:&quot;https://dummyjson.com/icon/averyp/128&quot;,&quot;bloodGroup&quot;:&quot;O-&quot;,&quot;height&quot;:172.68,&quot;weight&quot;:93.9,&quot;eyeColor&quot;:&quot;Brown&quot;,&quot;hair&quot;:{&quot;color&quot;:&quot;Green&quot;,&quot;type&quot;:&quot;Curly&quot;},&quot;ip&quot;:&quot;131.217.4.214&quot;,&quot;address&quot;:{&quot;address&quot;:&quot;1125 First Street&quot;,&quot;city&quot;:&quot;Columbus&quot;,&quot;state&quot;:&quot;Iowa&quot;,&quot;stateCode&quot;:&quot;IA&quot;,&quot;postalCode&quot;:&quot;30973&quot;,&quot;coordinates&quot;:{&quot;lat&quot;:12.789127,&quot;lng&quot;:85.792598},&quot;country&quot;:&quot;United States&quot;},&quot;macAddress&quot;:&quot;b3:ff:f3:c5:37:46&quot;,&quot;university&quot;:&quot;Harvard University&quot;,&quot;bank&quot;:{&quot;cardExpire&quot;:&quot;08/29&quot;,&quot;cardNumber&quot;:&quot;378024038311910&quot;,&quot;cardType&quot;:&quot;American Express&quot;,&quot;currency&quot;:&quot;USD&quot;,&quot;iban&quot;:&quot;DE42403186906981858976&quot;},&quot;company&quot;:{&quot;department&quot;:&quot;Accounting&quot;,&quot;name&quot;:&quot;Herzog Inc&quot;,&quot;title&quot;:&quot;Database Administrator&quot;,&quot;address&quot;:{&quot;address&quot;:&quot;183 Maple Street&quot;,&quot;city&quot;:&quot;New York&quot;,&quot;state&quot;:&quot;Rhode Island&quot;,&quot;stateCode&quot;:&quot;RI&quot;,&quot;postalCode&quot;:&quot;45238&quot;,&quot;coordinates&quot;:{&quot;lat&quot;:-53.318189,&quot;lng&quot;:105.835271},&quot;country&quot;:&quot;United States&quot;}},&quot;ein&quot;:&quot;348-493&quot;,&quot;ssn&quot;:&quot;679-523-686&quot;,&quot;userAgent&quot;:&quot;Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36&quot;,&quot;crypto&quot;:{&quot;coin&quot;:&quot;Bitcoin&quot;,&quot;wallet&quot;:&quot;0xb9fc2fe63b2a6c003f1c324c3bfa53259162181a&quot;,&quot;network&quot;:&quot;Ethereum (ERC20)&quot;},&quot;role&quot;:&quot;user&quot;},{&quot;id&quot;:17,&quot;firstName&quot;:&quot;Evelyn&quot;,&quot;lastName&quot;:&quot;Sanchez&quot;,&quot;maidenName&quot;:&quot;&quot;,&quot;age&quot;:38,&quot;gender&quot;:&quot;female&quot;,&quot;email&quot;:&quot;evelyn.sanchez@x.dummyjson.com&quot;,&quot;phone&quot;:&quot;+1 623-880-6871&quot;,&quot;username&quot;:&quot;evelyns&quot;,&quot;password&quot;:&quot;evelynspass&quot;,&quot;birthDate&quot;:&quot;1987-10-13&quot;,&quot;image&quot;:&quot;https://dummyjson.com/icon/evelyns/128&quot;,&quot;bloodGroup&quot;:&quot;B+&quot;,&quot;height&quot;:184.08,&quot;weight&quot;:83.15,&quot;eyeColor&quot;:&quot;Violet&quot;,&quot;hair&quot;:{&quot;color&quot;:&quot;Blue&quot;,&quot;type&quot;:&quot;Curly&quot;},&quot;ip&quot;:&quot;87.114.135.146&quot;,&quot;address&quot;:{&quot;address&quot;:&quot;1170 Lincoln Street&quot;,&quot;city&quot;:&quot;San Diego&quot;,&quot;state&quot;:&quot;Wyoming&quot;,&quot;stateCode&quot;:&quot;WY&quot;,&quot;postalCode&quot;:&quot;43423&quot;,&quot;coordinates&quot;:{&quot;lat&quot;:-83.31484,&quot;lng&quot;:11.768071},&quot;country&quot;:&quot;United States&quot;},&quot;macAddress&quot;:&quot;f8:e5:bd:43:bc:d8&quot;,&quot;university&quot;:&quot;Washington University in St. Louis&quot;,&quot;bank&quot;:{&quot;cardExpire&quot;:&quot;01/29&quot;,&quot;cardNumber&quot;:&quot;3514443781649095&quot;,&quot;cardType&quot;:&quot;JCB&quot;,&quot;currency&quot;:&quot;GBP&quot;,&quot;iban&quot;:&quot;GB74239MLVNQ0UB9ANTFRM&quot;},&quot;company&quot;:{&quot;department&quot;:&quot;Support&quot;,&quot;name&quot;:&quot;Predovic - Johns&quot;,&quot;title&quot;:&quot;Chief Financial Officer&quot;,&quot;address&quot;:{&quot;address&quot;:&quot;1802 Ninth Street&quot;,&quot;city&quot;:&quot;San Diego&quot;,&quot;state&quot;:&quot;Minnesota&quot;,&quot;stateCode&quot;:&quot;MN&quot;,&quot;postalCode&quot;:&quot;89416&quot;,&quot;coordinates&quot;:{&quot;lat&quot;:29.034592,&quot;lng&quot;:-78.004598},&quot;country&quot;:&quot;United States&quot;}},&quot;ein&quot;:&quot;604-817&quot;,&quot;ssn&quot;:&quot;689-332-644&quot;,&quot;userAgent&quot;:&quot;Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Safari/537.36&quot;,&quot;crypto&quot;:{&quot;coin&quot;:&quot;Bitcoin&quot;,&quot;wallet&quot;:&quot;0xb9fc2fe63b2a6c003f1c324c3bfa53259162181a&quot;,&quot;network&quot;:&quot;Ethereum (ERC20)&quot;},&quot;role&quot;:&quot;user&quot;},{&quot;id&quot;:18,&quot;firstName&quot;:&quot;Logan&quot;,&quot;lastName&quot;:&quot;Torres&quot;,&quot;maidenName&quot;:&quot;&quot;,&quot;age&quot;:32,&quot;gender&quot;:&quot;male&quot;,&quot;email&quot;:&quot;logan.torres@x.dummyjson.com&quot;,&quot;phone&quot;:&quot;+81 507-434-8733&quot;,&quot;username&quot;:&quot;logant&quot;,&quot;password&quot;:&quot;logantpass&quot;,&quot;birthDate&quot;:&quot;1993-10-26&quot;,&quot;image&quot;:&quot;https://dummyjson.com/icon/logant/128&quot;,&quot;bloodGroup&quot;:&quot;A+&quot;,&quot;height&quot;:190.04,&quot;weight&quot;:72.43,&quot;eyeColor&quot;:&quot;Green&quot;,&quot;hair&quot;:{&quot;color&quot;:&quot;Green&quot;,&quot;type&quot;:&quot;Curly&quot;},&quot;ip&quot;:&quot;155.98.15.162&quot;,&quot;address&quot;:{&quot;address&quot;:&quot;907 Seventh Street&quot;,&quot;city&quot;:&quot;Columbus&quot;,&quot;state&quot;:&quot;Arkansas&quot;,&quot;stateCode&quot;:&quot;AR&quot;,&quot;postalCode&quot;:&quot;78805&quot;,&quot;coordinates&quot;:{&quot;lat&quot;:-64.846516,&quot;lng&quot;:174.775744},&quot;country&quot;:&quot;United States&quot;},&quot;macAddress&quot;:&quot;40:d:5c:1:7d:bf&quot;,&quot;university&quot;:&quot;University of Illinois--Urbana-Champaign&quot;,&quot;bank&quot;:{&quot;cardExpire&quot;:&quot;04/30&quot;,&quot;cardNumber&quot;:&quot;6258651210557142&quot;,&quot;cardType&quot;:&quot;UnionPay&quot;,&quot;currency&quot;:&quot;EUR&quot;,&quot;iban&quot;:&quot;ES1171429445321693077621&quot;},&quot;company&quot;:{&quot;department&quot;:&quot;Training&quot;,&quot;name&quot;:&quot;Jast - Nader&quot;,&quot;title&quot;:&quot;Data Analyst&quot;,&quot;address&quot;:{&quot;address&quot;:&quot;947 Main Street&quot;,&quot;city&quot;:&quot;Denver&quot;,&quot;state&quot;:&quot;Minnesota&quot;,&quot;stateCode&quot;:&quot;MN&quot;,&quot;postalCode&quot;:&quot;71896&quot;,&quot;coordinates&quot;:{&quot;lat&quot;:-24.654063,&quot;lng&quot;:-147.255268},&quot;country&quot;:&quot;United States&quot;}},&quot;ein&quot;:&quot;576-218&quot;,&quot;ssn&quot;:&quot;806-639-934&quot;,&quot;userAgent&quot;:&quot;Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Safari/537.36&quot;,&quot;crypto&quot;:{&quot;coin&quot;:&quot;Bitcoin&quot;,&quot;wallet&quot;:&quot;0xb9fc2fe63b2a6c003f1c324c3bfa53259162181a&quot;,&quot;network&quot;:&quot;Ethereum (ERC20)&quot;},&quot;role&quot;:&quot;user&quot;},{&quot;id&quot;:19,&quot;firstName&quot;:&quot;Abigail&quot;,&quot;lastName&quot;:&quot;Rivera&quot;,&quot;maidenName&quot;:&quot;&quot;,&quot;age&quot;:29,&quot;gender&quot;:&quot;female&quot;,&quot;email&quot;:&quot;abigail.rivera@x.dummyjson.com&quot;,&quot;phone&quot;:&quot;+91 228-363-7806&quot;,&quot;username&quot;:&quot;abigailr&quot;,&quot;password&quot;:&quot;abigailrpass&quot;,&quot;birthDate&quot;:&quot;1996-10-11&quot;,&quot;image&quot;:&quot;https://dummyjson.com/icon/abigailr/128&quot;,&quot;bloodGroup&quot;:&quot;B+&quot;,&quot;height&quot;:186.39,&quot;weight&quot;:74.61,&quot;eyeColor&quot;:&quot;Violet&quot;,&quot;hair&quot;:{&quot;color&quot;:&quot;Blue&quot;,&quot;type&quot;:&quot;Kinky&quot;},&quot;ip&quot;:&quot;19.183.240.94&quot;,&quot;address&quot;:{&quot;address&quot;:&quot;996 Oak Street&quot;,&quot;city&quot;:&quot;Chicago&quot;,&quot;state&quot;:&quot;New Mexico&quot;,&quot;stateCode&quot;:&quot;NM&quot;,&quot;postalCode&quot;:&quot;11407&quot;,&quot;coordinates&quot;:{&quot;lat&quot;:44.321308,&quot;lng&quot;:-3.723903},&quot;country&quot;:&quot;United States&quot;},&quot;macAddress&quot;:&quot;1d:a6:58:2a:e5:e4&quot;,&quot;university&quot;:&quot;California Institute of Technology (Caltech)&quot;,&quot;bank&quot;:{&quot;cardExpire&quot;:&quot;01/27&quot;,&quot;cardNumber&quot;:&quot;6011399019022417&quot;,&quot;cardType&quot;:&quot;Discover&quot;,&quot;currency&quot;:&quot;EUR&quot;,&quot;iban&quot;:&quot;IT11QP2B5J81QM1FBX029VI5DD68O&quot;},&quot;company&quot;:{&quot;department&quot;:&quot;Human Resources&quot;,&quot;name&quot;:&quot;Prohaska - Thiel&quot;,&quot;title&quot;:&quot;Business Analyst&quot;,&quot;address&quot;:{&quot;address&quot;:&quot;1402 Adams Street&quot;,&quot;city&quot;:&quot;Austin&quot;,&quot;state&quot;:&quot;Wisconsin&quot;,&quot;stateCode&quot;:&quot;WI&quot;,&quot;postalCode&quot;:&quot;51456&quot;,&quot;coordinates&quot;:{&quot;lat&quot;:25.672938,&quot;lng&quot;:-76.54967},&quot;country&quot;:&quot;United States&quot;}},&quot;ein&quot;:&quot;173-637&quot;,&quot;ssn&quot;:&quot;655-823-929&quot;,&quot;userAgent&quot;:&quot;Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Edge/97.0.1072.76 Safari/537.36&quot;,&quot;crypto&quot;:{&quot;coin&quot;:&quot;Bitcoin&quot;,&quot;wallet&quot;:&quot;0xb9fc2fe63b2a6c003f1c324c3bfa53259162181a&quot;,&quot;network&quot;:&quot;Ethereum (ERC20)&quot;},&quot;role&quot;:&quot;user&quot;},{&quot;id&quot;:20,&quot;firstName&quot;:&quot;Jackson&quot;,&quot;lastName&quot;:&quot;Evans&quot;,&quot;maidenName&quot;:&quot;&quot;,&quot;age&quot;:35,&quot;gender&quot;:&quot;male&quot;,&quot;email&quot;:&quot;jackson.evans@x.dummyjson.com&quot;,&quot;phone&quot;:&quot;+44 468-628-6686&quot;,&quot;username&quot;:&quot;jacksone&quot;,&quot;password&quot;:&quot;jacksonepass&quot;,&quot;birthDate&quot;:&quot;1990-11-30&quot;,&quot;image&quot;:&quot;https://dummyjson.com/icon/jacksone/128&quot;,&quot;bloodGroup&quot;:&quot;O-&quot;,&quot;height&quot;:162.57,&quot;weight&quot;:74.37,&quot;eyeColor&quot;:&quot;Green&quot;,&quot;hair&quot;:{&quot;color&quot;:&quot;Red&quot;,&quot;type&quot;:&quot;Straight&quot;},&quot;ip&quot;:&quot;221.127.144.198&quot;,&quot;address&quot;:{&quot;address&quot;:&quot;1873 Main Street&quot;,&quot;city&quot;:&quot;New York&quot;,&quot;state&quot;:&quot;Arkansas&quot;,&quot;stateCode&quot;:&quot;AR&quot;,&quot;postalCode&quot;:&quot;26600&quot;,&quot;coordinates&quot;:{&quot;lat&quot;:34.722451,&quot;lng&quot;:63.448927},&quot;country&quot;:&quot;United States&quot;},&quot;macAddress&quot;:&quot;81:14:1:97:88:85&quot;,&quot;university&quot;:&quot;Ohio State University&quot;,&quot;bank&quot;:{&quot;cardExpire&quot;:&quot;07/30&quot;,&quot;cardNumber&quot;:&quot;376760688512826&quot;,&quot;cardType&quot;:&quot;American Express&quot;,&quot;currency&quot;:&quot;GBP&quot;,&quot;iban&quot;:&quot;GB27CM0H0MNPXSPDGA0A1O&quot;},&quot;company&quot;:{&quot;department&quot;:&quot;Legal&quot;,&quot;name&quot;:&quot;Kuhlman LLC&quot;,&quot;title&quot;:&quot;Web Developer&quot;,&quot;address&quot;:{&quot;address&quot;:&quot;1706 First Street&quot;,&quot;city&quot;:&quot;Chicago&quot;,&quot;state&quot;:&quot;Hawaii&quot;,&quot;stateCode&quot;:&quot;HI&quot;,&quot;postalCode&quot;:&quot;34725&quot;,&quot;coordinates&quot;:{&quot;lat&quot;:-80.416937,&quot;lng&quot;:-83.224516},&quot;country&quot;:&quot;United States&quot;}},&quot;ein&quot;:&quot;843-260&quot;,&quot;ssn&quot;:&quot;248-787-886&quot;,&quot;userAgent&quot;:&quot;Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.99 Safari/537.36&quot;,&quot;crypto&quot;:{&quot;coin&quot;:&quot;Bitcoin&quot;,&quot;wallet&quot;:&quot;0xb9fc2fe63b2a6c003f1c324c3bfa53259162181a&quot;,&quot;network&quot;:&quot;Ethereum (ERC20)&quot;},&quot;role&quot;:&quot;user&quot;},{&quot;id&quot;:21,&quot;firstName&quot;:&quot;Madison&quot;,&quot;lastName&quot;:&quot;Collins&quot;,&quot;maidenName&quot;:&quot;&quot;,&quot;age&quot;:27,&quot;gender&quot;:&quot;female&quot;,&quot;email&quot;:&quot;madison.collins@x.dummyjson.com&quot;,&quot;phone&quot;:&quot;+81 259-957-5711&quot;,&quot;username&quot;:&quot;madisonc&quot;,&quot;password&quot;:&quot;madisoncpass&quot;,&quot;birthDate&quot;:&quot;1998-3-7&quot;,&quot;image&quot;:&quot;https://dummyjson.com/icon/madisonc/128&quot;,&quot;bloodGroup&quot;:&quot;B-&quot;,&quot;height&quot;:189.28,&quot;weight&quot;:56.96,&quot;eyeColor&quot;:&quot;Red&quot;,&quot;hair&quot;:{&quot;color&quot;:&quot;Gray&quot;,&quot;type&quot;:&quot;Curly&quot;},&quot;ip&quot;:&quot;85.34.1.204&quot;,&quot;address&quot;:{&quot;address&quot;:&quot;1892 Lincoln Street&quot;,&quot;city&quot;:&quot;Philadelphia&quot;,&quot;state&quot;:&quot;New Jersey&quot;,&quot;stateCode&quot;:&quot;NJ&quot;,&quot;postalCode&quot;:&quot;62091&quot;,&quot;coordinates&quot;:{&quot;lat&quot;:52.993694,&quot;lng&quot;:160.486892},&quot;country&quot;:&quot;United States&quot;},&quot;macAddress&quot;:&quot;13:b0:d0:23:4d:26&quot;,&quot;university&quot;:&quot;University of Pennsylvania&quot;,&quot;bank&quot;:{&quot;cardExpire&quot;:&quot;09/27&quot;,&quot;cardNumber&quot;:&quot;5551259848327064&quot;,&quot;cardType&quot;:&quot;Mastercard&quot;,&quot;currency&quot;:&quot;EUR&quot;,&quot;iban&quot;:&quot;ES3893300143587765232049&quot;},&quot;company&quot;:{&quot;department&quot;:&quot;Engineering&quot;,&quot;name&quot;:&quot;Mayer - Smitham&quot;,&quot;title&quot;:&quot;Chief Technology Officer&quot;,&quot;address&quot;:{&quot;address&quot;:&quot;1438 Main Street&quot;,&quot;city&quot;:&quot;San Diego&quot;,&quot;state&quot;:&quot;Delaware&quot;,&quot;stateCode&quot;:&quot;DE&quot;,&quot;postalCode&quot;:&quot;63144&quot;,&quot;coordinates&quot;:{&quot;lat&quot;:1.629613,&quot;lng&quot;:23.232982},&quot;country&quot;:&quot;United States&quot;}},&quot;ein&quot;:&quot;716-166&quot;,&quot;ssn&quot;:&quot;457-258-950&quot;,&quot;userAgent&quot;:&quot;Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.99 Safari/537.36&quot;,&quot;crypto&quot;:{&quot;coin&quot;:&quot;Bitcoin&quot;,&quot;wallet&quot;:&quot;0xb9fc2fe63b2a6c003f1c324c3bfa53259162181a&quot;,&quot;network&quot;:&quot;Ethereum (ERC20)&quot;},&quot;role&quot;:&quot;user&quot;},{&quot;id&quot;:22,&quot;firstName&quot;:&quot;Elijah&quot;,&quot;lastName&quot;:&quot;Stewart&quot;,&quot;maidenName&quot;:&quot;&quot;,&quot;age&quot;:34,&quot;gender&quot;:&quot;male&quot;,&quot;email&quot;:&quot;elijah.stewart@x.dummyjson.com&quot;,&quot;phone&quot;:&quot;+44 468-357-7872&quot;,&quot;username&quot;:&quot;elijahs&quot;,&quot;password&quot;:&quot;elijahspass&quot;,&quot;birthDate&quot;:&quot;1991-10-22&quot;,&quot;image&quot;:&quot;https://dummyjson.com/icon/elijahs/128&quot;,&quot;bloodGroup&quot;:&quot;A-&quot;,&quot;height&quot;:195.33,&quot;weight&quot;:81.64,&quot;eyeColor&quot;:&quot;Blue&quot;,&quot;hair&quot;:{&quot;color&quot;:&quot;Purple&quot;,&quot;type&quot;:&quot;Straight&quot;},&quot;ip&quot;:&quot;23.87.135.62&quot;,&quot;address&quot;:{&quot;address&quot;:&quot;1701 Eighth Street&quot;,&quot;city&quot;:&quot;Columbus&quot;,&quot;state&quot;:&quot;Illinois&quot;,&quot;stateCode&quot;:&quot;IL&quot;,&quot;postalCode&quot;:&quot;31585&quot;,&quot;coordinates&quot;:{&quot;lat&quot;:-54.833799,&quot;lng&quot;:-174.504027},&quot;country&quot;:&quot;United States&quot;},&quot;macAddress&quot;:&quot;75:17:c6:35:fc:6d&quot;,&quot;university&quot;:&quot;Georgetown University&quot;,&quot;bank&quot;:{&quot;cardExpire&quot;:&quot;05/28&quot;,&quot;cardNumber&quot;:&quot;3648138556543460&quot;,&quot;cardType&quot;:&quot;Diners Club International&quot;,&quot;currency&quot;:&quot;EUR&quot;,&quot;iban&quot;:&quot;DE82018985741195770313&quot;},&quot;company&quot;:{&quot;department&quot;:&quot;Legal&quot;,&quot;name&quot;:&quot;Langworth Group&quot;,&quot;title&quot;:&quot;Business Analyst&quot;,&quot;address&quot;:{&quot;address&quot;:&quot;155 Ninth Street&quot;,&quot;city&quot;:&quot;Washington&quot;,&quot;state&quot;:&quot;South Dakota&quot;,&quot;stateCode&quot;:&quot;SD&quot;,&quot;postalCode&quot;:&quot;19039&quot;,&quot;coordinates&quot;:{&quot;lat&quot;:61.279254,&quot;lng&quot;:-12.607767},&quot;country&quot;:&quot;United States&quot;}},&quot;ein&quot;:&quot;520-394&quot;,&quot;ssn&quot;:&quot;287-380-801&quot;,&quot;userAgent&quot;:&quot;Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.93 Safari/537.36&quot;,&quot;crypto&quot;:{&quot;coin&quot;:&quot;Bitcoin&quot;,&quot;wallet&quot;:&quot;0xb9fc2fe63b2a6c003f1c324c3bfa53259162181a&quot;,&quot;network&quot;:&quot;Ethereum (ERC20)&quot;},&quot;role&quot;:&quot;user&quot;},{&quot;id&quot;:23,&quot;firstName&quot;:&quot;Chloe&quot;,&quot;lastName&quot;:&quot;Morales&quot;,&quot;maidenName&quot;:&quot;&quot;,&quot;age&quot;:40,&quot;gender&quot;:&quot;female&quot;,&quot;email&quot;:&quot;chloe.morales@x.dummyjson.com&quot;,&quot;phone&quot;:&quot;+92 468-541-7133&quot;,&quot;username&quot;:&quot;chloem&quot;,&quot;password&quot;:&quot;chloempass&quot;,&quot;birthDate&quot;:&quot;1985-4-21&quot;,&quot;image&quot;:&quot;https://dummyjson.com/icon/chloem/128&quot;,&quot;bloodGroup&quot;:&quot;O+&quot;,&quot;height&quot;:185.07,&quot;weight&quot;:63.97,&quot;eyeColor&quot;:&quot;Brown&quot;,&quot;hair&quot;:{&quot;color&quot;:&quot;Red&quot;,&quot;type&quot;:&quot;Kinky&quot;},&quot;ip&quot;:&quot;66.78.20.21&quot;,&quot;address&quot;:{&quot;address&quot;:&quot;401 Fourth Street&quot;,&quot;city&quot;:&quot;Dallas&quot;,&quot;state&quot;:&quot;New Jersey&quot;,&quot;stateCode&quot;:&quot;NJ&quot;,&quot;postalCode&quot;:&quot;54972&quot;,&quot;coordinates&quot;:{&quot;lat&quot;:-30.190759,&quot;lng&quot;:-58.705979},&quot;country&quot;:&quot;United States&quot;},&quot;macAddress&quot;:&quot;fc:f:29:e1:37:b8&quot;,&quot;university&quot;:&quot;Syracuse University&quot;,&quot;bank&quot;:{&quot;cardExpire&quot;:&quot;09/30&quot;,&quot;cardNumber&quot;:&quot;347036238254235&quot;,&quot;cardType&quot;:&quot;American Express&quot;,&quot;currency&quot;:&quot;CNY&quot;,&quot;iban&quot;:&quot;DE77762461851744284392&quot;},&quot;company&quot;:{&quot;department&quot;:&quot;Sales&quot;,&quot;name&quot;:&quot;Grady LLC&quot;,&quot;title&quot;:&quot;Database Administrator&quot;,&quot;address&quot;:{&quot;address&quot;:&quot;269 Third Street&quot;,&quot;city&quot;:&quot;Houston&quot;,&quot;state&quot;:&quot;North Carolina&quot;,&quot;stateCode&quot;:&quot;NC&quot;,&quot;postalCode&quot;:&quot;10385&quot;,&quot;coordinates&quot;:{&quot;lat&quot;:40.098115,&quot;lng&quot;:-1.762972},&quot;country&quot;:&quot;United States&quot;}},&quot;ein&quot;:&quot;913-597&quot;,&quot;ssn&quot;:&quot;938-883-163&quot;,&quot;userAgent&quot;:&quot;Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.93 Safari/537.36&quot;,&quot;crypto&quot;:{&quot;coin&quot;:&quot;Bitcoin&quot;,&quot;wallet&quot;:&quot;0xb9fc2fe63b2a6c003f1c324c3bfa53259162181a&quot;,&quot;network&quot;:&quot;Ethereum (ERC20)&quot;},&quot;role&quot;:&quot;user&quot;},{&quot;id&quot;:24,&quot;firstName&quot;:&quot;Mateo&quot;,&quot;lastName&quot;:&quot;Nguyen&quot;,&quot;maidenName&quot;:&quot;&quot;,&quot;age&quot;:31,&quot;gender&quot;:&quot;male&quot;,&quot;email&quot;:&quot;mateo.nguyen@x.dummyjson.com&quot;,&quot;phone&quot;:&quot;+1 341-597-6694&quot;,&quot;username&quot;:&quot;mateon&quot;,&quot;password&quot;:&quot;mateonpass&quot;,&quot;birthDate&quot;:&quot;1994-6-2&quot;,&quot;image&quot;:&quot;https://dummyjson.com/icon/mateon/128&quot;,&quot;bloodGroup&quot;:&quot;O+&quot;,&quot;height&quot;:174.29,&quot;weight&quot;:59.98,&quot;eyeColor&quot;:&quot;Red&quot;,&quot;hair&quot;:{&quot;color&quot;:&quot;Purple&quot;,&quot;type&quot;:&quot;Wavy&quot;},&quot;ip&quot;:&quot;192.57.144.7&quot;,&quot;address&quot;:{&quot;address&quot;:&quot;1578 Fourth Street&quot;,&quot;city&quot;:&quot;Columbus&quot;,&quot;state&quot;:&quot;Missouri&quot;,&quot;stateCode&quot;:&quot;MO&quot;,&quot;postalCode&quot;:&quot;20673&quot;,&quot;coordinates&quot;:{&quot;lat&quot;:-32.828675,&quot;lng&quot;:-82.557354},&quot;country&quot;:&quot;United States&quot;},&quot;macAddress&quot;:&quot;a7:26:10:7a:36:29&quot;,&quot;university&quot;:&quot;Columbia University&quot;,&quot;bank&quot;:{&quot;cardExpire&quot;:&quot;12/29&quot;,&quot;cardNumber&quot;:&quot;4021840414995098&quot;,&quot;cardType&quot;:&quot;Visa&quot;,&quot;currency&quot;:&quot;CAD&quot;,&quot;iban&quot;:&quot;DE43275561962007561223&quot;},&quot;company&quot;:{&quot;department&quot;:&quot;Accounting&quot;,&quot;name&quot;:&quot;Spinka LLC&quot;,&quot;title&quot;:&quot;Business Analyst&quot;,&quot;address&quot;:{&quot;address&quot;:&quot;1967 Jefferson Street&quot;,&quot;city&quot;:&quot;Dallas&quot;,&quot;state&quot;:&quot;Louisiana&quot;,&quot;stateCode&quot;:&quot;LA&quot;,&quot;postalCode&quot;:&quot;78527&quot;,&quot;coordinates&quot;:{&quot;lat&quot;:75.982676,&quot;lng&quot;:164.459743},&quot;country&quot;:&quot;United States&quot;}},&quot;ein&quot;:&quot;229-249&quot;,&quot;ssn&quot;:&quot;416-877-230&quot;,&quot;userAgent&quot;:&quot;Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36&quot;,&quot;crypto&quot;:{&quot;coin&quot;:&quot;Bitcoin&quot;,&quot;wallet&quot;:&quot;0xb9fc2fe63b2a6c003f1c324c3bfa53259162181a&quot;,&quot;network&quot;:&quot;Ethereum (ERC20)&quot;},&quot;role&quot;:&quot;user&quot;},{&quot;id&quot;:25,&quot;firstName&quot;:&quot;Harper&quot;,&quot;lastName&quot;:&quot;Kelly&quot;,&quot;maidenName&quot;:&quot;Evans&quot;,&quot;age&quot;:28,&quot;gender&quot;:&quot;female&quot;,&quot;email&quot;:&quot;harper.kelly@x.dummyjson.com&quot;,&quot;phone&quot;:&quot;+92 518-863-2863&quot;,&quot;username&quot;:&quot;harpere&quot;,&quot;password&quot;:&quot;harperepass&quot;,&quot;birthDate&quot;:&quot;1997-3-3&quot;,&quot;image&quot;:&quot;https://dummyjson.com/icon/harpere/128&quot;,&quot;bloodGroup&quot;:&quot;AB-&quot;,&quot;height&quot;:184.32,&quot;weight&quot;:81.69,&quot;eyeColor&quot;:&quot;Amber&quot;,&quot;hair&quot;:{&quot;color&quot;:&quot;Red&quot;,&quot;type&quot;:&quot;Curly&quot;},&quot;ip&quot;:&quot;174.111.61.162&quot;,&quot;address&quot;:{&quot;address&quot;:&quot;1591 Adams Street&quot;,&quot;city&quot;:&quot;Philadelphia&quot;,&quot;state&quot;:&quot;New York&quot;,&quot;stateCode&quot;:&quot;NY&quot;,&quot;postalCode&quot;:&quot;69521&quot;,&quot;coordinates&quot;:{&quot;lat&quot;:-26.832913,&quot;lng&quot;:-75.445017},&quot;country&quot;:&quot;United States&quot;},&quot;macAddress&quot;:&quot;b:ff:33:67:94:e4&quot;,&quot;university&quot;:&quot;Boston College&quot;,&quot;bank&quot;:{&quot;cardExpire&quot;:&quot;06/27&quot;,&quot;cardNumber&quot;:&quot;4488823564436432&quot;,&quot;cardType&quot;:&quot;Visa&quot;,&quot;currency&quot;:&quot;EUR&quot;,&quot;iban&quot;:&quot;ES5874149276753342261515&quot;},&quot;company&quot;:{&quot;department&quot;:&quot;Legal&quot;,&quot;name&quot;:&quot;Leffler, Rolfson and Becker&quot;,&quot;title&quot;:&quot;Business Development Manager&quot;,&quot;address&quot;:{&quot;address&quot;:&quot;16 Maple Street&quot;,&quot;city&quot;:&quot;Austin&quot;,&quot;state&quot;:&quot;North Carolina&quot;,&quot;stateCode&quot;:&quot;NC&quot;,&quot;postalCode&quot;:&quot;68274&quot;,&quot;coordinates&quot;:{&quot;lat&quot;:-15.423746,&quot;lng&quot;:149.298887},&quot;country&quot;:&quot;United States&quot;}},&quot;ein&quot;:&quot;592-557&quot;,&quot;ssn&quot;:&quot;209-544-548&quot;,&quot;userAgent&quot;:&quot;Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.99 Safari/537.36&quot;,&quot;crypto&quot;:{&quot;coin&quot;:&quot;Bitcoin&quot;,&quot;wallet&quot;:&quot;0xb9fc2fe63b2a6c003f1c324c3bfa53259162181a&quot;,&quot;network&quot;:&quot;Ethereum (ERC20)&quot;},&quot;role&quot;:&quot;user&quot;},{&quot;id&quot;:26,&quot;firstName&quot;:&quot;Evelyn&quot;,&quot;lastName&quot;:&quot;Gonzalez&quot;,&quot;maidenName&quot;:&quot;&quot;,&quot;age&quot;:36,&quot;gender&quot;:&quot;female&quot;,&quot;email&quot;:&quot;evelyn.gonzalez@x.dummyjson.com&quot;,&quot;phone&quot;:&quot;+61 708-508-4638&quot;,&quot;username&quot;:&quot;evelyng&quot;,&quot;password&quot;:&quot;evelyngpass&quot;,&quot;birthDate&quot;:&quot;1989-2-5&quot;,&quot;image&quot;:&quot;https://dummyjson.com/icon/evelyng/128&quot;,&quot;bloodGroup&quot;:&quot;O+&quot;,&quot;height&quot;:168.94,&quot;weight&quot;:58.47,&quot;eyeColor&quot;:&quot;Red&quot;,&quot;hair&quot;:{&quot;color&quot;:&quot;Black&quot;,&quot;type&quot;:&quot;Wavy&quot;},&quot;ip&quot;:&quot;42.52.74.232&quot;,&quot;address&quot;:{&quot;address&quot;:&quot;1065 Lincoln Street&quot;,&quot;city&quot;:&quot;Dallas&quot;,&quot;state&quot;:&quot;Maine&quot;,&quot;stateCode&quot;:&quot;ME&quot;,&quot;postalCode&quot;:&quot;84898&quot;,&quot;coordinates&quot;:{&quot;lat&quot;:67.768359,&quot;lng&quot;:71.268643},&quot;country&quot;:&quot;United States&quot;},&quot;macAddress&quot;:&quot;89:5e:5a:2a:72:42&quot;,&quot;university&quot;:&quot;Washington University in St. Louis&quot;,&quot;bank&quot;:{&quot;cardExpire&quot;:&quot;08/28&quot;,&quot;cardNumber&quot;:&quot;6011735364912274&quot;,&quot;cardType&quot;:&quot;Discover&quot;,&quot;currency&quot;:&quot;CAD&quot;,&quot;iban&quot;:&quot;DE27147353096476220032&quot;},&quot;company&quot;:{&quot;department&quot;:&quot;Accounting&quot;,&quot;name&quot;:&quot;Tromp, Gaylord and Weber&quot;,&quot;title&quot;:&quot;Project Manager&quot;,&quot;address&quot;:{&quot;address&quot;:&quot;584 Ninth Street&quot;,&quot;city&quot;:&quot;Jacksonville&quot;,&quot;state&quot;:&quot;Wisconsin&quot;,&quot;stateCode&quot;:&quot;WI&quot;,&quot;postalCode&quot;:&quot;45633&quot;,&quot;coordinates&quot;:{&quot;lat&quot;:26.014021,&quot;lng&quot;:40.572436},&quot;country&quot;:&quot;United States&quot;}},&quot;ein&quot;:&quot;569-275&quot;,&quot;ssn&quot;:&quot;487-680-127&quot;,&quot;userAgent&quot;:&quot;Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.54 Safari/537.36&quot;,&quot;crypto&quot;:{&quot;coin&quot;:&quot;Bitcoin&quot;,&quot;wallet&quot;:&quot;0xb9fc2fe63b2a6c003f1c324c3bfa53259162181a&quot;,&quot;network&quot;:&quot;Ethereum (ERC20)&quot;},&quot;role&quot;:&quot;user&quot;},{&quot;id&quot;:27,&quot;firstName&quot;:&quot;Daniel&quot;,&quot;lastName&quot;:&quot;Cook&quot;,&quot;maidenName&quot;:&quot;&quot;,&quot;age&quot;:42,&quot;gender&quot;:&quot;male&quot;,&quot;email&quot;:&quot;daniel.cook@x.dummyjson.com&quot;,&quot;phone&quot;:&quot;+44 254-761-6843&quot;,&quot;username&quot;:&quot;danielc&quot;,&quot;password&quot;:&quot;danielcpass&quot;,&quot;birthDate&quot;:&quot;1983-12-25&quot;,&quot;image&quot;:&quot;https://dummyjson.com/icon/danielc/128&quot;,&quot;bloodGroup&quot;:&quot;AB+&quot;,&quot;height&quot;:186.21,&quot;weight&quot;:83.72,&quot;eyeColor&quot;:&quot;Brown&quot;,&quot;hair&quot;:{&quot;color&quot;:&quot;Blonde&quot;,&quot;type&quot;:&quot;Curly&quot;},&quot;ip&quot;:&quot;1.61.73.142&quot;,&quot;address&quot;:{&quot;address&quot;:&quot;1163 Pine Street&quot;,&quot;city&quot;:&quot;Los Angeles&quot;,&quot;state&quot;:&quot;Nevada&quot;,&quot;stateCode&quot;:&quot;NV&quot;,&quot;postalCode&quot;:&quot;58781&quot;,&quot;coordinates&quot;:{&quot;lat&quot;:-3.456681,&quot;lng&quot;:-134.937482},&quot;country&quot;:&quot;United States&quot;},&quot;macAddress&quot;:&quot;6e:73:dc:3a:85:10&quot;,&quot;university&quot;:&quot;Columbia University&quot;,&quot;bank&quot;:{&quot;cardExpire&quot;:&quot;05/29&quot;,&quot;cardNumber&quot;:&quot;5485409595328150&quot;,&quot;cardType&quot;:&quot;Mastercard&quot;,&quot;currency&quot;:&quot;NZD&quot;,&quot;iban&quot;:&quot;DE71341603969952506034&quot;},&quot;company&quot;:{&quot;department&quot;:&quot;Support&quot;,&quot;name&quot;:&quot;Morissette, Baumbach and Auer&quot;,&quot;title&quot;:&quot;Legal Counsel&quot;,&quot;address&quot;:{&quot;address&quot;:&quot;938 Fifth Street&quot;,&quot;city&quot;:&quot;San Francisco&quot;,&quot;state&quot;:&quot;South Dakota&quot;,&quot;stateCode&quot;:&quot;SD&quot;,&quot;postalCode&quot;:&quot;45305&quot;,&quot;coordinates&quot;:{&quot;lat&quot;:21.323588,&quot;lng&quot;:-83.531427},&quot;country&quot;:&quot;United States&quot;}},&quot;ein&quot;:&quot;585-905&quot;,&quot;ssn&quot;:&quot;645-515-583&quot;,&quot;userAgent&quot;:&quot;Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:97.0) Gecko/20100101 Firefox/97.0&quot;,&quot;crypto&quot;:{&quot;coin&quot;:&quot;Bitcoin&quot;,&quot;wallet&quot;:&quot;0xb9fc2fe63b2a6c003f1c324c3bfa53259162181a&quot;,&quot;network&quot;:&quot;Ethereum (ERC20)&quot;},&quot;role&quot;:&quot;user&quot;},{&quot;id&quot;:28,&quot;firstName&quot;:&quot;Lily&quot;,&quot;lastName&quot;:&quot;Lee&quot;,&quot;maidenName&quot;:&quot;Brown&quot;,&quot;age&quot;:30,&quot;gender&quot;:&quot;female&quot;,&quot;email&quot;:&quot;lily.lee@x.dummyjson.com&quot;,&quot;phone&quot;:&quot;+1 808-757-9867&quot;,&quot;username&quot;:&quot;lilyb&quot;,&quot;password&quot;:&quot;lilybpass&quot;,&quot;birthDate&quot;:&quot;1995-12-3&quot;,&quot;image&quot;:&quot;https://dummyjson.com/icon/lilyb/128&quot;,&quot;bloodGroup&quot;:&quot;AB-&quot;,&quot;height&quot;:181.42,&quot;weight&quot;:51.49,&quot;eyeColor&quot;:&quot;Gray&quot;,&quot;hair&quot;:{&quot;color&quot;:&quot;Purple&quot;,&quot;type&quot;:&quot;Straight&quot;},&quot;ip&quot;:&quot;67.184.255.96&quot;,&quot;address&quot;:{&quot;address&quot;:&quot;1946 Oak Street&quot;,&quot;city&quot;:&quot;Phoenix&quot;,&quot;state&quot;:&quot;Massachusetts&quot;,&quot;stateCode&quot;:&quot;MA&quot;,&quot;postalCode&quot;:&quot;41540&quot;,&quot;coordinates&quot;:{&quot;lat&quot;:-9.87059,&quot;lng&quot;:-72.336845},&quot;country&quot;:&quot;United States&quot;},&quot;macAddress&quot;:&quot;18:b6:c7:a:50:3f&quot;,&quot;university&quot;:&quot;Johns Hopkins University&quot;,&quot;bank&quot;:{&quot;cardExpire&quot;:&quot;12/28&quot;,&quot;cardNumber&quot;:&quot;5551782139834613&quot;,&quot;cardType&quot;:&quot;Mastercard&quot;,&quot;currency&quot;:&quot;CAD&quot;,&quot;iban&quot;:&quot;DE49484285539189712621&quot;},&quot;company&quot;:{&quot;department&quot;:&quot;Product Management&quot;,&quot;name&quot;:&quot;Cremin Inc&quot;,&quot;title&quot;:&quot;Quality Assurance Engineer&quot;,&quot;address&quot;:{&quot;address&quot;:&quot;1735 Cedar Street&quot;,&quot;city&quot;:&quot;Phoenix&quot;,&quot;state&quot;:&quot;Wyoming&quot;,&quot;stateCode&quot;:&quot;WY&quot;,&quot;postalCode&quot;:&quot;85797&quot;,&quot;coordinates&quot;:{&quot;lat&quot;:72.231441,&quot;lng&quot;:-158.147245},&quot;country&quot;:&quot;United States&quot;}},&quot;ein&quot;:&quot;229-776&quot;,&quot;ssn&quot;:&quot;358-185-671&quot;,&quot;userAgent&quot;:&quot;Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Edge/97.0.1072.76 Safari/537.36&quot;,&quot;crypto&quot;:{&quot;coin&quot;:&quot;Bitcoin&quot;,&quot;wallet&quot;:&quot;0xb9fc2fe63b2a6c003f1c324c3bfa53259162181a&quot;,&quot;network&quot;:&quot;Ethereum (ERC20)&quot;},&quot;role&quot;:&quot;user&quot;},{&quot;id&quot;:29,&quot;firstName&quot;:&quot;Henry&quot;,&quot;lastName&quot;:&quot;Hill&quot;,&quot;maidenName&quot;:&quot;&quot;,&quot;age&quot;:39,&quot;gender&quot;:&quot;male&quot;,&quot;email&quot;:&quot;henry.hill@x.dummyjson.com&quot;,&quot;phone&quot;:&quot;+1 240-833-4680&quot;,&quot;username&quot;:&quot;henryh&quot;,&quot;password&quot;:&quot;henryhpass&quot;,&quot;birthDate&quot;:&quot;1986-8-19&quot;,&quot;image&quot;:&quot;https://dummyjson.com/icon/henryh/128&quot;,&quot;bloodGroup&quot;:&quot;O-&quot;,&quot;height&quot;:180.25,&quot;weight&quot;:95.84,&quot;eyeColor&quot;:&quot;Gray&quot;,&quot;hair&quot;:{&quot;color&quot;:&quot;Black&quot;,&quot;type&quot;:&quot;Straight&quot;},&quot;ip&quot;:&quot;194.43.55.202&quot;,&quot;address&quot;:{&quot;address&quot;:&quot;1837 Maple Street&quot;,&quot;city&quot;:&quot;Indianapolis&quot;,&quot;state&quot;:&quot;Delaware&quot;,&quot;stateCode&quot;:&quot;DE&quot;,&quot;postalCode&quot;:&quot;81783&quot;,&quot;coordinates&quot;:{&quot;lat&quot;:35.498256,&quot;lng&quot;:154.088476},&quot;country&quot;:&quot;United States&quot;},&quot;macAddress&quot;:&quot;fa:c3:1b:21:5f:44&quot;,&quot;university&quot;:&quot;University of Illinois--Urbana-Champaign&quot;,&quot;bank&quot;:{&quot;cardExpire&quot;:&quot;11/29&quot;,&quot;cardNumber&quot;:&quot;3625097026040498&quot;,&quot;cardType&quot;:&quot;Diners Club International&quot;,&quot;currency&quot;:&quot;EUR&quot;,&quot;iban&quot;:&quot;DE08820336197191865470&quot;},&quot;company&quot;:{&quot;department&quot;:&quot;Services&quot;,&quot;name&quot;:&quot;Gerlach, Funk and Schoen&quot;,&quot;title&quot;:&quot;Sales Manager&quot;,&quot;address&quot;:{&quot;address&quot;:&quot;1651 Lincoln Street&quot;,&quot;city&quot;:&quot;San Francisco&quot;,&quot;state&quot;:&quot;West Virginia&quot;,&quot;stateCode&quot;:&quot;WV&quot;,&quot;postalCode&quot;:&quot;61805&quot;,&quot;coordinates&quot;:{&quot;lat&quot;:-59.936335,&quot;lng&quot;:-12.405368},&quot;country&quot;:&quot;United States&quot;}},&quot;ein&quot;:&quot;118-957&quot;,&quot;ssn&quot;:&quot;925-686-100&quot;,&quot;userAgent&quot;:&quot;Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.93 Safari/537.36&quot;,&quot;crypto&quot;:{&quot;coin&quot;:&quot;Bitcoin&quot;,&quot;wallet&quot;:&quot;0xb9fc2fe63b2a6c003f1c324c3bfa53259162181a&quot;,&quot;network&quot;:&quot;Ethereum (ERC20)&quot;},&quot;role&quot;:&quot;user&quot;},{&quot;id&quot;:30,&quot;firstName&quot;:&quot;Addison&quot;,&quot;lastName&quot;:&quot;Wright&quot;,&quot;maidenName&quot;:&quot;&quot;,&quot;age&quot;:33,&quot;gender&quot;:&quot;female&quot;,&quot;email&quot;:&quot;addison.wright@x.dummyjson.com&quot;,&quot;phone&quot;:&quot;+1 514-384-3300&quot;,&quot;username&quot;:&quot;addisonw&quot;,&quot;password&quot;:&quot;addisonwpass&quot;,&quot;birthDate&quot;:&quot;1992-1-3&quot;,&quot;image&quot;:&quot;https://dummyjson.com/icon/addisonw/128&quot;,&quot;bloodGroup&quot;:&quot;B+&quot;,&quot;height&quot;:179.32,&quot;weight&quot;:76.93,&quot;eyeColor&quot;:&quot;Brown&quot;,&quot;hair&quot;:{&quot;color&quot;:&quot;Blonde&quot;,&quot;type&quot;:&quot;Straight&quot;},&quot;ip&quot;:&quot;11.35.69.81&quot;,&quot;address&quot;:{&quot;address&quot;:&quot;568 Tenth Street&quot;,&quot;city&quot;:&quot;San Francisco&quot;,&quot;state&quot;:&quot;Montana&quot;,&quot;stateCode&quot;:&quot;MT&quot;,&quot;postalCode&quot;:&quot;54698&quot;,&quot;coordinates&quot;:{&quot;lat&quot;:20.946052,&quot;lng&quot;:100.228822},&quot;country&quot;:&quot;United States&quot;},&quot;macAddress&quot;:&quot;fb:0:94:21:16:c&quot;,&quot;university&quot;:&quot;Syracuse University&quot;,&quot;bank&quot;:{&quot;cardExpire&quot;:&quot;06/28&quot;,&quot;cardNumber&quot;:&quot;5274971895809762&quot;,&quot;cardType&quot;:&quot;Mastercard&quot;,&quot;currency&quot;:&quot;PKR&quot;,&quot;iban&quot;:&quot;DE91480955939051635497&quot;},&quot;company&quot;:{&quot;department&quot;:&quot;Services&quot;,&quot;name&quot;:&quot;Kreiger Inc&quot;,&quot;title&quot;:&quot;Human Resources Manager&quot;,&quot;address&quot;:{&quot;address&quot;:&quot;1173 Eighth Street&quot;,&quot;city&quot;:&quot;San Diego&quot;,&quot;state&quot;:&quot;Michigan&quot;,&quot;stateCode&quot;:&quot;MI&quot;,&quot;postalCode&quot;:&quot;85777&quot;,&quot;coordinates&quot;:{&quot;lat&quot;:65.324413,&quot;lng&quot;:87.142893},&quot;country&quot;:&quot;United States&quot;}},&quot;ein&quot;:&quot;415-286&quot;,&quot;ssn&quot;:&quot;804-492-390&quot;,&quot;userAgent&quot;:&quot;Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.93 Safari/537.36&quot;,&quot;crypto&quot;:{&quot;coin&quot;:&quot;Bitcoin&quot;,&quot;wallet&quot;:&quot;0xb9fc2fe63b2a6c003f1c324c3bfa53259162181a&quot;,&quot;network&quot;:&quot;Ethereum (ERC20)&quot;},&quot;role&quot;:&quot;user&quot;}],&quot;total&quot;:208,&quot;skip&quot;:0,&quot;limit&quot;:30}</code></pre>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="nested-request-row">
-                    <div class="nested-request-header" onclick="toggleRequest(4, 1)">
-                        <span class="badge badge-post">POST</span>
-                        <span class="nested-url" title="https://dummyjson.com/auth/login">https://dummyjson.com/auth/login</span>
-                        <span class="status-indicator status-pass">200</span>
-                        <span class="nested-time">1134 ms</span>
-                    </div>
-                    <div id="req-details-4-1" class="nested-request-details" style="display: none;">
-                        <div class="curl-section">
-                            <div class="section-header">
-                                <h4>💻 cURL Replicator Command</h4>
-                                <button class="copy-btn" onclick="copyText(decodeURIComponent('curl -s -X POST %22https://dummyjson.com/auth/login%22 -H %22Content-Type: application/json%22 -d %22{%22username%22:%22emilys%22,%22password%22:%22emilyspass%22}%22'), this, event)">📋 Copy cURL</button>
-                            </div>
-                            <div class="code-box">
-                                <code>curl -s -X POST &quot;https://dummyjson.com/auth/login&quot; -H &quot;Content-Type: application/json&quot; -d &quot;{%22username%22:%22emilys%22,%22password%22:%22emilyspass%22}&quot;</code>
-                            </div>
-                        </div>
-                        <div class="body-split">
-                            <div class="body-block">
-                                <h4>📤 Request Body</h4>
-                                <pre><code>{&quot;username&quot;:&quot;emilys&quot;,&quot;password&quot;:&quot;emilyspass&quot;}</code></pre>
-                            </div>
-                            <div class="body-block">
-                                <h4>📥 Response Body</h4>
-                                <pre><code>{&quot;accessToken&quot;:&quot;eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJlbWlseXMiLCJlbWFpbCI6ImVtaWx5LmpvaG5zb25AeC5kdW1teWpzb24uY29tIiwiZmlyc3ROYW1lIjoiRW1pbHkiLCJsYXN0TmFtZSI6IkpvaG5zb24iLCJnZW5kZXIiOiJmZW1hbGUiLCJpbWFnZSI6Imh0dHBzOi8vZHVtbXlqc29uLmNvbS9pY29uL2VtaWx5cy8xMjgiLCJpYXQiOjE3ODM5MzQyMzcsImV4cCI6MTc4MzkzNzgzN30.atQg-R2cFyJJ61S7577sRmkQUHlEytrXcj3eQTcTqKI&quot;,&quot;refreshToken&quot;:&quot;eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJlbWlseXMiLCJlbWFpbCI6ImVtaWx5LmpvaG5zb25AeC5kdW1teWpzb24uY29tIiwiZmlyc3ROYW1lIjoiRW1pbHkiLCJsYXN0TmFtZSI6IkpvaG5zb24iLCJnZW5kZXIiOiJmZW1hbGUiLCJpbWFnZSI6Imh0dHBzOi8vZHVtbXlqc29uLmNvbS9pY29uL2VtaWx5cy8xMjgiLCJpYXQiOjE3ODM5MzQyMzcsImV4cCI6MTc4NjUyNjIzN30.pz07Jer7nPPyr6ZOldTgNhTpFvfz7WmW9GaXMCII7bY&quot;,&quot;id&quot;:1,&quot;username&quot;:&quot;emilys&quot;,&quot;email&quot;:&quot;emily.johnson@x.dummyjson.com&quot;,&quot;firstName&quot;:&quot;Emily&quot;,&quot;lastName&quot;:&quot;Johnson&quot;,&quot;gender&quot;:&quot;female&quot;,&quot;image&quot;:&quot;https://dummyjson.com/icon/emilys/128&quot;}</code></pre>
                             </div>
                         </div>
                     </div>
@@ -953,7 +1067,7 @@
                     <span class="assertion-summary">1 right</span>
                 </div>
             </td>
-            <td>2026-07-13 14:47:38</td>
+            <td>2026-07-16 12:38:40</td>
             <td>
                 <span class="status-indicator status-pass">✓ PASSED</span>
                 
@@ -962,23 +1076,31 @@
         <tr id="page-details-5" class="details-row" style="display: none;">
             <td colspan="3">
                 <div class="nested-requests-container">
-                    <h3>🔍 Executed API Requests Audit Trail</h3>
+                    <div class="audit-header">
+                        <h3>🔍 Executed API Requests Audit Trail</h3>
+                        
+                <button class="download-all-btn" onclick="downloadAll(['/files/test_data/GET_66e53f1a02a9_20260716_123840.json'], 'DummyAPI.Get_All_User')">
+                    📦 Download All (1)
+                </button>
+            
+                    </div>
                     
                 <div class="nested-request-row">
                     <div class="nested-request-header" onclick="toggleRequest(5, 0)">
                         <span class="badge badge-get">GET</span>
                         <span class="nested-url" title="https://dummyjson.com/products">https://dummyjson.com/products</span>
                         <span class="status-indicator status-pass">200</span>
-                        <span class="nested-time">833 ms</span>
+                        <span class="nested-time">798 ms</span>
+                        <a href="/files/test_data/GET_66e53f1a02a9_20260716_123840.json" download class="download-json-btn" title="Download complete test data with assertions">📥 Download JSON</a>
                     </div>
                     <div id="req-details-5-0" class="nested-request-details" style="display: none;">
                         <div class="curl-section">
                             <div class="section-header">
                                 <h4>💻 cURL Replicator Command</h4>
-                                <button class="copy-btn" onclick="copyText(decodeURIComponent('curl -s -X GET %22https://dummyjson.com/products%22 -H %22Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJlbWlseXMiLCJlbWFpbCI6ImVtaWx5LmpvaG5zb25AeC5kdW1teWpzb24uY29tIiwiZmlyc3ROYW1lIjoiRW1pbHkiLCJsYXN0TmFtZSI6IkpvaG5zb24iLCJnZW5kZXIiOiJmZW1hbGUiLCJpbWFnZSI6Imh0dHBzOi8vZHVtbXlqc29uLmNvbS9pY29uL2VtaWx5cy8xMjgiLCJpYXQiOjE3ODM5MzQyMzIsImV4cCI6MTc4MzkzNzgzMn0.90Qx6dKNP2OSBs7gCnkI-5XaAWatp_1p7xu-zwaoVgM%22'), this, event)">📋 Copy cURL</button>
+                                <button class="copy-btn" onclick="copyText(decodeURIComponent('curl -s -X GET %22https://dummyjson.com/products%22 -H %22Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJlbWlseXMiLCJlbWFpbCI6ImVtaWx5LmpvaG5zb25AeC5kdW1teWpzb24uY29tIiwiZmlyc3ROYW1lIjoiRW1pbHkiLCJsYXN0TmFtZSI6IkpvaG5zb24iLCJnZW5kZXIiOiJmZW1hbGUiLCJpbWFnZSI6Imh0dHBzOi8vZHVtbXlqc29uLmNvbS9pY29uL2VtaWx5cy8xMjgiLCJpYXQiOjE3ODQxODU2OTMsImV4cCI6MTc4NDE4OTI5M30.EKxROS_u-_TJ93CBkjVH3ZGKPeeJE0q8dcrgeeYNbbQ%22'), this, event)">📋 Copy cURL</button>
                             </div>
                             <div class="code-box">
-                                <code>curl -s -X GET &quot;https://dummyjson.com/products&quot; -H &quot;Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJlbWlseXMiLCJlbWFpbCI6ImVtaWx5LmpvaG5zb25AeC5kdW1teWpzb24uY29tIiwiZmlyc3ROYW1lIjoiRW1pbHkiLCJsYXN0TmFtZSI6IkpvaG5zb24iLCJnZW5kZXIiOiJmZW1hbGUiLCJpbWFnZSI6Imh0dHBzOi8vZHVtbXlqc29uLmNvbS9pY29uL2VtaWx5cy8xMjgiLCJpYXQiOjE3ODM5MzQyMzIsImV4cCI6MTc4MzkzNzgzMn0.90Qx6dKNP2OSBs7gCnkI-5XaAWatp_1p7xu-zwaoVgM&quot;</code>
+                                <code>curl -s -X GET &quot;https://dummyjson.com/products&quot; -H &quot;Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJlbWlseXMiLCJlbWFpbCI6ImVtaWx5LmpvaG5zb25AeC5kdW1teWpzb24uY29tIiwiZmlyc3ROYW1lIjoiRW1pbHkiLCJsYXN0TmFtZSI6IkpvaG5zb24iLCJnZW5kZXIiOiJmZW1hbGUiLCJpbWFnZSI6Imh0dHBzOi8vZHVtbXlqc29uLmNvbS9pY29uL2VtaWx5cy8xMjgiLCJpYXQiOjE3ODQxODU2OTMsImV4cCI6MTc4NDE4OTI5M30.EKxROS_u-_TJ93CBkjVH3ZGKPeeJE0q8dcrgeeYNbbQ&quot;</code>
                             </div>
                         </div>
                         <div class="body-split">
@@ -1005,7 +1127,7 @@
                     <span class="assertion-summary">1 right</span>
                 </div>
             </td>
-            <td>2026-07-13 14:47:37</td>
+            <td>2026-07-16 12:38:39</td>
             <td>
                 <span class="status-indicator status-pass">✓ PASSED</span>
                 
@@ -1014,14 +1136,22 @@
         <tr id="page-details-6" class="details-row" style="display: none;">
             <td colspan="3">
                 <div class="nested-requests-container">
-                    <h3>🔍 Executed API Requests Audit Trail</h3>
+                    <div class="audit-header">
+                        <h3>🔍 Executed API Requests Audit Trail</h3>
+                        
+                <button class="download-all-btn" onclick="downloadAll(['/files/test_data/GET_2b5fdda17a26_20260716_123839.json'], 'DummyAPI.Get_All_Products')">
+                    📦 Download All (1)
+                </button>
+            
+                    </div>
                     
                 <div class="nested-request-row">
                     <div class="nested-request-header" onclick="toggleRequest(6, 0)">
                         <span class="badge badge-post">POST</span>
                         <span class="nested-url" title="https://dummyjson.com/auth/login">https://dummyjson.com/auth/login</span>
                         <span class="status-indicator status-pass">200</span>
-                        <span class="nested-time">1631 ms</span>
+                        <span class="nested-time">1054 ms</span>
+                        
                     </div>
                     <div id="req-details-6-0" class="nested-request-details" style="display: none;">
                         <div class="curl-section">
@@ -1040,7 +1170,7 @@
                             </div>
                             <div class="body-block">
                                 <h4>📥 Response Body</h4>
-                                <pre><code>{&quot;accessToken&quot;:&quot;eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJlbWlseXMiLCJlbWFpbCI6ImVtaWx5LmpvaG5zb25AeC5kdW1teWpzb24uY29tIiwiZmlyc3ROYW1lIjoiRW1pbHkiLCJsYXN0TmFtZSI6IkpvaG5zb24iLCJnZW5kZXIiOiJmZW1hbGUiLCJpbWFnZSI6Imh0dHBzOi8vZHVtbXlqc29uLmNvbS9pY29uL2VtaWx5cy8xMjgiLCJpYXQiOjE3ODM5MzQyMzEsImV4cCI6MTc4MzkzNzgzMX0.LTmY5Il4r9_QhizTjS-0lLIPM669cCwH-qDkat9klNc&quot;,&quot;refreshToken&quot;:&quot;eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJlbWlseXMiLCJlbWFpbCI6ImVtaWx5LmpvaG5zb25AeC5kdW1teWpzb24uY29tIiwiZmlyc3ROYW1lIjoiRW1pbHkiLCJsYXN0TmFtZSI6IkpvaG5zb24iLCJnZW5kZXIiOiJmZW1hbGUiLCJpbWFnZSI6Imh0dHBzOi8vZHVtbXlqc29uLmNvbS9pY29uL2VtaWx5cy8xMjgiLCJpYXQiOjE3ODM5MzQyMzEsImV4cCI6MTc4NjUyNjIzMX0.-7-vwpKFG66u0hJqASSHnK4m7YOOAyhSIDyT4qYktIY&quot;,&quot;id&quot;:1,&quot;username&quot;:&quot;emilys&quot;,&quot;email&quot;:&quot;emily.johnson@x.dummyjson.com&quot;,&quot;firstName&quot;:&quot;Emily&quot;,&quot;lastName&quot;:&quot;Johnson&quot;,&quot;gender&quot;:&quot;female&quot;,&quot;image&quot;:&quot;https://dummyjson.com/icon/emilys/128&quot;}</code></pre>
+                                <pre><code>{&quot;accessToken&quot;:&quot;eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJlbWlseXMiLCJlbWFpbCI6ImVtaWx5LmpvaG5zb25AeC5kdW1teWpzb24uY29tIiwiZmlyc3ROYW1lIjoiRW1pbHkiLCJsYXN0TmFtZSI6IkpvaG5zb24iLCJnZW5kZXIiOiJmZW1hbGUiLCJpbWFnZSI6Imh0dHBzOi8vZHVtbXlqc29uLmNvbS9pY29uL2VtaWx5cy8xMjgiLCJpYXQiOjE3ODQxODU2OTMsImV4cCI6MTc4NDE4OTI5M30.EKxROS_u-_TJ93CBkjVH3ZGKPeeJE0q8dcrgeeYNbbQ&quot;,&quot;refreshToken&quot;:&quot;eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJlbWlseXMiLCJlbWFpbCI6ImVtaWx5LmpvaG5zb25AeC5kdW1teWpzb24uY29tIiwiZmlyc3ROYW1lIjoiRW1pbHkiLCJsYXN0TmFtZSI6IkpvaG5zb24iLCJnZW5kZXIiOiJmZW1hbGUiLCJpbWFnZSI6Imh0dHBzOi8vZHVtbXlqc29uLmNvbS9pY29uL2VtaWx5cy8xMjgiLCJpYXQiOjE3ODQxODU2OTMsImV4cCI6MTc4Njc3NzY5M30.Pm03VAUFRQXUzrfstZGoyeg8sOdZEw3EqcLtxQgg_WI&quot;,&quot;id&quot;:1,&quot;username&quot;:&quot;emilys&quot;,&quot;email&quot;:&quot;emily.johnson@x.dummyjson.com&quot;,&quot;firstName&quot;:&quot;Emily&quot;,&quot;lastName&quot;:&quot;Johnson&quot;,&quot;gender&quot;:&quot;female&quot;,&quot;image&quot;:&quot;https://dummyjson.com/icon/emilys/128&quot;}</code></pre>
                             </div>
                         </div>
                     </div>
@@ -1048,49 +1178,20 @@
                 
                 <div class="nested-request-row">
                     <div class="nested-request-header" onclick="toggleRequest(6, 1)">
-                        <span class="badge badge-post">POST</span>
-                        <span class="nested-url" title="https://dummyjson.com/auth/login">https://dummyjson.com/auth/login</span>
+                        <span class="badge badge-get">GET</span>
+                        <span class="nested-url" title="https://dummyjson.com/auth/me">https://dummyjson.com/auth/me</span>
                         <span class="status-indicator status-pass">200</span>
-                        <span class="nested-time">1019 ms</span>
+                        <span class="nested-time">982 ms</span>
+                        <a href="/files/test_data/GET_2b5fdda17a26_20260716_123839.json" download class="download-json-btn" title="Download complete test data with assertions">📥 Download JSON</a>
                     </div>
                     <div id="req-details-6-1" class="nested-request-details" style="display: none;">
                         <div class="curl-section">
                             <div class="section-header">
                                 <h4>💻 cURL Replicator Command</h4>
-                                <button class="copy-btn" onclick="copyText(decodeURIComponent('curl -s -X POST %22https://dummyjson.com/auth/login%22 -H %22Content-Type: application/json%22 -d %22{%22username%22:%22emilys%22,%22password%22:%22emilyspass%22}%22'), this, event)">📋 Copy cURL</button>
+                                <button class="copy-btn" onclick="copyText(decodeURIComponent('curl -s -X GET %22https://dummyjson.com/auth/me%22 -H %22Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJlbWlseXMiLCJlbWFpbCI6ImVtaWx5LmpvaG5zb25AeC5kdW1teWpzb24uY29tIiwiZmlyc3ROYW1lIjoiRW1pbHkiLCJsYXN0TmFtZSI6IkpvaG5zb24iLCJnZW5kZXIiOiJmZW1hbGUiLCJpbWFnZSI6Imh0dHBzOi8vZHVtbXlqc29uLmNvbS9pY29uL2VtaWx5cy8xMjgiLCJpYXQiOjE3ODQxODU2OTMsImV4cCI6MTc4NDE4OTI5M30.EKxROS_u-_TJ93CBkjVH3ZGKPeeJE0q8dcrgeeYNbbQ%22'), this, event)">📋 Copy cURL</button>
                             </div>
                             <div class="code-box">
-                                <code>curl -s -X POST &quot;https://dummyjson.com/auth/login&quot; -H &quot;Content-Type: application/json&quot; -d &quot;{%22username%22:%22emilys%22,%22password%22:%22emilyspass%22}&quot;</code>
-                            </div>
-                        </div>
-                        <div class="body-split">
-                            <div class="body-block">
-                                <h4>📤 Request Body</h4>
-                                <pre><code>{&quot;username&quot;:&quot;emilys&quot;,&quot;password&quot;:&quot;emilyspass&quot;}</code></pre>
-                            </div>
-                            <div class="body-block">
-                                <h4>📥 Response Body</h4>
-                                <pre><code>{&quot;accessToken&quot;:&quot;eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJlbWlseXMiLCJlbWFpbCI6ImVtaWx5LmpvaG5zb25AeC5kdW1teWpzb24uY29tIiwiZmlyc3ROYW1lIjoiRW1pbHkiLCJsYXN0TmFtZSI6IkpvaG5zb24iLCJnZW5kZXIiOiJmZW1hbGUiLCJpbWFnZSI6Imh0dHBzOi8vZHVtbXlqc29uLmNvbS9pY29uL2VtaWx5cy8xMjgiLCJpYXQiOjE3ODM5MzQyMzIsImV4cCI6MTc4MzkzNzgzMn0.90Qx6dKNP2OSBs7gCnkI-5XaAWatp_1p7xu-zwaoVgM&quot;,&quot;refreshToken&quot;:&quot;eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJlbWlseXMiLCJlbWFpbCI6ImVtaWx5LmpvaG5zb25AeC5kdW1teWpzb24uY29tIiwiZmlyc3ROYW1lIjoiRW1pbHkiLCJsYXN0TmFtZSI6IkpvaG5zb24iLCJnZW5kZXIiOiJmZW1hbGUiLCJpbWFnZSI6Imh0dHBzOi8vZHVtbXlqc29uLmNvbS9pY29uL2VtaWx5cy8xMjgiLCJpYXQiOjE3ODM5MzQyMzIsImV4cCI6MTc4NjUyNjIzMn0.tHVOh6hQAfLe48vkCsETQsWK7eptequqF4yk7b_pme8&quot;,&quot;id&quot;:1,&quot;username&quot;:&quot;emilys&quot;,&quot;email&quot;:&quot;emily.johnson@x.dummyjson.com&quot;,&quot;firstName&quot;:&quot;Emily&quot;,&quot;lastName&quot;:&quot;Johnson&quot;,&quot;gender&quot;:&quot;female&quot;,&quot;image&quot;:&quot;https://dummyjson.com/icon/emilys/128&quot;}</code></pre>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="nested-request-row">
-                    <div class="nested-request-header" onclick="toggleRequest(6, 2)">
-                        <span class="badge badge-get">GET</span>
-                        <span class="nested-url" title="https://dummyjson.com/auth/me">https://dummyjson.com/auth/me</span>
-                        <span class="status-indicator status-pass">200</span>
-                        <span class="nested-time">1085 ms</span>
-                    </div>
-                    <div id="req-details-6-2" class="nested-request-details" style="display: none;">
-                        <div class="curl-section">
-                            <div class="section-header">
-                                <h4>💻 cURL Replicator Command</h4>
-                                <button class="copy-btn" onclick="copyText(decodeURIComponent('curl -s -X GET %22https://dummyjson.com/auth/me%22 -H %22Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJlbWlseXMiLCJlbWFpbCI6ImVtaWx5LmpvaG5zb25AeC5kdW1teWpzb24uY29tIiwiZmlyc3ROYW1lIjoiRW1pbHkiLCJsYXN0TmFtZSI6IkpvaG5zb24iLCJnZW5kZXIiOiJmZW1hbGUiLCJpbWFnZSI6Imh0dHBzOi8vZHVtbXlqc29uLmNvbS9pY29uL2VtaWx5cy8xMjgiLCJpYXQiOjE3ODM5MzQyMzIsImV4cCI6MTc4MzkzNzgzMn0.90Qx6dKNP2OSBs7gCnkI-5XaAWatp_1p7xu-zwaoVgM%22'), this, event)">📋 Copy cURL</button>
-                            </div>
-                            <div class="code-box">
-                                <code>curl -s -X GET &quot;https://dummyjson.com/auth/me&quot; -H &quot;Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJlbWlseXMiLCJlbWFpbCI6ImVtaWx5LmpvaG5zb25AeC5kdW1teWpzb24uY29tIiwiZmlyc3ROYW1lIjoiRW1pbHkiLCJsYXN0TmFtZSI6IkpvaG5zb24iLCJnZW5kZXIiOiJmZW1hbGUiLCJpbWFnZSI6Imh0dHBzOi8vZHVtbXlqc29uLmNvbS9pY29uL2VtaWx5cy8xMjgiLCJpYXQiOjE3ODM5MzQyMzIsImV4cCI6MTc4MzkzNzgzMn0.90Qx6dKNP2OSBs7gCnkI-5XaAWatp_1p7xu-zwaoVgM&quot;</code>
+                                <code>curl -s -X GET &quot;https://dummyjson.com/auth/me&quot; -H &quot;Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJlbWlseXMiLCJlbWFpbCI6ImVtaWx5LmpvaG5zb25AeC5kdW1teWpzb24uY29tIiwiZmlyc3ROYW1lIjoiRW1pbHkiLCJsYXN0TmFtZSI6IkpvaG5zb24iLCJnZW5kZXIiOiJmZW1hbGUiLCJpbWFnZSI6Imh0dHBzOi8vZHVtbXlqc29uLmNvbS9pY29uL2VtaWx5cy8xMjgiLCJpYXQiOjE3ODQxODU2OTMsImV4cCI6MTc4NDE4OTI5M30.EKxROS_u-_TJ93CBkjVH3ZGKPeeJE0q8dcrgeeYNbbQ&quot;</code>
                             </div>
                         </div>
                         <div class="body-split">
@@ -1117,7 +1218,7 @@
                     <span class="assertion-summary">1 right</span>
                 </div>
             </td>
-            <td>2026-07-13 14:47:33</td>
+            <td>2026-07-16 12:38:36</td>
             <td>
                 <span class="status-indicator status-pass">✓ PASSED</span>
                 
@@ -1126,23 +1227,31 @@
         <tr id="page-details-7" class="details-row" style="display: none;">
             <td colspan="3">
                 <div class="nested-requests-container">
-                    <h3>🔍 Executed API Requests Audit Trail</h3>
+                    <div class="audit-header">
+                        <h3>🔍 Executed API Requests Audit Trail</h3>
+                        
+                <button class="download-all-btn" onclick="downloadAll(['/files/test_data/DELETE_b096e005379b_20260716_123836.json'], 'DummyAPI.End_to_End_Flow')">
+                    📦 Download All (1)
+                </button>
+            
+                    </div>
                     
                 <div class="nested-request-row">
                     <div class="nested-request-header" onclick="toggleRequest(7, 0)">
                         <span class="badge badge-delete">DELETE</span>
                         <span class="nested-url" title="https://dummyjson.com/users/1">https://dummyjson.com/users/1</span>
                         <span class="status-indicator status-pass">200</span>
-                        <span class="nested-time">1208 ms</span>
+                        <span class="nested-time">979 ms</span>
+                        <a href="/files/test_data/DELETE_b096e005379b_20260716_123836.json" download class="download-json-btn" title="Download complete test data with assertions">📥 Download JSON</a>
                     </div>
                     <div id="req-details-7-0" class="nested-request-details" style="display: none;">
                         <div class="curl-section">
                             <div class="section-header">
                                 <h4>💻 cURL Replicator Command</h4>
-                                <button class="copy-btn" onclick="copyText(decodeURIComponent('curl -s -X DELETE %22https://dummyjson.com/users/1%22 -H %22Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJlbWlseXMiLCJlbWFpbCI6ImVtaWx5LmpvaG5zb25AeC5kdW1teWpzb24uY29tIiwiZmlyc3ROYW1lIjoiRW1pbHkiLCJsYXN0TmFtZSI6IkpvaG5zb24iLCJnZW5kZXIiOiJmZW1hbGUiLCJpbWFnZSI6Imh0dHBzOi8vZHVtbXlqc29uLmNvbS9pY29uL2VtaWx5cy8xMjgiLCJpYXQiOjE3ODM5MzQyMjcsImV4cCI6MTc4MzkzNzgyN30.3jo3EnXd9R3XWWZmFAqOTY26agyTKh_M6bwXMJSJHrs%22'), this, event)">📋 Copy cURL</button>
+                                <button class="copy-btn" onclick="copyText(decodeURIComponent('curl -s -X DELETE %22https://dummyjson.com/users/1%22 -H %22Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJlbWlseXMiLCJlbWFpbCI6ImVtaWx5LmpvaG5zb25AeC5kdW1teWpzb24uY29tIiwiZmlyc3ROYW1lIjoiRW1pbHkiLCJsYXN0TmFtZSI6IkpvaG5zb24iLCJnZW5kZXIiOiJmZW1hbGUiLCJpbWFnZSI6Imh0dHBzOi8vZHVtbXlqc29uLmNvbS9pY29uL2VtaWx5cy8xMjgiLCJpYXQiOjE3ODQxODU2ODksImV4cCI6MTc4NDE4OTI4OX0.hQZN842_w9wq7bepKski4vg9WlJhXsxwqE1Jzuw5woE%22'), this, event)">📋 Copy cURL</button>
                             </div>
                             <div class="code-box">
-                                <code>curl -s -X DELETE &quot;https://dummyjson.com/users/1&quot; -H &quot;Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJlbWlseXMiLCJlbWFpbCI6ImVtaWx5LmpvaG5zb25AeC5kdW1teWpzb24uY29tIiwiZmlyc3ROYW1lIjoiRW1pbHkiLCJsYXN0TmFtZSI6IkpvaG5zb24iLCJnZW5kZXIiOiJmZW1hbGUiLCJpbWFnZSI6Imh0dHBzOi8vZHVtbXlqc29uLmNvbS9pY29uL2VtaWx5cy8xMjgiLCJpYXQiOjE3ODM5MzQyMjcsImV4cCI6MTc4MzkzNzgyN30.3jo3EnXd9R3XWWZmFAqOTY26agyTKh_M6bwXMJSJHrs&quot;</code>
+                                <code>curl -s -X DELETE &quot;https://dummyjson.com/users/1&quot; -H &quot;Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJlbWlseXMiLCJlbWFpbCI6ImVtaWx5LmpvaG5zb25AeC5kdW1teWpzb24uY29tIiwiZmlyc3ROYW1lIjoiRW1pbHkiLCJsYXN0TmFtZSI6IkpvaG5zb24iLCJnZW5kZXIiOiJmZW1hbGUiLCJpbWFnZSI6Imh0dHBzOi8vZHVtbXlqc29uLmNvbS9pY29uL2VtaWx5cy8xMjgiLCJpYXQiOjE3ODQxODU2ODksImV4cCI6MTc4NDE4OTI4OX0.hQZN842_w9wq7bepKski4vg9WlJhXsxwqE1Jzuw5woE&quot;</code>
                             </div>
                         </div>
                         <div class="body-split">
@@ -1152,7 +1261,38 @@
                             </div>
                             <div class="body-block">
                                 <h4>📥 Response Body</h4>
-                                <pre><code>{&quot;id&quot;:1,&quot;firstName&quot;:&quot;Emily&quot;,&quot;lastName&quot;:&quot;Johnson&quot;,&quot;maidenName&quot;:&quot;Smith&quot;,&quot;age&quot;:29,&quot;gender&quot;:&quot;female&quot;,&quot;email&quot;:&quot;emily.johnson@x.dummyjson.com&quot;,&quot;phone&quot;:&quot;+81 965-431-3024&quot;,&quot;username&quot;:&quot;emilys&quot;,&quot;password&quot;:&quot;emilyspass&quot;,&quot;birthDate&quot;:&quot;1996-5-30&quot;,&quot;image&quot;:&quot;https://dummyjson.com/icon/emilys/128&quot;,&quot;bloodGroup&quot;:&quot;O-&quot;,&quot;height&quot;:193.24,&quot;weight&quot;:63.16,&quot;eyeColor&quot;:&quot;Green&quot;,&quot;hair&quot;:{&quot;color&quot;:&quot;Brown&quot;,&quot;type&quot;:&quot;Curly&quot;},&quot;ip&quot;:&quot;42.48.100.32&quot;,&quot;address&quot;:{&quot;address&quot;:&quot;626 Main Street&quot;,&quot;city&quot;:&quot;Phoenix&quot;,&quot;state&quot;:&quot;Mississippi&quot;,&quot;stateCode&quot;:&quot;MS&quot;,&quot;postalCode&quot;:&quot;29112&quot;,&quot;coordinates&quot;:{&quot;lat&quot;:-77.16213,&quot;lng&quot;:-92.084824},&quot;country&quot;:&quot;United States&quot;},&quot;macAddress&quot;:&quot;47:fa:41:18:ec:eb&quot;,&quot;university&quot;:&quot;University of Wisconsin--Madison&quot;,&quot;bank&quot;:{&quot;cardExpire&quot;:&quot;05/28&quot;,&quot;cardNumber&quot;:&quot;3693233511855044&quot;,&quot;cardType&quot;:&quot;Diners Club International&quot;,&quot;currency&quot;:&quot;GBP&quot;,&quot;iban&quot;:&quot;GB74MH2UZLR9TRPHYNU8F8&quot;},&quot;company&quot;:{&quot;department&quot;:&quot;Engineering&quot;,&quot;name&quot;:&quot;Dooley, Kozey and Cronin&quot;,&quot;title&quot;:&quot;Sales Manager&quot;,&quot;address&quot;:{&quot;address&quot;:&quot;263 Tenth Street&quot;,&quot;city&quot;:&quot;San Francisco&quot;,&quot;state&quot;:&quot;Wisconsin&quot;,&quot;stateCode&quot;:&quot;WI&quot;,&quot;postalCode&quot;:&quot;37657&quot;,&quot;coordinates&quot;:{&quot;lat&quot;:71.814525,&quot;lng&quot;:-161.150263},&quot;country&quot;:&quot;United States&quot;}},&quot;ein&quot;:&quot;977-175&quot;,&quot;ssn&quot;:&quot;900-590-289&quot;,&quot;userAgent&quot;:&quot;Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.93 Safari/537.36&quot;,&quot;crypto&quot;:{&quot;coin&quot;:&quot;Bitcoin&quot;,&quot;wallet&quot;:&quot;0xb9fc2fe63b2a6c003f1c324c3bfa53259162181a&quot;,&quot;network&quot;:&quot;Ethereum (ERC20)&quot;},&quot;role&quot;:&quot;admin&quot;,&quot;isDeleted&quot;:true,&quot;deletedOn&quot;:&quot;2026-07-13T09:17:09.249Z&quot;}</code></pre>
+                                <pre><code>{&quot;id&quot;:1,&quot;firstName&quot;:&quot;Emily&quot;,&quot;lastName&quot;:&quot;Johnson&quot;,&quot;maidenName&quot;:&quot;Smith&quot;,&quot;age&quot;:29,&quot;gender&quot;:&quot;female&quot;,&quot;email&quot;:&quot;emily.johnson@x.dummyjson.com&quot;,&quot;phone&quot;:&quot;+81 965-431-3024&quot;,&quot;username&quot;:&quot;emilys&quot;,&quot;password&quot;:&quot;emilyspass&quot;,&quot;birthDate&quot;:&quot;1996-5-30&quot;,&quot;image&quot;:&quot;https://dummyjson.com/icon/emilys/128&quot;,&quot;bloodGroup&quot;:&quot;O-&quot;,&quot;height&quot;:193.24,&quot;weight&quot;:63.16,&quot;eyeColor&quot;:&quot;Green&quot;,&quot;hair&quot;:{&quot;color&quot;:&quot;Brown&quot;,&quot;type&quot;:&quot;Curly&quot;},&quot;ip&quot;:&quot;42.48.100.32&quot;,&quot;address&quot;:{&quot;address&quot;:&quot;626 Main Street&quot;,&quot;city&quot;:&quot;Phoenix&quot;,&quot;state&quot;:&quot;Mississippi&quot;,&quot;stateCode&quot;:&quot;MS&quot;,&quot;postalCode&quot;:&quot;29112&quot;,&quot;coordinates&quot;:{&quot;lat&quot;:-77.16213,&quot;lng&quot;:-92.084824},&quot;country&quot;:&quot;United States&quot;},&quot;macAddress&quot;:&quot;47:fa:41:18:ec:eb&quot;,&quot;university&quot;:&quot;University of Wisconsin--Madison&quot;,&quot;bank&quot;:{&quot;cardExpire&quot;:&quot;05/28&quot;,&quot;cardNumber&quot;:&quot;3693233511855044&quot;,&quot;cardType&quot;:&quot;Diners Club International&quot;,&quot;currency&quot;:&quot;GBP&quot;,&quot;iban&quot;:&quot;GB74MH2UZLR9TRPHYNU8F8&quot;},&quot;company&quot;:{&quot;department&quot;:&quot;Engineering&quot;,&quot;name&quot;:&quot;Dooley, Kozey and Cronin&quot;,&quot;title&quot;:&quot;Sales Manager&quot;,&quot;address&quot;:{&quot;address&quot;:&quot;263 Tenth Street&quot;,&quot;city&quot;:&quot;San Francisco&quot;,&quot;state&quot;:&quot;Wisconsin&quot;,&quot;stateCode&quot;:&quot;WI&quot;,&quot;postalCode&quot;:&quot;37657&quot;,&quot;coordinates&quot;:{&quot;lat&quot;:71.814525,&quot;lng&quot;:-161.150263},&quot;country&quot;:&quot;United States&quot;}},&quot;ein&quot;:&quot;977-175&quot;,&quot;ssn&quot;:&quot;900-590-289&quot;,&quot;userAgent&quot;:&quot;Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.93 Safari/537.36&quot;,&quot;crypto&quot;:{&quot;coin&quot;:&quot;Bitcoin&quot;,&quot;wallet&quot;:&quot;0xb9fc2fe63b2a6c003f1c324c3bfa53259162181a&quot;,&quot;network&quot;:&quot;Ethereum (ERC20)&quot;},&quot;role&quot;:&quot;admin&quot;,&quot;isDeleted&quot;:true,&quot;deletedOn&quot;:&quot;2026-07-16T07:08:10.732Z&quot;}</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="nested-request-row">
+                    <div class="nested-request-header" onclick="toggleRequest(7, 1)">
+                        <span class="badge badge-post">POST</span>
+                        <span class="nested-url" title="https://dummyjson.com/auth/login">https://dummyjson.com/auth/login</span>
+                        <span class="status-indicator status-pass">200</span>
+                        <span class="nested-time">909 ms</span>
+                        
+                    </div>
+                    <div id="req-details-7-1" class="nested-request-details" style="display: none;">
+                        <div class="curl-section">
+                            <div class="section-header">
+                                <h4>💻 cURL Replicator Command</h4>
+                                <button class="copy-btn" onclick="copyText(decodeURIComponent('curl -s -X POST %22https://dummyjson.com/auth/login%22 -H %22Content-Type: application/json%22 -d %22{%22username%22:%22emilys%22,%22password%22:%22emilyspass%22}%22'), this, event)">📋 Copy cURL</button>
+                            </div>
+                            <div class="code-box">
+                                <code>curl -s -X POST &quot;https://dummyjson.com/auth/login&quot; -H &quot;Content-Type: application/json&quot; -d &quot;{%22username%22:%22emilys%22,%22password%22:%22emilyspass%22}&quot;</code>
+                            </div>
+                        </div>
+                        <div class="body-split">
+                            <div class="body-block">
+                                <h4>📤 Request Body</h4>
+                                <pre><code>{&quot;username&quot;:&quot;emilys&quot;,&quot;password&quot;:&quot;emilyspass&quot;}</code></pre>
+                            </div>
+                            <div class="body-block">
+                                <h4>📥 Response Body</h4>
+                                <pre><code>{&quot;accessToken&quot;:&quot;eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJlbWlseXMiLCJlbWFpbCI6ImVtaWx5LmpvaG5zb25AeC5kdW1teWpzb24uY29tIiwiZmlyc3ROYW1lIjoiRW1pbHkiLCJsYXN0TmFtZSI6IkpvaG5zb24iLCJnZW5kZXIiOiJmZW1hbGUiLCJpbWFnZSI6Imh0dHBzOi8vZHVtbXlqc29uLmNvbS9pY29uL2VtaWx5cy8xMjgiLCJpYXQiOjE3ODQxODU2OTEsImV4cCI6MTc4NDE4OTI5MX0.eINMiSox05crg7t0P_J5XTbiw3siqphXSkE584d0POQ&quot;,&quot;refreshToken&quot;:&quot;eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJlbWlseXMiLCJlbWFpbCI6ImVtaWx5LmpvaG5zb25AeC5kdW1teWpzb24uY29tIiwiZmlyc3ROYW1lIjoiRW1pbHkiLCJsYXN0TmFtZSI6IkpvaG5zb24iLCJnZW5kZXIiOiJmZW1hbGUiLCJpbWFnZSI6Imh0dHBzOi8vZHVtbXlqc29uLmNvbS9pY29uL2VtaWx5cy8xMjgiLCJpYXQiOjE3ODQxODU2OTEsImV4cCI6MTc4Njc3NzY5MX0.ImJRYJ6PbeKzJCWlAIiDVNu-Snq97YrYC86CslovAsg&quot;,&quot;id&quot;:1,&quot;username&quot;:&quot;emilys&quot;,&quot;email&quot;:&quot;emily.johnson@x.dummyjson.com&quot;,&quot;firstName&quot;:&quot;Emily&quot;,&quot;lastName&quot;:&quot;Johnson&quot;,&quot;gender&quot;:&quot;female&quot;,&quot;image&quot;:&quot;https://dummyjson.com/icon/emilys/128&quot;}</code></pre>
                             </div>
                         </div>
                     </div>
@@ -1169,7 +1309,7 @@
                     <span class="assertion-summary">1 right</span>
                 </div>
             </td>
-            <td>2026-07-13 14:47:32</td>
+            <td>2026-07-16 12:38:35</td>
             <td>
                 <span class="status-indicator status-pass">✓ PASSED</span>
                 
@@ -1178,14 +1318,18 @@
         <tr id="page-details-8" class="details-row" style="display: none;">
             <td colspan="3">
                 <div class="nested-requests-container">
-                    <h3>🔍 Executed API Requests Audit Trail</h3>
+                    <div class="audit-header">
+                        <h3>🔍 Executed API Requests Audit Trail</h3>
+                        
+                    </div>
                     
                 <div class="nested-request-row">
                     <div class="nested-request-header" onclick="toggleRequest(8, 0)">
                         <span class="badge badge-post">POST</span>
                         <span class="nested-url" title="https://dummyjson.com/auth/login">https://dummyjson.com/auth/login</span>
                         <span class="status-indicator status-pass">200</span>
-                        <span class="nested-time">784 ms</span>
+                        <span class="nested-time">1025 ms</span>
+                        
                     </div>
                     <div id="req-details-8-0" class="nested-request-details" style="display: none;">
                         <div class="curl-section">
@@ -1204,37 +1348,7 @@
                             </div>
                             <div class="body-block">
                                 <h4>📥 Response Body</h4>
-                                <pre><code>{&quot;accessToken&quot;:&quot;eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJlbWlseXMiLCJlbWFpbCI6ImVtaWx5LmpvaG5zb25AeC5kdW1teWpzb24uY29tIiwiZmlyc3ROYW1lIjoiRW1pbHkiLCJsYXN0TmFtZSI6IkpvaG5zb24iLCJnZW5kZXIiOiJmZW1hbGUiLCJpbWFnZSI6Imh0dHBzOi8vZHVtbXlqc29uLmNvbS9pY29uL2VtaWx5cy8xMjgiLCJpYXQiOjE3ODM5MzQyMjYsImV4cCI6MTc4MzkzNzgyNn0.Ho48qXJh_LgVpzupgwKjhfmMXyMnHpFZ6RsN4XPupT8&quot;,&quot;refreshToken&quot;:&quot;eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJlbWlseXMiLCJlbWFpbCI6ImVtaWx5LmpvaG5zb25AeC5kdW1teWpzb24uY29tIiwiZmlyc3ROYW1lIjoiRW1pbHkiLCJsYXN0TmFtZSI6IkpvaG5zb24iLCJnZW5kZXIiOiJmZW1hbGUiLCJpbWFnZSI6Imh0dHBzOi8vZHVtbXlqc29uLmNvbS9pY29uL2VtaWx5cy8xMjgiLCJpYXQiOjE3ODM5MzQyMjYsImV4cCI6MTc4NjUyNjIyNn0.B33HTXh42AvprdELM2y6c1LPgrfZweTZOMQ3rvp5twM&quot;,&quot;id&quot;:1,&quot;username&quot;:&quot;emilys&quot;,&quot;email&quot;:&quot;emily.johnson@x.dummyjson.com&quot;,&quot;firstName&quot;:&quot;Emily&quot;,&quot;lastName&quot;:&quot;Johnson&quot;,&quot;gender&quot;:&quot;female&quot;,&quot;image&quot;:&quot;https://dummyjson.com/icon/emilys/128&quot;}</code></pre>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="nested-request-row">
-                    <div class="nested-request-header" onclick="toggleRequest(8, 1)">
-                        <span class="badge badge-post">POST</span>
-                        <span class="nested-url" title="https://dummyjson.com/auth/login">https://dummyjson.com/auth/login</span>
-                        <span class="status-indicator status-pass">200</span>
-                        <span class="nested-time">873 ms</span>
-                    </div>
-                    <div id="req-details-8-1" class="nested-request-details" style="display: none;">
-                        <div class="curl-section">
-                            <div class="section-header">
-                                <h4>💻 cURL Replicator Command</h4>
-                                <button class="copy-btn" onclick="copyText(decodeURIComponent('curl -s -X POST %22https://dummyjson.com/auth/login%22 -H %22Content-Type: application/json%22 -d %22{%22username%22:%22emilys%22,%22password%22:%22emilyspass%22}%22'), this, event)">📋 Copy cURL</button>
-                            </div>
-                            <div class="code-box">
-                                <code>curl -s -X POST &quot;https://dummyjson.com/auth/login&quot; -H &quot;Content-Type: application/json&quot; -d &quot;{%22username%22:%22emilys%22,%22password%22:%22emilyspass%22}&quot;</code>
-                            </div>
-                        </div>
-                        <div class="body-split">
-                            <div class="body-block">
-                                <h4>📤 Request Body</h4>
-                                <pre><code>{&quot;username&quot;:&quot;emilys&quot;,&quot;password&quot;:&quot;emilyspass&quot;}</code></pre>
-                            </div>
-                            <div class="body-block">
-                                <h4>📥 Response Body</h4>
-                                <pre><code>{&quot;accessToken&quot;:&quot;eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJlbWlseXMiLCJlbWFpbCI6ImVtaWx5LmpvaG5zb25AeC5kdW1teWpzb24uY29tIiwiZmlyc3ROYW1lIjoiRW1pbHkiLCJsYXN0TmFtZSI6IkpvaG5zb24iLCJnZW5kZXIiOiJmZW1hbGUiLCJpbWFnZSI6Imh0dHBzOi8vZHVtbXlqc29uLmNvbS9pY29uL2VtaWx5cy8xMjgiLCJpYXQiOjE3ODM5MzQyMjcsImV4cCI6MTc4MzkzNzgyN30.3jo3EnXd9R3XWWZmFAqOTY26agyTKh_M6bwXMJSJHrs&quot;,&quot;refreshToken&quot;:&quot;eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJlbWlseXMiLCJlbWFpbCI6ImVtaWx5LmpvaG5zb25AeC5kdW1teWpzb24uY29tIiwiZmlyc3ROYW1lIjoiRW1pbHkiLCJsYXN0TmFtZSI6IkpvaG5zb24iLCJnZW5kZXIiOiJmZW1hbGUiLCJpbWFnZSI6Imh0dHBzOi8vZHVtbXlqc29uLmNvbS9pY29uL2VtaWx5cy8xMjgiLCJpYXQiOjE3ODM5MzQyMjcsImV4cCI6MTc4NjUyNjIyN30.DqJCyOWoIadtwVMgL5qF5eaLreNJe_CVhPG_iHF82xw&quot;,&quot;id&quot;:1,&quot;username&quot;:&quot;emilys&quot;,&quot;email&quot;:&quot;emily.johnson@x.dummyjson.com&quot;,&quot;firstName&quot;:&quot;Emily&quot;,&quot;lastName&quot;:&quot;Johnson&quot;,&quot;gender&quot;:&quot;female&quot;,&quot;image&quot;:&quot;https://dummyjson.com/icon/emilys/128&quot;}</code></pre>
+                                <pre><code>{&quot;accessToken&quot;:&quot;eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJlbWlseXMiLCJlbWFpbCI6ImVtaWx5LmpvaG5zb25AeC5kdW1teWpzb24uY29tIiwiZmlyc3ROYW1lIjoiRW1pbHkiLCJsYXN0TmFtZSI6IkpvaG5zb24iLCJnZW5kZXIiOiJmZW1hbGUiLCJpbWFnZSI6Imh0dHBzOi8vZHVtbXlqc29uLmNvbS9pY29uL2VtaWx5cy8xMjgiLCJpYXQiOjE3ODQxODU2ODksImV4cCI6MTc4NDE4OTI4OX0.hQZN842_w9wq7bepKski4vg9WlJhXsxwqE1Jzuw5woE&quot;,&quot;refreshToken&quot;:&quot;eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJlbWlseXMiLCJlbWFpbCI6ImVtaWx5LmpvaG5zb25AeC5kdW1teWpzb24uY29tIiwiZmlyc3ROYW1lIjoiRW1pbHkiLCJsYXN0TmFtZSI6IkpvaG5zb24iLCJnZW5kZXIiOiJmZW1hbGUiLCJpbWFnZSI6Imh0dHBzOi8vZHVtbXlqc29uLmNvbS9pY29uL2VtaWx5cy8xMjgiLCJpYXQiOjE3ODQxODU2ODksImV4cCI6MTc4Njc3NzY4OX0.rkfbEVEAut1Xl7Gr77JvSaDh-CjDVYnrcAJciy55pWY&quot;,&quot;id&quot;:1,&quot;username&quot;:&quot;emilys&quot;,&quot;email&quot;:&quot;emily.johnson@x.dummyjson.com&quot;,&quot;firstName&quot;:&quot;Emily&quot;,&quot;lastName&quot;:&quot;Johnson&quot;,&quot;gender&quot;:&quot;female&quot;,&quot;image&quot;:&quot;https://dummyjson.com/icon/emilys/128&quot;}</code></pre>
                             </div>
                         </div>
                     </div>
@@ -1251,7 +1365,7 @@
                     <span class="assertion-summary">1 right</span>
                 </div>
             </td>
-            <td>2026-07-13 14:47:30</td>
+            <td>2026-07-16 12:38:32</td>
             <td>
                 <span class="status-indicator status-pass">✓ PASSED</span>
                 
@@ -1260,14 +1374,22 @@
         <tr id="page-details-9" class="details-row" style="display: none;">
             <td colspan="3">
                 <div class="nested-requests-container">
-                    <h3>🔍 Executed API Requests Audit Trail</h3>
+                    <div class="audit-header">
+                        <h3>🔍 Executed API Requests Audit Trail</h3>
+                        
+                <button class="download-all-btn" onclick="downloadAll(['/files/test_data/POST_80cf4449f6e2_20260716_123832.json'], 'DummyAPI.AuthenticateUser')">
+                    📦 Download All (1)
+                </button>
+            
+                    </div>
                     
                 <div class="nested-request-row">
                     <div class="nested-request-header" onclick="toggleRequest(9, 0)">
                         <span class="badge badge-post">POST</span>
                         <span class="nested-url" title="https://dummyjson.com/users/add">https://dummyjson.com/users/add</span>
                         <span class="status-indicator status-pass">201</span>
-                        <span class="nested-time">872 ms</span>
+                        <span class="nested-time">868 ms</span>
+                        <a href="/files/test_data/POST_80cf4449f6e2_20260716_123832.json" download class="download-json-btn" title="Download complete test data with assertions">📥 Download JSON</a>
                     </div>
                     <div id="req-details-9-0" class="nested-request-details" style="display: none;">
                         <div class="curl-section">
@@ -1292,6 +1414,37 @@
                     </div>
                 </div>
                 
+                <div class="nested-request-row">
+                    <div class="nested-request-header" onclick="toggleRequest(9, 1)">
+                        <span class="badge badge-post">POST</span>
+                        <span class="nested-url" title="https://dummyjson.com/auth/login">https://dummyjson.com/auth/login</span>
+                        <span class="status-indicator status-pass">200</span>
+                        <span class="nested-time">864 ms</span>
+                        
+                    </div>
+                    <div id="req-details-9-1" class="nested-request-details" style="display: none;">
+                        <div class="curl-section">
+                            <div class="section-header">
+                                <h4>💻 cURL Replicator Command</h4>
+                                <button class="copy-btn" onclick="copyText(decodeURIComponent('curl -s -X POST %22https://dummyjson.com/auth/login%22 -H %22Content-Type: application/json%22 -d %22{%22username%22:%22emilys%22,%22password%22:%22emilyspass%22}%22'), this, event)">📋 Copy cURL</button>
+                            </div>
+                            <div class="code-box">
+                                <code>curl -s -X POST &quot;https://dummyjson.com/auth/login&quot; -H &quot;Content-Type: application/json&quot; -d &quot;{%22username%22:%22emilys%22,%22password%22:%22emilyspass%22}&quot;</code>
+                            </div>
+                        </div>
+                        <div class="body-split">
+                            <div class="body-block">
+                                <h4>📤 Request Body</h4>
+                                <pre><code>{&quot;username&quot;:&quot;emilys&quot;,&quot;password&quot;:&quot;emilyspass&quot;}</code></pre>
+                            </div>
+                            <div class="body-block">
+                                <h4>📥 Response Body</h4>
+                                <pre><code>{&quot;accessToken&quot;:&quot;eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJlbWlseXMiLCJlbWFpbCI6ImVtaWx5LmpvaG5zb25AeC5kdW1teWpzb24uY29tIiwiZmlyc3ROYW1lIjoiRW1pbHkiLCJsYXN0TmFtZSI6IkpvaG5zb24iLCJnZW5kZXIiOiJmZW1hbGUiLCJpbWFnZSI6Imh0dHBzOi8vZHVtbXlqc29uLmNvbS9pY29uL2VtaWx5cy8xMjgiLCJpYXQiOjE3ODQxODU2ODgsImV4cCI6MTc4NDE4OTI4OH0.vt_dlabASRL7xN3Rf6eaMsgRKvpeOGfV-lFdFCzOOd4&quot;,&quot;refreshToken&quot;:&quot;eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJlbWlseXMiLCJlbWFpbCI6ImVtaWx5LmpvaG5zb25AeC5kdW1teWpzb24uY29tIiwiZmlyc3ROYW1lIjoiRW1pbHkiLCJsYXN0TmFtZSI6IkpvaG5zb24iLCJnZW5kZXIiOiJmZW1hbGUiLCJpbWFnZSI6Imh0dHBzOi8vZHVtbXlqc29uLmNvbS9pY29uL2VtaWx5cy8xMjgiLCJpYXQiOjE3ODQxODU2ODgsImV4cCI6MTc4Njc3NzY4OH0.iMrDzgsLDVqVtetsL-8e7DP97DOuxFwWQ-bSkIzeyYY&quot;,&quot;id&quot;:1,&quot;username&quot;:&quot;emilys&quot;,&quot;email&quot;:&quot;emily.johnson@x.dummyjson.com&quot;,&quot;firstName&quot;:&quot;Emily&quot;,&quot;lastName&quot;:&quot;Johnson&quot;,&quot;gender&quot;:&quot;female&quot;,&quot;image&quot;:&quot;https://dummyjson.com/icon/emilys/128&quot;}</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
                 </div>
             </td>
         </tr>
@@ -1303,7 +1456,7 @@
                     <span class="assertion-summary">1 right</span>
                 </div>
             </td>
-            <td>2026-07-13 14:47:28</td>
+            <td>2026-07-16 12:38:30</td>
             <td>
                 <span class="status-indicator status-pass">✓ PASSED</span>
                 
@@ -1312,7 +1465,10 @@
         <tr id="page-details-10" class="details-row" style="display: none;">
             <td colspan="3">
                 <div class="nested-requests-container">
-                    <h3>🔍 Executed API Requests Audit Trail</h3>
+                    <div class="audit-header">
+                        <h3>🔍 Executed API Requests Audit Trail</h3>
+                        
+                    </div>
                     <div class='no-requests'>No API HTTP requests were logged for this page run.</div>
                 </div>
             </td>

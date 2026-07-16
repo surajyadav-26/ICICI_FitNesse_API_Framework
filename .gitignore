@@ -8,6 +8,7 @@ config.json.*
 *.cert
 .env
 .env.local
+.env.*.local
 
 # Python virtual environments
 .venv/

@@ -768,11 +768,43 @@ Enterprise Internal Use Only - ICICI Prudential Life Insurance
 
 ---
 
+## 📝 **Changelog**
+
+### **v2.1.0** - July 16, 2026
+**UX Enhancements:**
+- ✅ Smart cancel button with change detection (no confirmation for empty forms)
+- ✅ Context-aware radio button defaults (Suite for new pages, Test for child pages)  
+- ✅ Universal ICICI theme application with MutationObserver
+- ✅ Enhanced environment management with console debugging
+- ✅ Developer console integration with detailed logging
+
+**Bug Fixes:**
+- ✅ Fixed GitHub Actions PowerShell error with HTML tags in Write-Host
+- ✅ Fixed cancel buttons not working on various pages
+- ✅ Improved form change detection logic
+
+**Developer Experience:**
+- ✅ Added console logging for all UX operations
+- ✅ RED banner indicator when JavaScript loads successfully
+- ✅ Enhanced debugging messages for troubleshooting
+- ✅ Updated .gitignore to exclude .zip backups and temp files
+
+### **v2.0.0** - July 13, 2026
+**Initial Release:**
+- 15 Python fixtures for comprehensive API testing
+- OAuth2, GraphQL, WebSocket, gRPC support
+- Custom ICICI branding and theme
+- GitHub Actions & Jenkins CI/CD integration
+- Multi-environment support (Dev/QA/UAT/Prod)
+- Automated HTML report generation
+
+---
+
 ## 🏆 **Credits**
 
 **Built By:** ICICI Prudential QA Engineering Team  
-**Framework Version:** 2.0  
-**Last Updated:** 2026-07-13  
+**Framework Version:** 2.1.0  
+**Last Updated:** 2026-07-16  
 **Status:** Production Ready ✅
 
 ---

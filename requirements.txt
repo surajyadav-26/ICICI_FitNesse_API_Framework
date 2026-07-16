@@ -1,6 +1,12 @@
 # Core HTTP and API Testing
 requests>=2.31.0
 
+# Environment Variables
+python-dotenv>=1.0.0
+
+# Encryption
+cryptography>=42.0.0
+
 # Testing Framework
 pytest>=8.0.0
 
