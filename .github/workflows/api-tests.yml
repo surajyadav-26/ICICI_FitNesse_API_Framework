@@ -350,14 +350,9 @@ jobs:
                 Write-Host "HTML Response Analysis:"
                 Write-Host "  Total length: $($html.Length) characters"
                 
-                # Show relevant sections of HTML for debugging
-                if ($html -match '(?s)<div[^>]*class=[^>]*test-output[^>]*>(.{0,500})') {
-                  Write-Host "  Found test-output section (first 500 chars)"
-                } elseif ($html -match '(?s)<div[^>]*id=[^>]*test-summary[^>]*>(.{0,500})') {
-                  Write-Host "  Found test-summary section"
-                } else {
-                  Write-Host "  Searching for result patterns in full HTML..."
-                }
+                # Save HTML to file for inspection
+                $html | Out-File -FilePath "fitnesse_response.html" -Encoding utf8
+                Write-Host "  Saved full HTML to fitnesse_response.html (will be uploaded as artifact)"
                 Write-Host ""
                 
                 # Initialize counters
@@ -367,7 +362,8 @@ jobs:
                 $ignores = 0
                 
                 # Try multiple pattern variations for FitNesse HTML
-                Write-Host "Trying pattern matching..."
+                Write-Host "Trying comprehensive pattern matching..."
+                Write-Host ""
                 
                 # Pattern 1: class="pass">NUMBER
                 if ($html -match 'class=.pass.>(\d+)') { 
@@ -663,8 +659,17 @@ jobs:
           path: ./reports
 
       - name: Deploy to GitHub Pages
+        continue-on-error: true
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./reports
           destination_dir: reports/${{ github.run_number }}
+          
+      - name: Pages Deployment Status
+        if: always()
+        shell: bash
+        run: |
+          echo "GitHub Pages deployment attempted"
+          echo "If deployment failed, GitHub Pages may not be enabled"
+          echo "Enable it at: Settings > Pages > Source > gh-pages branch"
