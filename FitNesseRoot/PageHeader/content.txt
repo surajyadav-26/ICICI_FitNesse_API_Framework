@@ -1718,6 +1718,198 @@ body article {
     });
   }
 
+  /* ═══════════════════════════════════════════════════════════════
+     FIX 1: CANCEL BUTTON FIX - Make cancel buttons actually work
+     ═══════════════════════════════════════════════════════════════ */
+  document.addEventListener("DOMContentLoaded", function() {
+    // Find all cancel buttons and links
+    var cancelButtons = document.querySelectorAll('input[value="Cancel"], button[type="button"]');
+    var cancelLinks = document.querySelectorAll('a[href*="Cancel"], a[title*="Cancel"]');
+    
+    // Fix cancel buttons
+    cancelButtons.forEach(function(btn) {
+      if (btn.value === "Cancel" || btn.innerText.indexOf("Cancel") !== -1) {
+        btn.onclick = function(e) {
+          e.preventDefault();
+          // Check if form has any changes
+          var form = btn.closest('form');
+          var hasChanges = false;
+          
+          if (form) {
+            var inputs = form.querySelectorAll('input, textarea, select');
+            inputs.forEach(function(input) {
+              if (input.type !== 'button' && input.type !== 'submit' && input.value && input.defaultValue !== input.value) {
+                hasChanges = true;
+              }
+            });
+          }
+          
+          // If no changes, just go back
+          if (!hasChanges) {
+            window.history.back();
+          } else {
+            // Ask for confirmation if there are changes
+            if (confirm('You have unsaved changes. Are you sure you want to cancel?')) {
+              window.history.back();
+            }
+          }
+          return false;
+        };
+      }
+    });
+    
+    // Fix cancel links
+    cancelLinks.forEach(function(link) {
+      link.onclick = function(e) {
+        e.preventDefault();
+        window.history.back();
+        return false;
+      };
+    });
+  });
+
+  /* ═══════════════════════════════════════════════════════════════
+     FIX 2: DEFAULT RADIO BUTTON SELECTION - Suite or Test based on context
+     ═══════════════════════════════════════════════════════════════ */
+  document.addEventListener("DOMContentLoaded", function() {
+    // Check if we're on the "Add Child" or "New Page" form
+    var pageTypeRadios = document.getElementsByName('pageType');
+    
+    if (pageTypeRadios && pageTypeRadios.length > 0) {
+      // Get current URL to detect context
+      var currentPath = window.location.pathname;
+      var currentSearch = window.location.search;
+      
+      // Detect if we're adding to a Suite page
+      var isInSuite = currentPath.match(/\/(FrontPage|Sanity|Smoke|DummyAPI)/i);
+      var isAddingChild = currentSearch.indexOf('responder=addChild') !== -1;
+      var isEditingPage = currentSearch.indexOf('responder=edit') !== -1;
+      
+      // Default selection logic:
+      // 1. If creating new page at root level → default to Suite
+      // 2. If adding child to existing suite → default to Test
+      // 3. Otherwise → default to Suite
+      
+      var defaultType = 'Suite'; // Default to Suite for new pages
+      
+      if (isAddingChild && isInSuite) {
+        // Adding a child to a suite → default to Test
+        defaultType = 'Test';
+      } else if (!isAddingChild && !isEditingPage) {
+        // Creating new page at root → default to Suite
+        defaultType = 'Suite';
+      }
+      
+      // Apply the selection
+      for (var i = 0; i < pageTypeRadios.length; i++) {
+        var radio = pageTypeRadios[i];
+        if (radio.value === defaultType) {
+          radio.checked = true;
+          
+          // Trigger change event to update any dependent UI
+          if (typeof Event === 'function') {
+            radio.dispatchEvent(new Event('change', { bubbles: true }));
+          } else {
+            // IE fallback
+            var evt = document.createEvent('HTMLEvents');
+            evt.initEvent('change', true, true);
+            radio.dispatchEvent(evt);
+          }
+          
+          console.log('ICICI Framework: Auto-selected page type:', defaultType);
+          break;
+        }
+      }
+    }
+  });
+
+  /* ═══════════════════════════════════════════════════════════════
+     FIX 3: ENSURE ICICI THEME APPLIES TO ALL PAGES
+     ═══════════════════════════════════════════════════════════════ */
+  document.addEventListener("DOMContentLoaded", function() {
+    // Force body class for theme consistency
+    if (document.body) {
+      document.body.classList.add('icici-theme');
+    }
+    
+    // Apply theme to dynamically loaded content
+    var observer = new MutationObserver(function(mutations) {
+      mutations.forEach(function(mutation) {
+        if (mutation.addedNodes) {
+          mutation.addedNodes.forEach(function(node) {
+            if (node.nodeType === 1) { // Element node
+              // Apply ICICI styling to buttons
+              if (node.tagName === 'BUTTON' || (node.tagName === 'INPUT' && node.type === 'submit')) {
+                if (!node.classList.contains('icici-styled')) {
+                  node.classList.add('icici-styled');
+                }
+              }
+              
+              // Apply to tables
+              if (node.tagName === 'TABLE') {
+                if (!node.classList.contains('icici-table')) {
+                  node.classList.add('icici-table');
+                }
+              }
+            }
+          });
+        }
+      });
+    });
+    
+    // Start observing
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+  });
+
+  /* ═══════════════════════════════════════════════════════════════
+     FIX 4: ENHANCED CANCEL BUTTON FOR FORMS WITH NO DATA
+     ═══════════════════════════════════════════════════════════════ */
+  document.addEventListener("DOMContentLoaded", function() {
+    // Monitor form inputs to track if user has entered any data
+    var forms = document.querySelectorAll('form');
+    
+    forms.forEach(function(form) {
+      var formHasData = false;
+      
+      // Track input changes
+      form.addEventListener('input', function() {
+        var inputs = form.querySelectorAll('input, textarea, select');
+        formHasData = false;
+        
+        inputs.forEach(function(input) {
+          if (input.type !== 'button' && input.type !== 'submit' && input.type !== 'hidden') {
+            if (input.value && input.value.trim() !== '') {
+              formHasData = true;
+            }
+          }
+        });
+      });
+      
+      // Override cancel button behavior
+      var cancelBtn = form.querySelector('input[value="Cancel"], button[type="button"]');
+      if (cancelBtn) {
+        cancelBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          
+          if (!formHasData) {
+            // No data entered, just go back without confirmation
+            window.history.back();
+          } else {
+            // Data entered, ask for confirmation
+            if (confirm('You have unsaved changes. Discard them?')) {
+              window.history.back();
+            }
+          }
+          
+          return false;
+        });
+      }
+    });
+  });
+
 })();
 </script>
 
