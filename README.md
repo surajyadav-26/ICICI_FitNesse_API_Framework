@@ -46,13 +46,35 @@ Enterprise-grade REST API testing framework for ICICI Prudential AML & Complianc
 - ✅ **cURL Logging**: Auto-generate curl commands for debugging
 - ✅ **Daily Log Rotation**: 7-day retention with structured logging
 
-### **UI/UX**
+### **UI/UX Enhancements** 🎨
 - ✅ **Custom ICICI Branding**: Official logos, colors (#A6192E red, #004A80 blue)
 - ✅ **Role-Based Access**: Admin (full) and Viewer (read-only) roles
 - ✅ **Fixed Header Navigation**: Stays at top while scrolling
 - ✅ **Loading Indicators**: Visual feedback during test execution
 - ✅ **Environment Selector**: Quick switching with persistent storage
 - ✅ **Responsive Design**: Desktop-optimized with mobile support
+
+### **🆕 Latest UX Improvements** (v2.1 - July 2026)
+- ✅ **Smart Cancel Buttons**: 
+  - Automatically detects form changes
+  - No confirmation prompt for empty forms
+  - Works across all FitNesse pages
+- ✅ **Context-Aware Radio Defaults**:
+  - Creating new page → Suite selected by default
+  - Adding child to suite → Test selected by default
+  - Skips auto-selection on properties page (preserves current type)
+- ✅ **Universal Theme Application**:
+  - MutationObserver monitors dynamic content
+  - Auto-applies ICICI styling to new elements
+  - Consistent branding everywhere
+- ✅ **Enhanced Environment Management**:
+  - Console logging for delete/save operations
+  - Persistent storage with localStorage
+  - Visual feedback for all changes
+- ✅ **Developer Console Integration**:
+  - RED banner on successful load
+  - Detailed debugging messages
+  - Easy troubleshooting
 
 ### **CI/CD Automation**
 - ✅ **GitHub Actions**: Auto-trigger on push/PR, scheduled runs, manual dispatch

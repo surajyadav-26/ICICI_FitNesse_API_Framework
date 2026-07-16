@@ -36,6 +36,15 @@ FitNesseRoot/ErrorLogs/
 FitNesseRoot/files/reports/
 FitNesseRoot/update_history.txt
 
+# FitNesse backup zip files (created automatically)
+FitNesseRoot/**/*.zip
+*.zip
+
+# Temporary files
+temp_*.html
+temp_*.txt
+temp_check.html
+
 # OS-specific temp files
 .DS_Store
 Thumbs.db
