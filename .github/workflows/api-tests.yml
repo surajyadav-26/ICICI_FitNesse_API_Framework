@@ -11,9 +11,9 @@ on:
   workflow_dispatch:
     inputs:
       test_suite:
-        description: 'Test suite to run (e.g., FrontPage.Sanity, FrontPage.Smoke)'
+        description: 'Test suite to run (e.g., FrontPage.DummyAPI, FrontPage.Sanity, FrontPage.Smoke)'
         required: false
-        default: 'FrontPage'
+        default: 'FrontPage.DummyAPI'
       environment:
         description: 'Test environment'
         required: true
@@ -301,8 +301,11 @@ jobs:
         run: |
           $ErrorActionPreference = "Continue"
           
-          $testSuite = "${{ github.event.inputs.test_suite || 'FrontPage' }}"
-          $testUrl = "http://localhost:8080/${testSuite}?suite&format=json"
+          # Use actual test suite (FrontPage is not a suite, it's a parent page)
+          $testSuite = "${{ github.event.inputs.test_suite || 'FrontPage.DummyAPI' }}"
+          
+          # FitNesse JSON format requires: ?responder=suite&format=json
+          $testUrl = "http://localhost:8080/${testSuite}?responder=suite&format=json"
           
           Write-Host "Running test suite: $testSuite"
           Write-Host "Test URL: $testUrl"
