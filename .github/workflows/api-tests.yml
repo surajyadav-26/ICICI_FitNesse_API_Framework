@@ -126,31 +126,34 @@ jobs:
           }
           Write-Host ""
           
-          Write-Host "Starting FitNesse as detached background process..."
-          # Use Start-Process to create a true detached process that survives step exit
-          $processParams = @{
-            FilePath = "java"
-            ArgumentList = @("-cp", ".\fitnesse-standalone.jar", "fitnesseMain.FitNesseMain", "-p", "8080", "-e", "0")
-            WorkingDirectory = $PWD
-            PassThru = $true
-            NoNewWindow = $true
-          }
+          Write-Host "Starting FitNesse with cmd.exe start (truly independent process)..."
+          # GitHub Actions kills child processes when step exits, even with Start-Process
+          # Solution: Use cmd.exe /c start /b to create process not in job tree
+          # Redirect output to files so process doesn't block
+          $fitnesseLogs = Join-Path $PWD "fitnesse_output.log"
+          $fitnesseErrors = Join-Path $PWD "fitnesse_errors.log"
           
-          $process = Start-Process @processParams
+          # Start FitNesse using cmd.exe start with output redirection
+          cmd /c "start /b java -cp fitnesse-standalone.jar fitnesseMain.FitNesseMain -p 8080 -e 0 > fitnesse_output.log 2> fitnesse_errors.log"
           
-          Write-Host "FitNesse process started with PID: $($process.Id)"
-          Write-Host "Waiting 15 seconds for initialization..."
-          Start-Sleep -Seconds 15
+          Write-Host "FitNesse start command issued"
+          Write-Host "Output log: $fitnesseLogs"
+          Write-Host "Error log: $fitnesseErrors"
+          Write-Host "Waiting 20 seconds for initialization..."
+          Start-Sleep -Seconds 20
           
-          # Check if process is still running
-          $process.Refresh()
-          if ($process.HasExited) {
-            Write-Error "FitNesse process exited with code: $($process.ExitCode)"
-            Write-Host "Process exited immediately - check for startup errors"
+          # Check if Java process is running
+          $javaProcess = Get-Process -Name "java" -ErrorAction SilentlyContinue | Select-Object -First 1
+          if (-not $javaProcess) {
+            Write-Error "No Java process found after start"
+            if (Test-Path $fitnesseErrors) {
+              Write-Host "Error log content:"
+              Get-Content $fitnesseErrors | Write-Host
+            }
             exit 1
           }
           
-          Write-Host "Process still running (PID: $($process.Id)), checking HTTP connectivity..."
+          Write-Host "Java process found: PID $($javaProcess.Id)"
           
           # Wait for FitNesse HTTP response
           $maxRetries = 40
@@ -161,11 +164,14 @@ jobs:
             Start-Sleep -Seconds 3
             $retryCount++
             
-            # Check if process is still running
-            $process.Refresh()
-            if ($process.HasExited) {
-              Write-Error "FitNesse process exited with code: $($process.ExitCode)"
-              Write-Host "Process died during initialization"
+            # Check if Java process is still running
+            $currentJavaProcess = Get-Process -Name "java" -ErrorAction SilentlyContinue
+            if (-not $currentJavaProcess) {
+              Write-Error "Java process terminated during startup"
+              if (Test-Path $fitnesseErrors) {
+                Write-Host "Error log content:"
+                Get-Content $fitnesseErrors | Write-Host
+              }
               exit 1
             }
             
@@ -191,17 +197,28 @@ jobs:
           } while ($retryCount -lt $maxRetries)
           
           if (-not $serverReady) {
-            $process.Refresh()
+            $finalJavaProcess = Get-Process -Name "java" -ErrorAction SilentlyContinue
             Write-Error "FitNesse server failed to start after $maxRetries attempts ($($maxRetries * 3) seconds)"
-            Write-Host "Process Running: $(-not $process.HasExited), PID: $($process.Id)"
+            if ($finalJavaProcess) {
+              Write-Host "Java process still running but not responding: PID $($finalJavaProcess.Id)"
+            } else {
+              Write-Host "Java process terminated"
+            }
+            if (Test-Path $fitnesseErrors) {
+              Write-Host "Error log content:"
+              Get-Content $fitnesseErrors | Write-Host
+            }
             exit 1
           }
           
           Write-Host "SUCCESS: FitNesse server is running and ready for tests"
-          Write-Host "Process PID: $($process.Id), Running: $(-not $process.HasExited)"
+          $successJavaProcess = Get-Process -Name "java" -ErrorAction SilentlyContinue | Select-Object -First 1
+          if ($successJavaProcess) {
+            Write-Host "Java Process PID: $($successJavaProcess.Id)"
+          }
           
           # Clear any accumulated errors and exit successfully
-          # The process will continue running as a detached background process
+          # FitNesse started via cmd.exe is NOT a child process - survives step exit
           $Error.Clear()
           exit 0
 
