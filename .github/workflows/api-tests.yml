@@ -372,62 +372,62 @@ jobs:
                 # Pattern 1: class="pass">NUMBER
                 if ($html -match 'class=.pass.>(\d+)') { 
                   $right = [int]$Matches[1]
-                  Write-Host "  ✓ Found pass count using class=.pass.> pattern: $right"
+                  Write-Host "  [OK] Found pass count using class=.pass.> pattern: $right"
                 }
                 if ($html -match 'class=.fail.>(\d+)') { 
                   $wrong = [int]$Matches[1]
-                  Write-Host "  ✓ Found fail count using class=.fail.> pattern: $wrong"
+                  Write-Host "  [OK] Found fail count using class=.fail.> pattern: $wrong"
                 }
                 if ($html -match 'class=.error.>(\d+)') { 
                   $exceptions = [int]$Matches[1]
-                  Write-Host "  ✓ Found error count using class=.error.> pattern: $exceptions"
+                  Write-Host "  [OK] Found error count using class=.error.> pattern: $exceptions"
                 }
                 if ($html -match 'class=.ignore.>(\d+)') { 
                   $ignores = [int]$Matches[1]
-                  Write-Host "  ✓ Found ignore count using class=.ignore.> pattern: $ignores"
+                  Write-Host "  [OK] Found ignore count using class=.ignore.> pattern: $ignores"
                 }
                 
                 # Pattern 2: TEXT patterns "5 right", "0 wrong", etc.
                 if ($right -eq 0 -and $html -match '(\d+)\s+right') { 
                   $right = [int]$Matches[1]
-                  Write-Host "  ✓ Found pass count using text pattern: $right right"
+                  Write-Host "  [OK] Found pass count using text pattern: $right right"
                 }
                 if ($wrong -eq 0 -and $html -match '(\d+)\s+wrong') { 
                   $wrong = [int]$Matches[1]
-                  Write-Host "  ✓ Found fail count using text pattern: $wrong wrong"
+                  Write-Host "  [OK] Found fail count using text pattern: $wrong wrong"
                 }
                 if ($exceptions -eq 0 -and $html -match '(\d+)\s+exceptions?') { 
                   $exceptions = [int]$Matches[1]
-                  Write-Host "  ✓ Found exception count using text pattern: $exceptions exception(s)"
+                  Write-Host "  [OK] Found exception count using text pattern: $exceptions exception(s)"
                 }
                 if ($ignores -eq 0 -and $html -match '(\d+)\s+ignored?') { 
                   $ignores = [int]$Matches[1]
-                  Write-Host "  ✓ Found ignore count using text pattern: $ignores ignored"
+                  Write-Host "  [OK] Found ignore count using text pattern: $ignores ignored"
                 }
                 
                 # Pattern 3: Try finding in page footer or summary div
                 if ($right -eq 0 -and $wrong -eq 0 -and $exceptions -eq 0) {
-                  Write-Host "  ⚠ No matches found with standard patterns"
+                  Write-Host "  [WARN] No matches found with standard patterns"
                   Write-Host "  Trying alternate patterns..."
                   
                   # Look for patterns like: strong tags with numbers
                   if ($html -match '<strong>(\d+)</strong>\s*right') { 
                     $right = [int]$Matches[1]
-                    Write-Host "  ✓ Found pass count in strong tags: $right"
+                    Write-Host "  [OK] Found pass count in strong tags: $right"
                   }
                   if ($html -match '<strong>(\d+)</strong>\s*wrong') { 
                     $wrong = [int]$Matches[1]
-                    Write-Host "  ✓ Found fail count in strong tags: $wrong"
+                    Write-Host "  [OK] Found fail count in strong tags: $wrong"
                   }
                   
                   # Look for: right="5"
                   if ($right -eq 0 -and $html -match 'right=.(\d+).') { 
                     $right = [int]$Matches[1]
-                    Write-Host "  ✓ Found pass count in attribute: $right"
+                    Write-Host "  [OK] Found pass count in attribute: $right"
                   }
                   if ($wrong -eq 0 -and $html -match 'wrong=.(\d+).') { 
                     $wrong = [int]$Matches[1]
-                    Write-Host "  ✓ Found fail count in attribute: $wrong"
+                    Write-Host "  [OK] Found fail count in attribute: $wrong"
                   }
                 }
                 
@@ -441,7 +441,7 @@ jobs:
                 
                 # If still all zeros, show sample of HTML to help debug
                 if ($right -eq 0 -and $wrong -eq 0 -and $exceptions -eq 0 -and $ignores -eq 0) {
-                  Write-Host "⚠ WARNING: All counts are 0 - pattern matching may have failed"
+                  Write-Host "[WARN] All counts are 0 - pattern matching may have failed"
                   Write-Host "Sample of HTML response (first 1000 chars after <body>):"
                   if ($html -match '(?s)<body[^>]*>(.{0,1000})') {
                     Write-Host $Matches[1]
