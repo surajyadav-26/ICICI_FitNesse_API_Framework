@@ -95,6 +95,8 @@ jobs:
       - name: Start FitNesse Server (Background)
         shell: powershell
         run: |
+          $ErrorActionPreference = "Continue"
+          
           # Start FitNesse server in background
           $env:PYTHONPATH = $PWD
           
@@ -103,15 +105,25 @@ jobs:
           Write-Host "=========================================="
           Write-Host "Working Directory: $PWD"
           Write-Host "PYTHONPATH: $env:PYTHONPATH"
+          Write-Host ""
           Write-Host "Java Version:"
-          java -version 2>&1 | ForEach-Object { Write-Host "  $_" }
+          try {
+            $javaVersion = & java -version 2>&1 | Out-String
+            Write-Host $javaVersion
+          } catch {
+            Write-Host "  Could not get Java version"
+          }
           Write-Host ""
           
           # Test running FitNesse directly to see any errors
           Write-Host "Testing FitNesse JAR..."
-          $testOutput = & java -cp ".\fitnesse-standalone.jar" fitnesseMain.FitNesseMain -? 2>&1
-          Write-Host "FitNesse help output:"
-          $testOutput | ForEach-Object { Write-Host "  $_" }
+          try {
+            $testOutput = & java -cp ".\fitnesse-standalone.jar" fitnesseMain.FitNesseMain -? 2>&1 | Out-String
+            Write-Host "FitNesse help output:"
+            Write-Host $testOutput
+          } catch {
+            Write-Host "Error testing FitNesse: $_"
+          }
           Write-Host ""
           
           Write-Host "Starting FitNesse as background job..."
