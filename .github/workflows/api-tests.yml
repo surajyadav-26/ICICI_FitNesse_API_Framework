@@ -410,14 +410,14 @@ jobs:
                   Write-Host "  ⚠ No matches found with standard patterns"
                   Write-Host "  Trying alternate patterns..."
                   
-                  # Look for patterns like: <strong>5</strong> right
+                  # Look for patterns like: strong tags with numbers
                   if ($html -match '<strong>(\d+)</strong>\s*right') { 
                     $right = [int]$Matches[1]
-                    Write-Host "  ✓ Found pass count in <strong> tags: $right"
+                    Write-Host "  ✓ Found pass count in strong tags: $right"
                   }
                   if ($html -match '<strong>(\d+)</strong>\s*wrong') { 
                     $wrong = [int]$Matches[1]
-                    Write-Host "  ✓ Found fail count in <strong> tags: $wrong"
+                    Write-Host "  ✓ Found fail count in strong tags: $wrong"
                   }
                   
                   # Look for: right="5"

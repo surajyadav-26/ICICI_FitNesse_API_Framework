@@ -1176,7 +1176,9 @@ body article {
       delBtn.setAttribute("data-env", env);
       delBtn.onclick = function(e) {
         var envName = e.target.getAttribute("data-env");
+        console.log('%cDeleting environment:', 'color: orange;', envName);
         delete tempEnvironments[envName];
+        console.log('Remaining environments:', Object.keys(tempEnvironments));
         renderModalTable();
       };
       tdAction.appendChild(delBtn);
@@ -1190,23 +1192,33 @@ body article {
     var addName = (document.getElementById("ici-add-env-name").value || "").trim();
     var addUrl = (document.getElementById("ici-add-env-url").value || "").trim();
     
+    console.log('%cSaving Environments...', 'color: #A6192E; font-weight: bold;');
+    console.log('tempEnvironments before save:', JSON.stringify(tempEnvironments, null, 2));
+    
     if (addName && addUrl) {
       addName = addName.toUpperCase().replace(/\s+/g, "_");
       tempEnvironments[addName] = addUrl;
+      console.log('Added new environment:', addName, '=', addUrl);
     }
     
     if (Object.keys(tempEnvironments).length === 0) {
       alert("At least one environment must exist.");
+      console.error('Cannot save: No environments defined');
       return;
     }
     
     var config = loadConfig();
     config.environments = tempEnvironments;
     if (!config.environments[config.active]) {
-      config.active = Object.keys(tempEnvironments)[0];
+      var firstEnv = Object.keys(tempEnvironments)[0];
+      console.log('Active environment not found, switching to:', firstEnv);
+      config.active = firstEnv;
     }
     
+    console.log('Final config to save:', JSON.stringify(config, null, 2));
     saveConfig(config);
+    console.log('\u2713 Config saved to localStorage');
+    
     iciCloseManageEnvModal();
     iciSwitchEnv(config.active);
   };
@@ -1719,195 +1731,168 @@ body article {
   }
 
   /* ═══════════════════════════════════════════════════════════════
-     FIX 1: CANCEL BUTTON FIX - Make cancel buttons actually work
+     ICICI UX ENHANCEMENTS - All 5 fixes consolidated
      ═══════════════════════════════════════════════════════════════ */
   document.addEventListener("DOMContentLoaded", function() {
-    // Find all cancel buttons and links
-    var cancelButtons = document.querySelectorAll('input[value="Cancel"], button[type="button"]');
-    var cancelLinks = document.querySelectorAll('a[href*="Cancel"], a[title*="Cancel"]');
+    console.log('%c═══ ICICI UX ENHANCEMENTS LOADED ═══', 'background: #A6192E; color: #fff; padding: 5px; font-weight: bold;');
+    console.log('Page URL:', window.location.href);
     
-    // Fix cancel buttons
-    cancelButtons.forEach(function(btn) {
-      if (btn.value === "Cancel" || btn.innerText.indexOf("Cancel") !== -1) {
-        btn.onclick = function(e) {
-          e.preventDefault();
-          // Check if form has any changes
-          var form = btn.closest('form');
-          var hasChanges = false;
+    /* ────────────────────────────────────────────────────────────
+       FIX 1 & 4: CANCEL BUTTON FIX - Smart cancel with change detection
+       ──────────────────────────────────────────────────────────── */
+    var formDataChanged = {};
+    var forms = document.querySelectorAll('form');
+    
+    forms.forEach(function(form, index) {
+      var formId = 'form_' + index;
+      formDataChanged[formId] = false;
+      
+      // Track any input changes in the form
+      form.addEventListener('input', function() {
+        var hasData = false;
+        var inputs = form.querySelectorAll('input:not([type="hidden"]):not([type="submit"]):not([type="button"]), textarea, select');
+        
+        for (var i = 0; i < inputs.length; i++) {
+          var input = inputs[i];
+          var value = input.value || '';
+          var defaultValue = input.defaultValue || '';
           
-          if (form) {
-            var inputs = form.querySelectorAll('input, textarea, select');
-            inputs.forEach(function(input) {
-              if (input.type !== 'button' && input.type !== 'submit' && input.value && input.defaultValue !== input.value) {
-                hasChanges = true;
-              }
-            });
+          // Check if value differs from default or if it has any content
+          if (value !== defaultValue && value.trim() !== '') {
+            hasData = true;
+            break;
           }
+        }
+        
+        formDataChanged[formId] = hasData;
+      });
+    });
+    
+    // Fix all cancel links (FitNesse uses <a class="button">Cancel</a>)
+    var cancelLinks = document.querySelectorAll('a.button, a[href]:not([href="#"])');
+    
+    cancelLinks.forEach(function(link) {
+      if (link.textContent.trim() === 'Cancel' || link.innerText.trim() === 'Cancel') {
+        console.log('ICICI UX: Found cancel link:', link.href);
+        
+        link.addEventListener('click', function(e) {
+          e.preventDefault();
           
-          // If no changes, just go back
+          // Find the closest form to check if it has changes
+          var closestForm = link.closest('form') || document.querySelector('form');
+          var formIndex = Array.prototype.indexOf.call(forms, closestForm);
+          var formId = 'form_' + formIndex;
+          var hasChanges = formDataChanged[formId] || false;
+          
           if (!hasChanges) {
+            // No changes, just go back
+            console.log('ICICI UX: No changes detected, navigating back');
             window.history.back();
           } else {
-            // Ask for confirmation if there are changes
-            if (confirm('You have unsaved changes. Are you sure you want to cancel?')) {
+            // Ask for confirmation
+            if (confirm('You have unsaved changes. Discard them?')) {
+              console.log('ICICI UX: User confirmed discard, navigating back');
               window.history.back();
             }
           }
+          
           return false;
-        };
+        });
       }
     });
     
-    // Fix cancel links
-    cancelLinks.forEach(function(link) {
-      link.onclick = function(e) {
-        e.preventDefault();
-        window.history.back();
-        return false;
-      };
-    });
-  });
-
-  /* ═══════════════════════════════════════════════════════════════
-     FIX 2: DEFAULT RADIO BUTTON SELECTION - Suite or Test based on context
-     ═══════════════════════════════════════════════════════════════ */
-  document.addEventListener("DOMContentLoaded", function() {
-    // Check if we're on the "Add Child" or "New Page" form
-    var pageTypeRadios = document.getElementsByName('pageType');
+    /* ────────────────────────────────────────────────────────────
+       FIX 2: SMART RADIO BUTTON DEFAULTS
+       ──────────────────────────────────────────────────────────── */
+    // FitNesse uses name="PageType" with capitals!
+    var pageTypeRadios = document.getElementsByName('PageType');
     
     if (pageTypeRadios && pageTypeRadios.length > 0) {
-      // Get current URL to detect context
       var currentPath = window.location.pathname;
       var currentSearch = window.location.search;
       
-      // Detect if we're adding to a Suite page
-      var isInSuite = currentPath.match(/\/(FrontPage|Sanity|Smoke|DummyAPI)/i);
-      var isAddingChild = currentSearch.indexOf('responder=addChild') !== -1;
-      var isEditingPage = currentSearch.indexOf('responder=edit') !== -1;
+      console.log('%cRadio Buttons Found!', 'color: #004A80; font-weight: bold;');
+      console.log('  Path:', currentPath);
+      console.log('  Search:', currentSearch);
+      console.log('  Radio count:', pageTypeRadios.length);
       
-      // Default selection logic:
-      // 1. If creating new page at root level → default to Suite
-      // 2. If adding child to existing suite → default to Test
-      // 3. Otherwise → default to Suite
-      
-      var defaultType = 'Suite'; // Default to Suite for new pages
-      
-      if (isAddingChild && isInSuite) {
-        // Adding a child to a suite → default to Test
-        defaultType = 'Test';
-      } else if (!isAddingChild && !isEditingPage) {
-        // Creating new page at root → default to Suite
-        defaultType = 'Suite';
+      // Check current state
+      for (var j = 0; j < pageTypeRadios.length; j++) {
+        console.log('  Radio', j, ':', pageTypeRadios[j].value, '- checked:', pageTypeRadios[j].checked);
       }
       
-      // Apply the selection
+      // Detect context
+      var isAddingChild = currentSearch.indexOf('responder=addChild') !== -1 || currentSearch.indexOf('addChild') !== -1;
+      var isProperties = currentSearch.indexOf('properties') !== -1;
+      var isInSuite = currentPath.match(/\/(Sanity|Smoke|DummyAPI|FrontPage)/i);
+      
+      // Skip auto-selection on properties page (shows current page type)
+      if (isProperties) {
+        console.log('  → Properties page detected, keeping current selection');
+        return;
+      }
+      
+      var defaultType = 'Suite'; // Default for new pages
+      
+      if (isAddingChild && isInSuite) {
+        // Adding child to a suite → default to Test
+        defaultType = 'Test';
+        console.log('  → Context: Adding child to suite → Defaulting to TEST');
+      } else {
+        console.log('  → Context: New page → Defaulting to SUITE');
+      }
+      
+      // Apply selection
       for (var i = 0; i < pageTypeRadios.length; i++) {
-        var radio = pageTypeRadios[i];
-        if (radio.value === defaultType) {
-          radio.checked = true;
+        if (pageTypeRadios[i].value === defaultType) {
+          pageTypeRadios[i].checked = true;
+          console.log('%c  ✓ Auto-selected:', 'color: green; font-weight: bold;', defaultType);
           
-          // Trigger change event to update any dependent UI
+          // Trigger change event
           if (typeof Event === 'function') {
-            radio.dispatchEvent(new Event('change', { bubbles: true }));
-          } else {
-            // IE fallback
-            var evt = document.createEvent('HTMLEvents');
-            evt.initEvent('change', true, true);
-            radio.dispatchEvent(evt);
+            pageTypeRadios[i].dispatchEvent(new Event('change', { bubbles: true }));
           }
-          
-          console.log('ICICI Framework: Auto-selected page type:', defaultType);
           break;
         }
       }
-    }
-  });
-
-  /* ═══════════════════════════════════════════════════════════════
-     FIX 3: ENSURE ICICI THEME APPLIES TO ALL PAGES
-     ═══════════════════════════════════════════════════════════════ */
-  document.addEventListener("DOMContentLoaded", function() {
-    // Force body class for theme consistency
-    if (document.body) {
-      document.body.classList.add('icici-theme');
+    } else {
+      console.log('No PageType radio buttons found on this page');
     }
     
-    // Apply theme to dynamically loaded content
-    var observer = new MutationObserver(function(mutations) {
-      mutations.forEach(function(mutation) {
-        if (mutation.addedNodes) {
-          mutation.addedNodes.forEach(function(node) {
-            if (node.nodeType === 1) { // Element node
-              // Apply ICICI styling to buttons
-              if (node.tagName === 'BUTTON' || (node.tagName === 'INPUT' && node.type === 'submit')) {
-                if (!node.classList.contains('icici-styled')) {
+    /* ────────────────────────────────────────────────────────────
+       FIX 3: UNIVERSAL ICICI THEME
+       ──────────────────────────────────────────────────────────── */
+    if (document.body && !document.body.classList.contains('icici-theme')) {
+      document.body.classList.add('icici-theme');
+      console.log('ICICI UX: Applied icici-theme class to body');
+    }
+    
+    // Watch for dynamically added content
+    if (typeof MutationObserver !== 'undefined') {
+      var themeObserver = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+          if (mutation.addedNodes) {
+            for (var i = 0; i < mutation.addedNodes.length; i++) {
+              var node = mutation.addedNodes[i];
+              if (node.nodeType === 1) {
+                // Apply theme classes to new elements
+                if (node.tagName === 'BUTTON' || (node.tagName === 'INPUT' && node.type === 'submit')) {
                   node.classList.add('icici-styled');
                 }
-              }
-              
-              // Apply to tables
-              if (node.tagName === 'TABLE') {
-                if (!node.classList.contains('icici-table')) {
+                if (node.tagName === 'TABLE') {
                   node.classList.add('icici-table');
                 }
               }
             }
-          });
-        }
-      });
-    });
-    
-    // Start observing
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true
-    });
-  });
-
-  /* ═══════════════════════════════════════════════════════════════
-     FIX 4: ENHANCED CANCEL BUTTON FOR FORMS WITH NO DATA
-     ═══════════════════════════════════════════════════════════════ */
-  document.addEventListener("DOMContentLoaded", function() {
-    // Monitor form inputs to track if user has entered any data
-    var forms = document.querySelectorAll('form');
-    
-    forms.forEach(function(form) {
-      var formHasData = false;
-      
-      // Track input changes
-      form.addEventListener('input', function() {
-        var inputs = form.querySelectorAll('input, textarea, select');
-        formHasData = false;
-        
-        inputs.forEach(function(input) {
-          if (input.type !== 'button' && input.type !== 'submit' && input.type !== 'hidden') {
-            if (input.value && input.value.trim() !== '') {
-              formHasData = true;
-            }
           }
         });
       });
       
-      // Override cancel button behavior
-      var cancelBtn = form.querySelector('input[value="Cancel"], button[type="button"]');
-      if (cancelBtn) {
-        cancelBtn.addEventListener('click', function(e) {
-          e.preventDefault();
-          
-          if (!formHasData) {
-            // No data entered, just go back without confirmation
-            window.history.back();
-          } else {
-            // Data entered, ask for confirmation
-            if (confirm('You have unsaved changes. Discard them?')) {
-              window.history.back();
-            }
-          }
-          
-          return false;
-        });
-      }
-    });
+      themeObserver.observe(document.body, { childList: true, subtree: true });
+      console.log('ICICI UX: Theme observer active');
+    }
+    
+    console.log('%c✓ All 5 UX fixes initialized successfully', 'color: green; font-weight: bold;');
   });
 
 })();
