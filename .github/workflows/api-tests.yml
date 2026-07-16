@@ -126,34 +126,31 @@ jobs:
           }
           Write-Host ""
           
-          Write-Host "Starting FitNesse as background job..."
-          # Use Start-Job instead of Start-Process for better control
-          $job = Start-Job -ScriptBlock {
-            param($workDir, $pythonPath)
-            Set-Location $workDir
-            $env:PYTHONPATH = $pythonPath
-            & java -cp ".\fitnesse-standalone.jar" fitnesseMain.FitNesseMain -p 8080 -e 0 2>&1
-          } -ArgumentList $PWD, $env:PYTHONPATH
+          Write-Host "Starting FitNesse as detached background process..."
+          # Use Start-Process to create a true detached process that survives step exit
+          $processParams = @{
+            FilePath = "java"
+            ArgumentList = @("-cp", ".\fitnesse-standalone.jar", "fitnesseMain.FitNesseMain", "-p", "8080", "-e", "0")
+            WorkingDirectory = $PWD
+            PassThru = $true
+            NoNewWindow = $true
+          }
           
-          Write-Host "FitNesse job started with ID: $($job.Id)"
+          $process = Start-Process @processParams
+          
+          Write-Host "FitNesse process started with PID: $($process.Id)"
           Write-Host "Waiting 15 seconds for initialization..."
           Start-Sleep -Seconds 15
           
-          # Check job status
-          $jobState = (Get-Job -Id $job.Id).State
-          Write-Host "Job State after 15 seconds: $jobState"
-          
-          if ($jobState -eq 'Failed' -or $jobState -eq 'Completed') {
-            Write-Host "Job exited! Getting output..."
-            $jobOutput = Receive-Job -Id $job.Id 2>&1
-            Write-Host "Job Output:"
-            $jobOutput | ForEach-Object { Write-Host "  $_" }
-            Remove-Job -Id $job.Id -Force
-            Write-Error "FitNesse job failed or completed unexpectedly"
+          # Check if process is still running
+          $process.Refresh()
+          if ($process.HasExited) {
+            Write-Error "FitNesse process exited with code: $($process.ExitCode)"
+            Write-Host "Process exited immediately - check for startup errors"
             exit 1
           }
           
-          Write-Host "Job still running, checking HTTP connectivity..."
+          Write-Host "Process still running (PID: $($process.Id)), checking HTTP connectivity..."
           
           # Wait for FitNesse HTTP response
           $maxRetries = 40
@@ -164,15 +161,11 @@ jobs:
             Start-Sleep -Seconds 3
             $retryCount++
             
-            # Check if job is still running
-            $currentJobState = (Get-Job -Id $job.Id).State
-            if ($currentJobState -eq 'Failed' -or $currentJobState -eq 'Completed') {
-              Write-Host "Job exited during wait! State: $currentJobState"
-              $jobOutput = Receive-Job -Id $job.Id 2>&1
-              Write-Host "Job Output:"
-              $jobOutput | ForEach-Object { Write-Host "  $_" }
-              Remove-Job -Id $job.Id -Force
-              Write-Error "FitNesse job failed or completed unexpectedly"
+            # Check if process is still running
+            $process.Refresh()
+            if ($process.HasExited) {
+              Write-Error "FitNesse process exited with code: $($process.ExitCode)"
+              Write-Host "Process died during initialization"
               exit 1
             }
             
@@ -198,22 +191,25 @@ jobs:
           } while ($retryCount -lt $maxRetries)
           
           if (-not $serverReady) {
-            $finalJobState = (Get-Job -Id $job.Id).State
+            $process.Refresh()
             Write-Error "FitNesse server failed to start after $maxRetries attempts ($($maxRetries * 3) seconds)"
-            Write-Host "Job State: $finalJobState"
+            Write-Host "Process Running: $(-not $process.HasExited), PID: $($process.Id)"
             exit 1
           }
           
           Write-Host "SUCCESS: FitNesse server is running and ready for tests"
-          Write-Host "Job State: $((Get-Job -Id $job.Id).State)"
+          Write-Host "Process PID: $($process.Id), Running: $(-not $process.HasExited)"
           
           # Clear any accumulated errors and exit successfully
+          # The process will continue running as a detached background process
           $Error.Clear()
           exit 0
 
       - name: Verify FitNesse Server
         shell: powershell
         run: |
+          $ErrorActionPreference = "Continue"
+          
           Write-Host "Verifying FitNesse server connectivity..."
           
           $connected = $false
@@ -278,6 +274,10 @@ jobs:
             Write-Error "FitNesse server verification failed - see diagnostics above"
             exit 1
           }
+          
+          # Verification successful - clear errors and exit
+          $Error.Clear()
+          exit 0
 
       - name: Run FitNesse Test Suite
         shell: powershell
