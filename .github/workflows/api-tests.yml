@@ -164,9 +164,15 @@ jobs:
             Start-Sleep -Seconds 3
             $retryCount++
             
-            # Check if process is still running first
-            if ($process.HasExited) {
-              Write-Error "FitNesse process exited with code: $($process.ExitCode)"
+            # Check if job is still running
+            $currentJobState = (Get-Job -Id $job.Id).State
+            if ($currentJobState -eq 'Failed' -or $currentJobState -eq 'Completed') {
+              Write-Host "Job exited during wait! State: $currentJobState"
+              $jobOutput = Receive-Job -Id $job.Id 2>&1
+              Write-Host "Job Output:"
+              $jobOutput | ForEach-Object { Write-Host "  $_" }
+              Remove-Job -Id $job.Id -Force
+              Write-Error "FitNesse job failed or completed unexpectedly"
               exit 1
             }
             
@@ -192,13 +198,18 @@ jobs:
           } while ($retryCount -lt $maxRetries)
           
           if (-not $serverReady) {
+            $finalJobState = (Get-Job -Id $job.Id).State
             Write-Error "FitNesse server failed to start after $maxRetries attempts ($($maxRetries * 3) seconds)"
-            Write-Host "Process Status: Running=$(-not $process.HasExited), PID=$($process.Id)"
+            Write-Host "Job State: $finalJobState"
             exit 1
           }
           
           Write-Host "SUCCESS: FitNesse server is running and ready for tests"
-          Write-Host "Process Status: PID=$($process.Id), Running=$(-not $process.HasExited)"
+          Write-Host "Job State: $((Get-Job -Id $job.Id).State)"
+          
+          # Clear any accumulated errors and exit successfully
+          $Error.Clear()
+          exit 0
 
       - name: Verify FitNesse Server
         shell: powershell
