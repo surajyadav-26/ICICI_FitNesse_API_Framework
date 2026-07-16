@@ -28,9 +28,73 @@ for /f "tokens=5" %%a in ('netstat -aon ^| findstr :8089') do taskkill /f /pid %
 goto check_java
 
 :check_java
-:: Check if Java is installed
-java -version >nul 2>&1
-if errorlevel 1 goto no_java
+:: Force Java 8 for FitNesse compatibility
+echo [INFO] Searching for Java 8 installation...
+
+:: Try to find Java 8
+set "JAVA_HOME_BACKUP=%JAVA_HOME%"
+set "JAVA8_FOUND="
+
+if exist "C:\Program Files\Java\jdk1.8.0_*" (
+    for /d %%i in ("C:\Program Files\Java\jdk1.8.0_*") do (
+        set "JAVA_HOME=%%i"
+        set "JAVA8_FOUND=1"
+        goto found_java8
+    )
+)
+
+if exist "C:\Program Files (x86)\Java\jdk1.8.0_*" (
+    for /d %%i in ("C:\Program Files (x86)\Java\jdk1.8.0_*") do (
+        set "JAVA_HOME=%%i"
+        set "JAVA8_FOUND=1"
+        goto found_java8
+    )
+)
+
+if exist "C:\Program Files\Java\jre1.8.0_*" (
+    for /d %%i in ("C:\Program Files\Java\jre1.8.0_*") do (
+        set "JAVA_HOME=%%i"
+        set "JAVA8_FOUND=1"
+        goto found_java8
+    )
+)
+
+if exist "C:\Program Files (x86)\Java\jre1.8.0_*" (
+    for /d %%i in ("C:\Program Files (x86)\Java\jre1.8.0_*") do (
+        set "JAVA_HOME=%%i"
+        set "JAVA8_FOUND=1"
+        goto found_java8
+    )
+)
+
+if exist "C:\Program Files (x86)\Java\jre-1.8*" (
+    for /d %%i in ("C:\Program Files (x86)\Java\jre-1.8*") do (
+        set "JAVA_HOME=%%i"
+        set "JAVA8_FOUND=1"
+        goto found_java8
+    )
+)
+
+if exist "C:\Program Files\Java\jre-1.8*" (
+    for /d %%i in ("C:\Program Files\Java\jre-1.8*") do (
+        set "JAVA_HOME=%%i"
+        set "JAVA8_FOUND=1"
+        goto found_java8
+    )
+)
+
+:: If Java 8 not found, just use whatever Java is available
+if not defined JAVA8_FOUND (
+    echo [WARNING] Java 8 not found in standard locations. Using system Java...
+    java -version >nul 2>&1
+    if errorlevel 1 goto no_java
+    goto launch_fitnesse
+)
+
+:found_java8
+set "PATH=%JAVA_HOME%\bin;%PATH%"
+echo [SUCCESS] Using Java 8 from: %JAVA_HOME%
+"%JAVA_HOME%\bin\java" -version
 goto launch_fitnesse
 
 :no_java
@@ -51,4 +115,10 @@ start /b .venv\Scripts\python "%~dp0core\fitnesse_watcher.py"
 
 echo [INFO] Press Ctrl+C in this terminal to stop the server.
 echo ---------------------------------------------------------------------
-java -cp "%~dp0.;%~dp0fitnesse-standalone.jar" fitnesseMain.FitNesseMain -p 8080 -a "%~dp0passwords.txt"
+
+:: Use explicit Java path if JAVA_HOME is set, otherwise use system java
+if defined JAVA_HOME (
+    "%JAVA_HOME%\bin\java" -cp "%~dp0.;%~dp0fitnesse-standalone.jar" fitnesseMain.FitNesseMain -p 8080 -a "%~dp0passwords.txt"
+) else (
+    java -cp "%~dp0.;%~dp0fitnesse-standalone.jar" fitnesseMain.FitNesseMain -p 8080 -a "%~dp0passwords.txt"
+)
