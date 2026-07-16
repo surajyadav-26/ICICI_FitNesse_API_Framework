@@ -299,15 +299,48 @@ jobs:
       - name: Run FitNesse Test Suite
         shell: powershell
         run: |
+          $ErrorActionPreference = "Continue"
+          
           $testSuite = "${{ github.event.inputs.test_suite || 'FrontPage' }}"
           $testUrl = "http://localhost:8080/${testSuite}?suite&format=json"
           
           Write-Host "Running test suite: $testSuite"
           Write-Host "Test URL: $testUrl"
+          Write-Host ""
+          
+          # Wait a bit more to ensure FitNesse is fully ready
+          Write-Host "Waiting 5 seconds for FitNesse to be fully ready..."
+          Start-Sleep -Seconds 5
           
           $exitCode = 0
           try {
+            Write-Host "Sending request to FitNesse..."
             $response = Invoke-WebRequest -Uri $testUrl -UseBasicParsing -TimeoutSec 600
+            
+            Write-Host "Response received:"
+            Write-Host "  Status Code: $($response.StatusCode)"
+            Write-Host "  Content-Type: $($response.Headers['Content-Type'])"
+            Write-Host "  Content Length: $($response.Content.Length) bytes"
+            Write-Host ""
+            
+            # Check if response is JSON
+            $contentType = $response.Headers['Content-Type']
+            if ($contentType -notmatch 'application/json') {
+              Write-Host "WARNING: Response is not JSON! Content-Type: $contentType"
+              Write-Host "First 500 characters of response:"
+              Write-Host $response.Content.Substring(0, [Math]::Min(500, $response.Content.Length))
+              Write-Host ""
+              
+              # If it's HTML, FitNesse might be showing an error page
+              if ($contentType -match 'text/html') {
+                Write-Error "FitNesse returned HTML instead of JSON. The suite might not exist or there's an error."
+                Write-Host "Full response saved to fitnesse_response.html for inspection"
+                $response.Content | Out-File -FilePath "fitnesse_response.html"
+                exit 1
+              }
+            }
+            
+            Write-Host "Parsing JSON response..."
             $testResults = $response.Content | ConvertFrom-Json
             
             # Extract results
@@ -335,8 +368,37 @@ jobs:
               Write-Host "All tests passed!"
             }
           } catch {
+            Write-Host ""
+            Write-Host "=========================================="
+            Write-Host "ERROR RUNNING TESTS"
+            Write-Host "=========================================="
+            Write-Host "Error: $_"
+            Write-Host "Error Type: $($_.Exception.GetType().FullName)"
+            Write-Host ""
+            
+            # Check if FitNesse is still running
+            $javaProcess = Get-Process -Name "java" -ErrorAction SilentlyContinue
+            if ($javaProcess) {
+              Write-Host "FitNesse process is still running (PID: $($javaProcess.Id))"
+            } else {
+              Write-Host "FitNesse process has died!"
+            }
+            
+            # Try to access FitNesse home page
+            try {
+              $homeCheck = Invoke-WebRequest -Uri "http://localhost:8080/" -UseBasicParsing -TimeoutSec 5
+              Write-Host "FitNesse home page accessible (Status: $($homeCheck.StatusCode))"
+            } catch {
+              Write-Host "Cannot access FitNesse home page: $_"
+            }
+            
             Write-Error "Failed to run tests: $_"
             $exitCode = 1
+          }
+          
+          # Clear errors if tests passed
+          if ($exitCode -eq 0) {
+            $Error.Clear()
           }
           
           exit $exitCode
