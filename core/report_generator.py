@@ -262,6 +262,12 @@ def generate_html_report() -> None:
                 req_body = html_escape(r["request_body"])
                 resp_body = html_escape(r["response_body"])
                 curl_cmd = html_escape(r["curl"])
+                
+                # Get JSON file path for download button
+                json_file = r.get("json_file", "")
+                download_btn = ""
+                if json_file:
+                    download_btn = f'<a href="/files/{json_file}" download class="download-json-btn" title="Download complete test data with assertions">📥 Download JSON</a>'
 
                 req_details_display = "block" if not is_success else "none"
 
@@ -272,6 +278,7 @@ def generate_html_report() -> None:
                         <span class="nested-url" title="{html_escape(r['url'])}">{html_escape(r['url'])}</span>
                         <span class="status-indicator {status_class}">{r['status_code']}</span>
                         <span class="nested-time">{r['response_time_ms']} ms</span>
+                        {download_btn}
                     </div>
                     <div id="req-details-{idx}-{r_idx}" class="nested-request-details" style="display: {req_details_display};">
                         <div class="curl-section">
@@ -299,6 +306,17 @@ def generate_html_report() -> None:
         else:
             requests_sub_html = "<div class='no-requests'>No API HTTP requests were logged for this page run.</div>"
 
+        # Collect all JSON file paths for "Download All" button
+        json_files = [r.get("json_file", "") for r in p["requests"] if r.get("json_file")]
+        download_all_btn = ""
+        if json_files:
+            json_files_list = ",".join([f"'/files/{jf}'" for jf in json_files])
+            download_all_btn = f'''
+                <button class="download-all-btn" onclick="downloadAll([{json_files_list}], '{html_escape(p['name'])}')">
+                    📦 Download All ({len(json_files)})
+                </button>
+            '''
+
         pages_html += f"""
         <tr class="summary-row" onclick="togglePage({idx})" data-name="{html_escape(p['name'])}" data-status="{page_status_value}" title="Click to view requests audit trail">
             <td>
@@ -316,7 +334,10 @@ def generate_html_report() -> None:
         <tr id="page-details-{idx}" class="details-row" style="display: {row_display_style};">
             <td colspan="3">
                 <div class="nested-requests-container">
-                    <h3>🔍 Executed API Requests Audit Trail</h3>
+                    <div class="audit-header">
+                        <h3>🔍 Executed API Requests Audit Trail</h3>
+                        {download_all_btn}
+                    </div>
                     {requests_sub_html}
                 </div>
             </td>
@@ -626,13 +647,39 @@ def generate_html_report() -> None:
             background: #f8fafc;
             border-left: 4px solid var(--primary);
         }}
+        .audit-header {{
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }}
         .nested-requests-container h3 {{
             font-size: 14px;
             font-weight: 700;
             color: var(--text-sub);
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            margin-bottom: 16px;
+            margin: 0;
+        }}
+        .download-all-btn {{
+            background: linear-gradient(135deg, #0284c7 0%, #0ea5e9 100%);
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }}
+        .download-all-btn:hover {{
+            background: linear-gradient(135deg, #0369a1 0%, #0284c7 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
         }}
         .nested-request-row {{
             background: var(--bg-card);
@@ -748,6 +795,26 @@ def generate_html_report() -> None:
         .copy-btn:hover {{
             background: rgba(255,255,255,0.25);
         }}
+        .download-json-btn {{
+            background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin-left: 12px;
+            transition: all 0.2s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }}
+        .download-json-btn:hover {{
+            background: linear-gradient(135deg, #047857 0%, #059669 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+        }}
         .body-split {{
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
@@ -810,6 +877,31 @@ def generate_html_report() -> None:
                     btn.textContent = original;
                 }}, 1500);
             }});
+        }}
+
+        function downloadAll(filePaths, testName) {{
+            // Download all JSON files for a test
+            if (!filePaths || filePaths.length === 0) {{
+                alert("No test data files available to download.");
+                return;
+            }}
+            
+            // Download each file sequentially with small delay
+            filePaths.forEach(function(path, index) {{
+                setTimeout(function() {{
+                    var link = document.createElement('a');
+                    link.href = path;
+                    link.download = '';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                }}, index * 200); // 200ms delay between downloads
+            }});
+            
+            // Show success message
+            setTimeout(function() {{
+                alert('Downloaded ' + filePaths.length + ' test data file(s) for ' + testName);
+            }}, filePaths.length * 200 + 100);
         }}
 
         function filterAndSearch() {{

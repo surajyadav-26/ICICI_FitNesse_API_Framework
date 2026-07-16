@@ -116,11 +116,39 @@ class BaseRequestFixture:
     def _record_to_report(self, method: str, url: str, status_code: int, response_time_ms: int, 
                           curl_cmd: str, request_body: str, response_body: str, 
                           right: int = 0, wrong: int = 0, exceptions: int = 0) -> None:
-        """Shared helper to record request details to the HTML report generator."""
+        """Shared helper to record request details to the HTML report generator and save JSON test data."""
+        timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
+        
         try:
             from core.report_generator import add_record
+            from core.test_data_capture import save_test_data
+            
+            # Save JSON test data file with sanitization
+            json_file_path = ""
+            try:
+                json_file_path = save_test_data(
+                    test_name="API_Test",  # Will be updated by report generator with actual test name
+                    method=method,
+                    url=url,
+                    request_headers=self._custom_headers,
+                    request_body=request_body,
+                    response_status=status_code,
+                    response_headers=self._response_headers,
+                    response_body=response_body,
+                    response_time_ms=response_time_ms,
+                    assertions={
+                        "right": right,
+                        "wrong": wrong,
+                        "ignored": 0,
+                        "exceptions": exceptions
+                    },
+                    timestamp=timestamp
+                )
+            except Exception as json_err:
+                logger.warning(f"[TestData] Failed to save JSON test data: {json_err}")
+            
             add_record({
-                "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+                "timestamp": timestamp,
                 "method": method,
                 "url": url,
                 "status_code": status_code,
@@ -131,7 +159,8 @@ class BaseRequestFixture:
                 "right": right,
                 "wrong": wrong,
                 "ignored": 0,
-                "exceptions": exceptions
+                "exceptions": exceptions,
+                "json_file": json_file_path  # Add JSON file path for download button
             })
         except Exception as e:
             logger.error(f"[Report] Failed to trigger report generator: {e}")

@@ -36,6 +36,10 @@ FitNesseRoot/ErrorLogs/
 FitNesseRoot/files/reports/
 FitNesseRoot/update_history.txt
 
+# Test data JSON files (request/response captures)
+FitNesseRoot/files/test_data/
+*.test_data.json
+
 # FitNesse backup zip files (created automatically)
 FitNesseRoot/**/*.zip
 *.zip
