@@ -164,8 +164,10 @@ def generate_html_report() -> None:
     # Map HTTP requests directly to their parent Test Pages using a strict proximity-matching logic.
     # Each request is matched to EXACTLY ONE page (the closest page in time), preventing duplicates
     # and mixing up requests between adjacent tests in a suite run.
+    # OPTIMIZATION: Only consider recent requests (last 50) instead of all historical data
+    recent_history = report_history[-50:] if len(report_history) > 50 else report_history
     active_requests = []
-    for req in report_history:
+    for req in recent_history:
         try:
             req_dt = datetime.datetime.strptime(req["timestamp"], "%Y-%m-%d %H:%M:%S")
             
@@ -352,7 +354,7 @@ def generate_html_report() -> None:
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ICICI Prudential AML API Report</title>
+    <title>ICICI Prudential AML API Report - Latest Test Run</title>
     <link rel="shortcut icon" type="image/x-icon" href="/files/fitnesse/icici/img/favicon.ico" />
     <link rel="icon" type="image/x-icon" href="/files/fitnesse/icici/img/favicon.ico" />
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -943,12 +945,13 @@ def generate_html_report() -> None:
                 <img src="/files/images/icici-prudential-logo.png" alt="ICICI Prudential" style="height: 52px; width: auto; object-fit: contain;" onerror="this.src='/files/fitnesse/icici/img/icici-logo.png'">
                 <div class="header-title">
                     <h1>ICICI Prudential AML API Report</h1>
-                    <p>Enterprise API Verification & Reporting Dashboard</p>
+                    <p>Latest Test Run - Showing Most Recent Results</p>
                 </div>
             </div>
             <div class="header-meta">
                 <strong>Active Suite:</strong> {html_escape(suite_name) if suite_name else 'N/A'}<br>
                 <strong>Environment:</strong> UAT Testing Portal<br>
+                <strong>Report Generated:</strong> {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}<br>
                 <strong>Execution Duration:</strong> {formatted_duration}
             </div>
         </header>
