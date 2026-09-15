@@ -50,6 +50,8 @@ runtime/
 temp_*.html
 temp_*.txt
 temp_check.html
+FitNesseRoot/RerunLastFailures_*.wiki
+RerunLastFailures_*.wiki
 
 # OS-specific temp files
 .DS_Store

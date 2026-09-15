@@ -2,4 +2,4 @@
 
 !|fixtures.GetRequestFixture|
 |url|key|statusCodes?|jsonValue?|responseBody?|
-|${BASE_URL}/products|total|200|194||
+|${API_BASE_URL}/products|total|200|194||

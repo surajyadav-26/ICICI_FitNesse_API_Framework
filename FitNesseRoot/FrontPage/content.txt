@@ -296,7 +296,7 @@
       </div>
     </div>
 
-    <div class="ici-card-desc">Create your corporate AML API test pages or suites natively in 1 click. Any test page or suite you add will automatically and dynamically appear inside the responsive grid card view below:</div>
+    <div class="ici-card-desc">Create your corporate AML API & UI test pages or suites natively in 1 click. Any test page or suite you add will automatically and dynamically appear inside the responsive grid card view below:</div>
     
     <!-- Hidden relative list contents used as our dynamic data source -->
     <div id="ici-contents-wrapper" style="display: none !important;">

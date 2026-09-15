@@ -2,4 +2,4 @@
 
 !|fixtures.GetRequestFixture|
 |url|key|statusCodes?|jsonValue?|responseBody?|
-|${BASE_URL}/users/1|email|200|emily.johnson@x.dummyjson.com||
+|${API_BASE_URL}/users/1|email|200|emily.johnson@x.dummyjson.com||

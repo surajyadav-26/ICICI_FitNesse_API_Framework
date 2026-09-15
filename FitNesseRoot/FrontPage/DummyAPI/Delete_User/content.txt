@@ -2,4 +2,4 @@
 
 !|fixtures.DeleteRequestFixture|
 |url|statusCodes?|responseBody?|
-|${BASE_URL}/users/1|200||
+|${API_BASE_URL}/users/1|200||

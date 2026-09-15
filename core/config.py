@@ -40,6 +40,7 @@ class Config:
     # API Base URLs
     DEV_BASE_URL = os.getenv("DEV_BASE_URL", "https://dev-api.example.com")
     STAGING_BASE_URL = os.getenv("STAGING_BASE_URL", "https://staging-api.example.com")
+    QA_BASE_URL = os.getenv("QA_BASE_URL", "https://dummyjson.com")
     UAT_BASE_URL = os.getenv("UAT_BASE_URL", "https://uat-api.example.com")
     PROD_BASE_URL = os.getenv("PROD_BASE_URL", "https://api.example.com")
     
@@ -56,6 +57,13 @@ class Config:
     UI_BASE_URL = os.getenv("UI_BASE_URL", "https://retailnetbanking.icici.bank.in/login-page")
     UI_WORKERS = int(os.getenv("UI_WORKERS", "1"))
     
+    # Environment-Wise UI URLs
+    DEV_UI_URL = os.getenv("DEV_UI_URL", "https://dev-retailnetbanking.icici.bank.in/login-page")
+    STAGING_UI_URL = os.getenv("STAGING_UI_URL", "https://staging-retailnetbanking.icici.bank.in/login-page")
+    QA_UI_URL = os.getenv("QA_UI_URL", "https://qa-retailnetbanking.icici.bank.in/login-page")
+    UAT_UI_URL = os.getenv("UAT_UI_URL", "https://retailnetbanking.icici.bank.in/login-page")
+    PROD_UI_URL = os.getenv("PROD_UI_URL", "https://retailnetbanking.icici.bank.in/login-page")
+    
     # Framework Configuration
     DEFAULT_TIMEOUT = int(os.getenv("DEFAULT_TIMEOUT", "15"))
     MAX_RETRIES = int(os.getenv("MAX_RETRIES", "3"))
@@ -71,12 +79,6 @@ class Config:
     
     # Mock Server
     MOCK_SERVER_PORT = int(os.getenv("MOCK_SERVER_PORT", "8089"))
-    
-    # Notifications
-    SLACK_WEBHOOK_URL = os.getenv("SLACK_WEBHOOK_URL", "")
-    EMAIL_SMTP_SERVER = os.getenv("EMAIL_SMTP_SERVER", "smtp.gmail.com")
-    EMAIL_FROM = os.getenv("EMAIL_FROM", "")
-    EMAIL_TO = os.getenv("EMAIL_TO", "")
     
     @classmethod
     def get_base_url(cls, environment: str) -> str:
@@ -95,9 +97,39 @@ class Config:
         env_map = {
             "dev": cls.DEV_BASE_URL,
             "staging": cls.STAGING_BASE_URL,
+            "qa": cls.QA_BASE_URL,
             "uat": cls.UAT_BASE_URL,
             "prod": cls.PROD_BASE_URL,
             "production": cls.PROD_BASE_URL
+        }
+        
+        env_lower = environment.lower()
+        if env_lower not in env_map:
+            raise ValueError(f"Invalid environment: {environment}. Must be one of: {list(env_map.keys())}")
+        
+        return env_map[env_lower]
+    
+    @classmethod
+    def get_ui_url(cls, environment: str) -> str:
+        """
+        Get UI URL for specified environment.
+        
+        Args:
+            environment: One of 'dev', 'staging', 'uat', 'prod'
+            
+        Returns:
+            UI URL string
+            
+        Raises:
+            ValueError: If environment is invalid
+        """
+        env_map = {
+            "dev": cls.DEV_UI_URL,
+            "staging": cls.STAGING_UI_URL,
+            "qa": cls.QA_UI_URL,
+            "uat": cls.UAT_UI_URL,
+            "prod": cls.PROD_UI_URL,
+            "production": cls.PROD_UI_URL
         }
         
         env_lower = environment.lower()

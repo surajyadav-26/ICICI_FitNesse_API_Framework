@@ -2,4 +2,4 @@
 
 !|fixtures.AuthFixture|
 |tokenUrl|bodyJson|tokenField|generateToken?|statusCode?|responseBody?|
-|${BASE_URL}/auth/login|{"username":"emilys","password":"emilyspass"}|accessToken|true|200|||
+|${API_BASE_URL}/auth/login|{"username":"emilys","password":"emilyspass"}|accessToken|true|200|||

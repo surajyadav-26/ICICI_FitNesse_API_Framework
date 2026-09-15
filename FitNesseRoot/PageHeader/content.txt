@@ -109,26 +109,73 @@ body { padding-top: 64px !important; margin-top: 0 !important; }
      MANAGE ENVIRONMENTS MODAL (Accessible from any page!)
      ═══════════════════════════════════════════════════ -->
 <div id="ici-env-modal" class="ici-modal-overlay">
-  <div class="ici-modal-box">
-    <div class="ici-modal-title">Manage Environments</div>
+  <div class="ici-modal-box" style="width: 750px !important;">
+    <div class="ici-modal-title" style="margin-bottom: 8px;">Manage Configurations</div>
     
-    <table class="ici-env-table">
-      <thead>
-        <tr>
-          <th style="width: 25%;">Env Name</th>
-          <th style="width: 65%;">Base URL</th>
-          <th style="width: 10%; text-align: center;">Action</th>
-        </tr>
-      </thead>
-      <tbody id="ici-modal-table-body">
-        <!-- Rows injected dynamically by JS -->
-      </tbody>
-    </table>
+    <!-- Tab Selector -->
+    <div class="ici-modal-tabs" style="display: flex; gap: 8px; margin-bottom: 16px; border-bottom: 2px solid #eee; padding-bottom: 8px;">
+      <button class="ici-tab-btn" id="ici-tab-env" onclick="iciSwitchModalTab('env')" style="background: transparent; border: none; border-bottom: 2px solid #A6192E; font-weight: bold; cursor: pointer; padding: 4px 12px; color: #A6192E;">Environments</button>
+      <button class="ici-tab-btn" id="ici-tab-config" onclick="iciSwitchModalTab('config')" style="background: transparent; border: none; font-weight: bold; cursor: pointer; padding: 4px 12px; color: #64748b;">Config</button>
+    </div>
 
-    <div class="ici-modal-title" style="font-size: 14px; margin-top: 16px; border-top: 1px dashed #eee; padding-top: 16px;">Add New Environment</div>
-    <div style="display: flex; gap: 8px; margin-bottom: 8px;">
-      <input type="text" id="ici-add-env-name" class="ici-env-input" style="width: 30%;" placeholder="e.g. STAGING" />
-      <input type="text" id="ici-add-env-url" class="ici-env-input" style="width: 70%;" placeholder="e.g. http://192.168.4.189/api" />
+    <!-- Tab 1: Environments Pane -->
+    <div id="ici-pane-env">
+      <table class="ici-env-table">
+        <thead>
+          <tr>
+            <th style="width: 15%;">Env Name</th>
+            <th style="width: 40%;">API Base URL</th>
+            <th style="width: 35%;">UI Base URL</th>
+            <th style="width: 10%; text-align: center;">Action</th>
+          </tr>
+        </thead>
+        <tbody id="ici-modal-table-body">
+          <!-- Rows injected dynamically by JS -->
+        </tbody>
+      </table>
+
+      <div class="ici-modal-title" style="font-size: 14px; margin-top: 16px; border-top: 1px dashed #eee; padding-top: 16px;">Add New Environment</div>
+      <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+        <input type="text" id="ici-add-env-name" class="ici-env-input" style="width: 20%;" placeholder="e.g. STAGING" />
+        <input type="text" id="ici-add-env-url" class="ici-env-input" style="width: 40%;" placeholder="e.g. API URL (BASE_URL)" />
+        <input type="text" id="ici-add-env-ui-url" class="ici-env-input" style="width: 40%;" placeholder="e.g. UI URL (UI_BASE_URL)" />
+      </div>
+    </div>
+
+    <!-- Tab 2: Config Pane -->
+    <div id="ici-pane-config" style="display: none;">
+      <p class="ici-modal-hint" style="margin-bottom: 16px;">Central execution parameters. Changes are automatically updated in your .env file on disk!</p>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+        <div class="icici-field">
+          <label style="display: block !important; font-size: 11px; font-weight: 700; color: #475569; margin-bottom: 4px; text-transform: uppercase;">Browser Engine</label>
+          <select id="ici-config-browser" class="ici-env-input">
+            <option value="chromium">Chromium (Chrome)</option>
+            <option value="firefox">Firefox</option>
+            <option value="webkit">WebKit (Safari/iPhone)</option>
+          </select>
+        </div>
+        <div class="icici-field">
+          <label style="display: block !important; font-size: 11px; font-weight: 700; color: #475569; margin-bottom: 4px; text-transform: uppercase;">Headless Mode</label>
+          <select id="ici-config-headless" class="ici-env-input">
+            <option value="true">Headless (Background Run)</option>
+            <option value="false">Headed (Visible Window)</option>
+          </select>
+        </div>
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+        <div class="icici-field">
+          <label style="display: block !important; font-size: 11px; font-weight: 700; color: #475569; margin-bottom: 4px; text-transform: uppercase;">Max Retries</label>
+          <input type="number" id="ici-config-retries" class="ici-env-input" min="0" max="10" placeholder="e.g. 3" />
+        </div>
+        <div class="icici-field">
+          <label style="display: block !important; font-size: 11px; font-weight: 700; color: #475569; margin-bottom: 4px; text-transform: uppercase;">Retry Delay (s)</label>
+          <input type="number" id="ici-config-delay" class="ici-env-input" min="0" step="0.5" placeholder="e.g. 1.0" />
+        </div>
+        <div class="icici-field">
+          <label style="display: block !important; font-size: 11px; font-weight: 700; color: #475569; margin-bottom: 4px; text-transform: uppercase;">UI Workers</label>
+          <input type="number" id="ici-config-workers" class="ici-env-input" min="1" max="16" placeholder="e.g. 1" />
+        </div>
+      </div>
     </div>
 
     <div class="ici-modal-actions">
@@ -1284,7 +1331,7 @@ body article {
 
   window.iciLogout = function() {
     clearSession();
-    location.reload();
+    location.href = "/";
   };
 
   /* Enter key on login form */
@@ -1315,10 +1362,10 @@ body article {
   var DEFAULT_CONFIG = {
     active: "Dev",
     environments: {
-      "Dev": "http://192.168.4.187/trubi25v2rel",
-      "QA": "https://dummyjson.com",
-      "UAT": "http://uat-api.icicipru.com/api",
-      "Prod": "https://api.icicipru.com/api"
+      "Dev": { api: "http://192.168.4.187/trubi25v2rel", ui: "https://dev-retailnetbanking.icici.bank.in/login-page" },
+      "QA": { api: "https://dummyjson.com", ui: "https://retailnetbanking.icici.bank.in/login-page" },
+      "UAT": { api: "http://uat-api.icicipru.com/api", ui: "https://retailnetbanking.icici.bank.in/login-page" },
+      "Prod": { api: "https://api.icicipru.com/api", ui: "https://retailnetbanking.icici.bank.in/login-page" }
     }
   };
 
@@ -1330,7 +1377,23 @@ body article {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_CONFIG));
       return DEFAULT_CONFIG;
     }
-    try { return JSON.parse(stored); } catch(e) { return DEFAULT_CONFIG; }
+    try { 
+      var parsed = JSON.parse(stored);
+      // Auto-migrate old string-only configurations seamlessly to support both API and UI URLs!
+      var migrated = false;
+      for (var env in parsed.environments) {
+        if (typeof parsed.environments[env] === "string") {
+          var oldUrl = parsed.environments[env];
+          var defaultUi = DEFAULT_CONFIG.environments[env] ? DEFAULT_CONFIG.environments[env].ui : "https://retailnetbanking.icici.bank.in/login-page";
+          parsed.environments[env] = { api: oldUrl, ui: defaultUi };
+          migrated = true;
+        }
+      }
+      if (migrated) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
+      }
+      return parsed; 
+    } catch(e) { return DEFAULT_CONFIG; }
   }
 
   function saveConfig(config) {
@@ -1360,10 +1423,22 @@ body article {
     config.active = selectedEnv;
     saveConfig(config);
     
-    var activeUrl = config.environments[selectedEnv];
+    // Write both API_BASE_URL and UI_BASE_URL dynamically to FitNesse VariablePage!
+    var activeUrl = config.environments[selectedEnv].api || "";
+    var activeUiUrl = config.environments[selectedEnv].ui || "https://retailnetbanking.icici.bank.in/login-page";
+    
+    // Read dynamic UI Workers to enable multi-threaded parallel execution in FitNesse!
+    var workers = parseInt(config.workers || "1");
+    var parallelStr = "";
+    if (workers > 1) {
+      parallelStr = "!define runInParallel {true}\n!define fitnesse.runner.parallel {" + workers + "}\n";
+    } else {
+      parallelStr = "!define runInParallel {false}\n";
+    }
+    
     var formData = new URLSearchParams();
     formData.append("responder", "saveData");
-    formData.append("pageContent", "!define BASE_URL {" + activeUrl + "}\n");
+    formData.append("pageContent", "!define API_BASE_URL {" + activeUrl + "}\n!define UI_BASE_URL {" + activeUiUrl + "}\n" + parallelStr);
     
     fetch("/VariablePage", {
       method: "POST",
@@ -1381,15 +1456,51 @@ body article {
 
   window.iciOpenManageEnvModal = function() {
     var config = loadConfig();
-    tempEnvironments = Object.assign({}, config.environments);
+    // Deep clone environments to avoid direct state mutation
+    tempEnvironments = JSON.parse(JSON.stringify(config.environments));
     document.getElementById("ici-add-env-name").value = "";
     document.getElementById("ici-add-env-url").value = "";
+    document.getElementById("ici-add-env-ui-url").value = "";
+    
+    // Reset to environments tab by default on open
+    iciSwitchModalTab('env');
+    
+    // Populate Config tab inputs with currently loaded active settings
+    document.getElementById("ici-config-browser").value = config.browser || "chromium";
+    document.getElementById("ici-config-headless").value = config.headless !== undefined ? String(config.headless) : "true";
+    document.getElementById("ici-config-retries").value = config.retries || "3";
+    document.getElementById("ici-config-delay").value = config.delay || "1.0";
+    document.getElementById("ici-config-workers").value = config.workers || "1";
+    
     renderModalTable();
     document.getElementById("ici-env-modal").style.display = "flex";
   };
 
   window.iciCloseManageEnvModal = function() {
     document.getElementById("ici-env-modal").style.display = "none";
+  };
+
+  window.iciSwitchModalTab = function(tabName) {
+    var tabEnv = document.getElementById("ici-tab-env");
+    var tabConfig = document.getElementById("ici-tab-config");
+    var paneEnv = document.getElementById("ici-pane-env");
+    var paneConfig = document.getElementById("ici-pane-config");
+    
+    if (tabName === "env") {
+      tabEnv.style.borderBottom = "2px solid #A6192E";
+      tabEnv.style.color = "#A6192E";
+      tabConfig.style.borderBottom = "none";
+      tabConfig.style.color = "#64748b";
+      paneEnv.style.display = "block";
+      paneConfig.style.display = "none";
+    } else {
+      tabConfig.style.borderBottom = "2px solid #A6192E";
+      tabConfig.style.color = "#A6192E";
+      tabEnv.style.borderBottom = "none";
+      tabEnv.style.color = "#64748b";
+      paneEnv.style.display = "none";
+      paneConfig.style.display = "block";
+    }
   };
 
   function renderModalTable() {
@@ -1405,19 +1516,37 @@ body article {
       tdName.textContent = env;
       tr.appendChild(tdName);
       
+      // API URL Input column
       var tdUrl = document.createElement("td");
-      var input = document.createElement("input");
-      input.type = "text";
-      input.className = "ici-env-input";
-      input.value = tempEnvironments[env];
-      input.setAttribute("data-env", env);
-      input.onchange = function(e) {
-        var envName = e.target.getAttribute("data-env");
-        tempEnvironments[envName] = e.target.value.trim();
+      var inputApi = document.createElement("input");
+      inputApi.type = "text";
+      inputApi.className = "ici-env-input";
+      inputApi.value = tempEnvironments[env].api || "";
+      inputApi.setAttribute("data-env-api", env);
+      inputApi.onchange = function(e) {
+        var envName = e.target.getAttribute("data-env-api");
+        if (!tempEnvironments[envName]) tempEnvironments[envName] = {};
+        tempEnvironments[envName].api = e.target.value.trim();
       };
-      tdUrl.appendChild(input);
+      tdUrl.appendChild(inputApi);
       tr.appendChild(tdUrl);
       
+      // UI URL Input column
+      var tdUiUrl = document.createElement("td");
+      var inputUi = document.createElement("input");
+      inputUi.type = "text";
+      inputUi.className = "ici-env-input";
+      inputUi.value = tempEnvironments[env].ui || "";
+      inputUi.setAttribute("data-env-ui", env);
+      inputUi.onchange = function(e) {
+        var envName = e.target.getAttribute("data-env-ui");
+        if (!tempEnvironments[envName]) tempEnvironments[envName] = {};
+        tempEnvironments[envName].ui = e.target.value.trim();
+      };
+      tdUiUrl.appendChild(inputUi);
+      tr.appendChild(tdUiUrl);
+      
+      // Delete Action column
       var tdAction = document.createElement("td");
       tdAction.style.textAlign = "center";
       var delBtn = document.createElement("button");
@@ -1426,9 +1555,7 @@ body article {
       delBtn.setAttribute("data-env", env);
       delBtn.onclick = function(e) {
         var envName = e.target.getAttribute("data-env");
-        console.log('%cDeleting environment:', 'color: orange;', envName);
         delete tempEnvironments[envName];
-        console.log('Remaining environments:', Object.keys(tempEnvironments));
         renderModalTable();
       };
       tdAction.appendChild(delBtn);
@@ -1441,33 +1568,66 @@ body article {
   window.iciSaveEnvironments = function() {
     var addName = (document.getElementById("ici-add-env-name").value || "").trim();
     var addUrl = (document.getElementById("ici-add-env-url").value || "").trim();
-    
-    console.log('%cSaving Environments...', 'color: #A6192E; font-weight: bold;');
-    console.log('tempEnvironments before save:', JSON.stringify(tempEnvironments, null, 2));
+    var addUiUrl = (document.getElementById("ici-add-env-ui-url").value || "").trim();
     
     if (addName && addUrl) {
       addName = addName.toUpperCase().replace(/\s+/g, "_");
-      tempEnvironments[addName] = addUrl;
-      console.log('Added new environment:', addName, '=', addUrl);
+      tempEnvironments[addName] = { 
+        api: addUrl, 
+        ui: addUiUrl || "https://retailnetbanking.icici.bank.in/login-page" 
+      };
     }
     
     if (Object.keys(tempEnvironments).length === 0) {
       alert("At least one environment must exist.");
-      console.error('Cannot save: No environments defined');
       return;
+    }
+    
+    // Read all modified input fields currently in the table
+    for (var env in tempEnvironments) {
+      var apiInput = document.querySelector("[data-env-api='" + env + "']");
+      var uiInput = document.querySelector("[data-env-ui='" + env + "']");
+      if (apiInput) tempEnvironments[env].api = apiInput.value.trim();
+      if (uiInput) tempEnvironments[env].ui = uiInput.value.trim();
     }
     
     var config = loadConfig();
     config.environments = tempEnvironments;
     if (!config.environments[config.active]) {
       var firstEnv = Object.keys(tempEnvironments)[0];
-      console.log('Active environment not found, switching to:', firstEnv);
       config.active = firstEnv;
     }
     
-    console.log('Final config to save:', JSON.stringify(config, null, 2));
+    // Read and save all the values from the Config Tab on Save!
+    config.browser = document.getElementById("ici-config-browser").value;
+    config.headless = document.getElementById("ici-config-headless").value;
+    config.retries = document.getElementById("ici-config-retries").value.trim() || "3";
+    config.delay = document.getElementById("ici-config-delay").value.trim() || "1.0";
+    config.workers = document.getElementById("ici-config-workers").value.trim() || "1";
+    
     saveConfig(config);
-    console.log('\u2713 Config saved to localStorage');
+    
+    // Construct the structured payload to match what our Python backend expects!
+    var payload = {
+      environments: tempEnvironments,
+      config: {
+        browser: config.browser,
+        headless: config.headless,
+        retries: config.retries,
+        delay: config.delay,
+        workers: config.workers
+      }
+    };
+    
+    // Natively POST the updated environments to your Python backend to write straight to .env on disk!
+    fetch("http://localhost:8090/environments", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    })
+    .catch(function(err) {
+      console.warn("User store server offline; .env on disk was not updated:", err);
+    });
     
     iciCloseManageEnvModal();
     iciSwitchEnv(config.active);

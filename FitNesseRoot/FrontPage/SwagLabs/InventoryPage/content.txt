@@ -3,7 +3,6 @@
 !define TEST_SYSTEM {slim}
 
 | script | fixtures.UiFixture |
-| set headless | true |
 | start browser |
 | navigate to | https://www.saucedemo.com/ |
 | fill field | username | with value | standard_user |

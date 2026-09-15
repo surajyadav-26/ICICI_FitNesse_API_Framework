@@ -1,2 +1,6 @@
-|FrontPage.SwagLabs.LoginPage||11:02:44 Tue, Sep 15, 2026|
+|VariablePage||17:16:09 Tue, Sep 15, 2026|
+|FrontPage.DummyAPI.Add_User||16:32:59 Tue, Sep 15, 2026|
+|FrontPage.SwagLabs.LoginPage|admin|16:12:17 Tue, Sep 15, 2026|
+|FrontPage.SwagLabs.InventoryPage|admin|16:03:19 Tue, Sep 15, 2026|
+|FrontPage.DummyAPI.Search_Product|admin|15:34:39 Tue, Sep 15, 2026|
 |FrontPage.SwagLabs|admin|10:54:48 Tue, Sep 15, 2026|

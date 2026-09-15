@@ -3,11 +3,10 @@
 !define TEST_SYSTEM {slim}
 
 | script | fixtures.UiFixture |
-| set headless | false |
 | start browser |
-| navigate to | https://www.saucedemo.com/ |
+| navigate to | ${UI_BASE_URL} |
 | fill field | username | with value | standard_user |
-| fill field | password | with value | secret_sauce |
+| fill field | password | with value | secret_sauc |
 | click button | loginButton |
 | wait for text | Products | timeout | 10000 |
 | check | verify text present | Products | true |

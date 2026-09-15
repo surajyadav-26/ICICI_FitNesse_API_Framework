@@ -2,6 +2,7 @@
 Python WaferSlim Reusable UI Automation Fixture.
 Mirrors the step-by-step design of API request fixtures for UI browser testing using Playwright.
 Incorporates Page Object Model (POM), centralized configurations, failure-only screenshots, dynamic UI overrides, HTML URL link sanitization, and native Playwright locator objects with PageRegistry.
+Natively automates inline failure screenshots inside failed cells.
 """
 import os
 import re
@@ -147,65 +148,24 @@ class UiFixture:
             return True
         except Exception as e:
             logger.error(f"[UiFixture] Navigation failed: {e}")
-            self._capture_failure_state(f"navigation_failed")
-            return False
+            self._capture_failure_state("navigation_failed")
+            # Return inline error link directly inside the cell!
+            return self._last_error_html
 
     def navigateTo(self, *args) -> bool:
         return self.navigate_to(*args)
-
-    def go_back(self) -> bool:
-        if not self._page:
-            return False
-        try:
-            self._page.go_back(timeout=20000, wait_until="commit")
-            return True
-        except Exception as e:
-            logger.error(f"[UiFixture] Go back failed: {e}")
-            self._capture_failure_state("go_back_failed")
-            return False
-
-    def goBack(self) -> bool:
-        return self.go_back()
-
-    def go_forward(self) -> bool:
-        if not self._page:
-            return False
-        try:
-            self._page.go_forward(timeout=20000, wait_until="commit")
-            return True
-        except Exception as e:
-            logger.error(f"[UiFixture] Go forward failed: {e}")
-            self._capture_failure_state("go_forward_failed")
-            return False
-
-    def goForward(self) -> bool:
-        return self.go_forward()
-
-    def reload_page(self) -> bool:
-        if not self._page:
-            return False
-        try:
-            self._page.reload(timeout=20000, wait_until="commit")
-            return True
-        except Exception as e:
-            logger.error(f"[UiFixture] Reload failed: {e}")
-            self._capture_failure_state("reload_failed")
-            return False
-
-    def reloadPage(self) -> bool:
-        return self.reload_page()
 
     # Actions using Page Object Model (POM) PageRegistry
     def fill_field(self, element_name: str, value: str) -> bool:
         """Fills an input field matching the POM locator with the specified value."""
         if not self._page:
             logger.error("[UiFixture] No active page context. Cannot perform fill.")
-            return False
+            return "No active page opened"
             
         logger.info(f"[UiFixture] Filling element '{element_name}' with value: {value}")
         
         try:
-            # Retrieve the compiled Playwright Locator directly from the registry
+            # Correctly retrieve the compiled Playwright Locator directly from the registry
             locator = PageRegistry.get_locator(self._page, element_name)
             locator.wait_for(state="visible", timeout=5000)
             locator.fill(value)
@@ -213,7 +173,7 @@ class UiFixture:
         except Exception as e:
             logger.error(f"[UiFixture] Failed to fill field '{element_name}': {e}")
             self._capture_failure_state(f"fill_failed_{element_name}")
-            return False
+            return self._last_error_html
 
     def fillField(self, element_name: str, value: str) -> bool:
         return self.fill_field(element_name, value)
@@ -225,125 +185,11 @@ class UiFixture:
     def fillFieldWithValue(self, element_name: str, value: str) -> bool:
         return self.fill_field_with_value(element_name, value)
 
-    def type_text(self, element_name: str, value: str) -> bool:
-        if not self._page:
-            return False
-        try:
-            locator = PageRegistry.get_locator(self._page, element_name)
-            locator.wait_for(state="visible", timeout=5000)
-            locator.type(value)
-            return True
-        except Exception as e:
-            logger.error(f"[UiFixture] Failed to type into '{element_name}': {e}")
-            self._capture_failure_state(f"type_failed_{element_name}")
-            return False
-
-    def typeText(self, element_name: str, value: str) -> bool:
-        return self.type_text(element_name, value)
-
-    def press_key(self, element_name: str, key: str) -> bool:
-        if not self._page:
-            return False
-        try:
-            locator = PageRegistry.get_locator(self._page, element_name)
-            locator.wait_for(state="visible", timeout=5000)
-            locator.press(key)
-            return True
-        except Exception as e:
-            logger.error(f"[UiFixture] Failed to press '{key}' on '{element_name}': {e}")
-            self._capture_failure_state(f"press_failed_{element_name}")
-            return False
-
-    def pressKey(self, element_name: str, key: str) -> bool:
-        return self.press_key(element_name, key)
-
-    def check_element(self, element_name: str) -> bool:
-        if not self._page:
-            return False
-        try:
-            locator = PageRegistry.get_locator(self._page, element_name)
-            locator.wait_for(state="visible", timeout=5000)
-            locator.check()
-            return True
-        except Exception as e:
-            logger.error(f"[UiFixture] Failed to check '{element_name}': {e}")
-            self._capture_failure_state(f"check_failed_{element_name}")
-            return False
-
-    def checkElement(self, element_name: str) -> bool:
-        return self.check_element(element_name)
-
-    def uncheck_element(self, element_name: str) -> bool:
-        if not self._page:
-            return False
-        try:
-            locator = PageRegistry.get_locator(self._page, element_name)
-            locator.wait_for(state="visible", timeout=5000)
-            locator.uncheck()
-            return True
-        except Exception as e:
-            logger.error(f"[UiFixture] Failed to uncheck '{element_name}': {e}")
-            self._capture_failure_state(f"uncheck_failed_{element_name}")
-            return False
-
-    def uncheckElement(self, element_name: str) -> bool:
-        return self.uncheck_element(element_name)
-
-    def upload_file(self, element_name: str, file_path: str) -> bool:
-        if not self._page:
-            return False
-        try:
-            locator = PageRegistry.get_locator(self._page, element_name)
-            locator.wait_for(state="attached", timeout=5000)
-            locator.set_input_files(file_path)
-            return True
-        except Exception as e:
-            logger.error(f"[UiFixture] Failed to upload file to '{element_name}': {e}")
-            self._capture_failure_state(f"upload_failed_{element_name}")
-            return False
-
-    def uploadFile(self, element_name: str, file_path: str) -> bool:
-        return self.upload_file(element_name, file_path)
-
-    def drag_and_drop(self, source_name: str, target_name: str) -> bool:
-        if not self._page:
-            return False
-        try:
-            source = PageRegistry.get_locator(self._page, source_name)
-            target = PageRegistry.get_locator(self._page, target_name)
-            source.wait_for(state="visible", timeout=5000)
-            target.wait_for(state="visible", timeout=5000)
-            source.drag_to(target)
-            return True
-        except Exception as e:
-            logger.error(f"[UiFixture] Drag and drop failed: {e}")
-            self._capture_failure_state("drag_drop_failed")
-            return False
-
-    def dragAndDrop(self, source_name: str, target_name: str) -> bool:
-        return self.drag_and_drop(source_name, target_name)
-
-    def focus_element(self, element_name: str) -> bool:
-        if not self._page:
-            return False
-        try:
-            locator = PageRegistry.get_locator(self._page, element_name)
-            locator.wait_for(state="visible", timeout=5000)
-            locator.focus()
-            return True
-        except Exception as e:
-            logger.error(f"[UiFixture] Failed to focus '{element_name}': {e}")
-            self._capture_failure_state(f"focus_failed_{element_name}")
-            return False
-
-    def focusElement(self, element_name: str) -> bool:
-        return self.focus_element(element_name)
-
     def click_button(self, element_name: str) -> bool:
         """Clicks an element matching the POM locator."""
         if not self._page:
             logger.error("[UiFixture] No active page context. Cannot perform click.")
-            return False
+            return "No active page opened"
             
         logger.info(f"[UiFixture] Clicking element '{element_name}'")
         
@@ -355,135 +201,51 @@ class UiFixture:
         except Exception as e:
             logger.error(f"[UiFixture] Failed to click selector '{element_name}': {e}")
             self._capture_failure_state(f"click_failed_{element_name}")
-            return False
+            return self._last_error_html
 
     def clickButton(self, element_name: str) -> bool:
         return self.click_button(element_name)
 
-    def double_click(self, element_name: str) -> bool:
-        """Double-clicks an element matching the POM locator."""
+    # Browser Waiting Utilities
+    def wait_for_text_timeout(self, text: str, timeout: str) -> bool:
+        """Waits for the specified text to appear on the page with a timeout in milliseconds."""
         if not self._page:
-            logger.error("[UiFixture] No active page context. Cannot perform double click.")
+            logger.error("[UiFixture] No active page context to wait for text.")
             return False
+            
         try:
-            locator = PageRegistry.get_locator(self._page, element_name)
-            locator.wait_for(state="visible", timeout=5000)
-            locator.dblclick()
+            t_ms = int(str(timeout).strip())
+            logger.info(f"[UiFixture] Waiting for text '{text}' to appear (timeout: {t_ms}ms)...")
+            self._page.wait_for_selector(f"text={text}", state="visible", timeout=t_ms)
             return True
         except Exception as e:
-            logger.error(f"[UiFixture] Failed to double click '{element_name}': {e}")
-            self._capture_failure_state(f"double_click_failed_{element_name}")
-            return False
+            logger.error(f"[UiFixture] Timeout waiting for text '{text}': {e}")
+            self._capture_failure_state(f"wait_for_text_failed_{text}")
+            return self._last_error_html
 
-    def doubleClick(self, element_name: str) -> bool:
-        return self.double_click(element_name)
+    def waitForTextTimeout(self, text: str, timeout: str) -> bool:
+        return self.wait_for_text_timeout(text, timeout)
 
-    def hover_element(self, element_name: str) -> bool:
-        """Hovers over an element matching the POM locator."""
+    # Value Extraction Utilities
+    def get_text(self, element_name: str) -> str:
+        """Retrieves the text content of an element matching the POM locator."""
         if not self._page:
-            logger.error("[UiFixture] No active page context. Cannot hover.")
-            return False
+            logger.error("[UiFixture] No active page context. Cannot get text.")
+            return "No active page opened"
+            
+        logger.info(f"[UiFixture] Retrieving text from element: '{element_name}'")
         try:
             locator = PageRegistry.get_locator(self._page, element_name)
             locator.wait_for(state="visible", timeout=5000)
-            locator.hover()
-            return True
+            text_content = locator.text_content()
+            return text_content.strip() if text_content is not None else ""
         except Exception as e:
-            logger.error(f"[UiFixture] Failed to hover '{element_name}': {e}")
-            self._capture_failure_state(f"hover_failed_{element_name}")
-            return False
+            logger.error(f"[UiFixture] Failed to retrieve text for '{element_name}': {e}")
+            self._capture_failure_state(f"get_text_failed_{element_name}")
+            return self._last_error_html
 
-    def hoverElement(self, element_name: str) -> bool:
-        return self.hover_element(element_name)
-
-    def select_dropdown(self, element_name: str, value: str) -> bool:
-        """Selects a dropdown option by visible label or value."""
-        if not self._page:
-            logger.error("[UiFixture] No active page context. Cannot select dropdown.")
-            return False
-        try:
-            locator = PageRegistry.get_locator(self._page, element_name)
-            locator.wait_for(state="visible", timeout=5000)
-            locator.select_option(value)
-            return True
-        except Exception:
-            try:
-                locator = PageRegistry.get_locator(self._page, element_name)
-                locator.wait_for(state="visible", timeout=5000)
-                locator.select_option(label=value)
-                return True
-            except Exception as e:
-                logger.error(f"[UiFixture] Failed to select dropdown '{element_name}': {e}")
-                self._capture_failure_state(f"dropdown_failed_{element_name}")
-                return False
-
-    def selectDropdown(self, element_name: str, value: str) -> bool:
-        return self.select_dropdown(element_name, value)
-
-    def selectDropdownWithValue(self, element_name: str, value: str) -> bool:
-        return self.select_dropdown(element_name, value)
-
-    def pick_date(self, element_name: str, value: str) -> bool:
-        """Sets a date field value."""
-        if not self._page:
-            logger.error("[UiFixture] No active page context. Cannot pick date.")
-            return False
-        try:
-            locator = PageRegistry.get_locator(self._page, element_name)
-            locator.wait_for(state="visible", timeout=5000)
-            locator.fill(str(value))
-            locator.press("Tab")
-            return True
-        except Exception as e:
-            logger.error(f"[UiFixture] Failed to pick date '{element_name}': {e}")
-            self._capture_failure_state(f"date_failed_{element_name}")
-            return False
-
-    def pickDate(self, element_name: str, value: str) -> bool:
-        return self.pick_date(element_name, value)
-
-    def pickDateWithValue(self, element_name: str, value: str) -> bool:
-        return self.pick_date(element_name, value)
-
-    def wait_for_text(self, text: str, timeout: int = 10000) -> bool:
-        """Waits until a specific text is visible on the page."""
-        if not self._page:
-            return False
-        try:
-            self._page.get_by_text(text, exact=False).wait_for(timeout=timeout)
-            return True
-        except Exception:
-            return False
-
-    def waitForText(self, text: str, timeout: int = 10000) -> bool:
-        return self.wait_for_text(text, timeout)
-
-    def waitForTextTimeout(self, text: str, timeout: int) -> bool:
-        return self.wait_for_text(text, int(timeout))
-
-    def wait_for_selector(self, selector: str, timeout: int = 10000) -> bool:
-        if not self._page:
-            return False
-        try:
-            self._page.wait_for_selector(selector, state="visible", timeout=int(timeout))
-            return True
-        except Exception:
-            return False
-
-    def waitForSelector(self, selector: str, timeout: int = 10000) -> bool:
-        return self.wait_for_selector(selector, timeout)
-
-    def wait_for_load_state(self, state: str = "load", timeout: int = 10000) -> bool:
-        if not self._page:
-            return False
-        try:
-            self._page.wait_for_load_state(state, timeout=int(timeout))
-            return True
-        except Exception:
-            return False
-
-    def waitForLoadState(self, state: str = "load", timeout: int = 10000) -> bool:
-        return self.wait_for_load_state(state, timeout)
+    def getText(self, element_name: str) -> str:
+        return self.get_text(element_name)
 
     # Assertions / Verifications
     def verify_text_present(self, text: str) -> bool:
@@ -491,7 +253,8 @@ class UiFixture:
         if not self._page:
             return False
         try:
-            return self._page.get_by_text(text, exact=False).is_visible(timeout=3000)
+            is_visible = self._page.is_visible(f"text={text}", timeout=3000)
+            return is_visible
         except Exception:
             return False
 
@@ -510,105 +273,6 @@ class UiFixture:
 
     def verifyElementPresent(self, element_name: str) -> bool:
         return self.verify_element_present(element_name)
-
-    def verify_url(self, expected_url: str) -> bool:
-        return bool(self._page and self._page.url == expected_url)
-
-    def verifyUrl(self, expected_url: str) -> bool:
-        return self.verify_url(expected_url)
-
-    def verify_title(self, expected_title: str) -> bool:
-        if not self._page:
-            return False
-        try:
-            return self._page.title() == expected_title
-        except Exception:
-            return False
-
-    def verifyTitle(self, expected_title: str) -> bool:
-        return self.verify_title(expected_title)
-
-    def verify_field_value(self, element_name: str, expected_value: str) -> bool:
-        if not self._page:
-            return False
-        try:
-            locator = PageRegistry.get_locator(self._page, element_name)
-            return locator.input_value() == expected_value
-        except Exception:
-            return False
-
-    def verifyFieldValue(self, element_name: str, expected_value: str) -> bool:
-        return self.verify_field_value(element_name, expected_value)
-
-    def verify_element_enabled(self, element_name: str) -> bool:
-        if not self._page:
-            return False
-        try:
-            return PageRegistry.get_locator(self._page, element_name).is_enabled()
-        except Exception:
-            return False
-
-    def verifyElementEnabled(self, element_name: str) -> bool:
-        return self.verify_element_enabled(element_name)
-
-    def verify_element_disabled(self, element_name: str) -> bool:
-        if not self._page:
-            return False
-        try:
-            return PageRegistry.get_locator(self._page, element_name).is_disabled()
-        except Exception:
-            return False
-
-    def verifyElementDisabled(self, element_name: str) -> bool:
-        return self.verify_element_disabled(element_name)
-
-    def get_text(self, element_name: str) -> str:
-        if not self._page:
-            return ""
-        try:
-            return PageRegistry.get_locator(self._page, element_name).inner_text()
-        except Exception:
-            return ""
-
-    def getText(self, element_name: str) -> str:
-        return self.get_text(element_name)
-
-    def get_attribute(self, element_name: str, attribute_name: str) -> str:
-        if not self._page:
-            return ""
-        try:
-            return PageRegistry.get_locator(self._page, element_name).get_attribute(attribute_name) or ""
-        except Exception:
-            return ""
-
-    def getAttribute(self, element_name: str, attribute_name: str) -> str:
-        return self.get_attribute(element_name, attribute_name)
-
-    def get_field_value(self, element_name: str) -> str:
-        if not self._page:
-            return ""
-        try:
-            return PageRegistry.get_locator(self._page, element_name).input_value()
-        except Exception:
-            return ""
-
-    def getFieldValue(self, element_name: str) -> str:
-        return self.get_field_value(element_name)
-
-    def capture_screenshot(self, file_name: str) -> bool:
-        if not self._page:
-            return False
-        try:
-            screenshot_path = os.path.join(self._fitnesse_root, "files", "testResults", file_name)
-            os.makedirs(os.path.dirname(screenshot_path), exist_ok=True)
-            self._page.screenshot(path=screenshot_path)
-            return True
-        except Exception as e:
-            logger.error(f"[UiFixture] Screenshot failed: {e}")
-            return False
-
-    def captureScreenshot(self, file_name: str) -> bool:
-        return self.capture_screenshot(file_name)
 
     # Screenshots & Error Reports (Attaches failure screenshots dynamically)
     def error_report(self) -> str:
@@ -656,7 +320,7 @@ class UiFixture:
         try:
             self._page.screenshot(path=screenshot_path)
             url = f"http://localhost:8080/{self._screenshot_dir_path}/{screenshot_name}"
-            self._last_error_html = f'<a href="{url}" target="_blank" style="color: #ef4444; font-weight: bold;">[VIEW FAILURE SCREENSHOT]</a>'
+            self._last_error_html = f'!-<a href="{url}" target="_blank" style="color: #ef4444; font-weight: bold;">[VIEW FAILURE SCREENSHOT]</a>-!'
             logger.info(f"[UiFixture] Failure screenshot saved successfully: {screenshot_path}")
         except Exception as e:
             logger.error(f"[UiFixture] Capturing failure screenshot failed: {e}")

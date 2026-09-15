@@ -2,4 +2,4 @@
 
 !|fixtures.PostRequestFixture|
 |url|bodyJson|statusCodes?|responseBody?|
-|${BASE_URL}/users/add|{"firstName":"John","lastName":"Doe","age":30}|201||
+|${API_API_BASE_URL}/users/add|{"firstName":"John","lastName":"Doe","age":30}|201||
