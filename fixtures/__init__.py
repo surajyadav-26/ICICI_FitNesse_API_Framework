@@ -11,3 +11,5 @@ from .websocket_fixture import WebSocketFixture
 from .grpc_request_fixture import GrpcRequestFixture
 from .oauth2_fixture import OAuth2Fixture
 from .graphql_fixture import GraphQLFixture
+from .ui_fixture import UiFixture
+

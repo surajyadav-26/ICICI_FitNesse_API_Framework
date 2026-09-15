@@ -48,7 +48,7 @@ Enterprise-grade REST API testing framework for ICICI Prudential AML & Complianc
 
 ### **UI/UX Enhancements** 🎨
 - ✅ **Custom ICICI Branding**: Official logos, colors (#A6192E red, #004A80 blue)
-- ✅ **Role-Based Access**: Admin (full) and Viewer (read-only) roles
+- ✅ **Role-Based Access**: Admin, Editor, and Viewer roles
 - ✅ **Fixed Header Navigation**: Stays at top while scrolling
 - ✅ **Loading Indicators**: Visual feedback during test execution
 - ✅ **Environment Selector**: Quick switching with persistent storage
@@ -92,7 +92,7 @@ ICICI_FitNesseAPIFramework/
 ├── start_server.bat              # Quick launcher (kills conflicts, starts server)
 ├── requirements.txt              # Python dependencies
 ├── plugins.properties            # FitNesse configuration
-├── passwords.txt                 # User credentials (admin:admin123)
+├── data/users.json               # Canonical UI and FitNesse user store
 ├── fitnesse-standalone.jar       # FitNesse engine
 ├── .gitignore                    # Security exclusions
 │
@@ -165,6 +165,9 @@ python -m venv .venv
 
 # Install packages
 pip install -r requirements.txt
+
+# Install browser runtime for Playwright UI tests
+python -m playwright install chromium
 ```
 
 ### **4. Start Server**
@@ -559,22 +562,17 @@ on:
 
 ### **Credentials Management**
 
-**Default Users:**
+**UI Application Roles:**
 | Role | Username | Password | Permissions |
 |------|----------|----------|-------------|
-| Admin | `admin` | `admin123` | Full access (edit/delete/run) |
-| QA Lead | `qa` | `qa123` | Full access |
-| Developer | `dev` | `dev123` | View + Run only |
-| Reader | `reader` | `reader123` | View only |
+| Admin | `admin` | `admin123` | Full access, including Users |
+| Editor | `editor` | `editor123` | Home, run, report, history, edit, add, and delete |
+| Viewer | `viewer` | `viewer123` | Home, run, report, and history only |
 
-**Change Passwords:**
-Edit `FitNesseRoot/PageHeader/content.txt` line ~759:
-```javascript
-var USERS = {
-  "admin":  { password: "NEW_PASSWORD",  role: "admin",  display: "Admin" },
-  ...
-};
-```
+Users can be added, edited, or deleted by an Admin from the **Users** option in the profile dropdown. The canonical UI user store is [data/users.json](data/users.json). The local user-store service serves and updates this file on `127.0.0.1:8090`; browser `localStorage` under `nirikshan_users` is retained only as a fallback cache.
+
+**FitNesse Server Authentication:**
+The application uses `data/users.json` for its Admin, Editor, and Viewer roles. `start_server.bat` starts FitNesse without the separate `passwords.txt` Basic Auth gate, so the UI role model controls the visible and permitted workflows. The root-level `passwords.txt` file is no longer required.
 
 ### **Sensitive Files Protection**
 

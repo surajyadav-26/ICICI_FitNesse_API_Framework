@@ -374,18 +374,21 @@
       if (nameLower.indexOf("smoke") !== -1) icon = "💨";
       else if (nameLower.indexOf("sanity") !== -1) icon = "🛡️";
       else if (nameLower.indexOf("regression") !== -1) icon = "🧪";
+      else if (nameLower.indexOf("banking") !== -1 || nameLower.indexOf("retail") !== -1 || nameLower.indexOf("tata") !== -1 || nameLower.indexOf("aig") !== -1 || nameLower.indexOf("sit") !== -1) icon = "🖥️";
       else if (!isSuite) icon = "📄";
 
       // ── Dynamic Descriptions Mapping based on Suite Name ──
       var desc = "Dynamic corporate API test suite.";
-      if (nameLower.indexOf("smoke") !== -1) {
+      if (nameLower.indexOf("banking") !== -1 || nameLower.indexOf("retail") !== -1 || nameLower.indexOf("tata") !== -1 || nameLower.indexOf("aig") !== -1 || nameLower.indexOf("sit") !== -1) {
+        desc = "Dynamic corporate UI and browser automation test suite.";
+      } else if (nameLower.indexOf("smoke") !== -1) {
         desc = "Checks critical application functionality to confirm the build is stable for testing.";
       } else if (nameLower.indexOf("sanity") !== -1) {
         desc = "Verifies specific changes or fixes and their immediate impact.";
       } else if (nameLower.indexOf("regression") !== -1) {
         desc = "Validates that previously working features remain unaffected by recent changes.";
       } else if (!isSuite) {
-        desc = "Single executable REST API automation test case.";
+        desc = "Single executable automation test case.";
       }
 
       // ── Create Suite Card DOM Element ──

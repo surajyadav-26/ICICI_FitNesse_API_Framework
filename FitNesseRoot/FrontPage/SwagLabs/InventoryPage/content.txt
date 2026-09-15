@@ -1,0 +1,15 @@
+!1 Swag Labs Inventory
+
+!define TEST_SYSTEM {slim}
+
+| script | fixtures.UiFixture |
+| set headless | true |
+| start browser |
+| navigate to | https://www.saucedemo.com/ |
+| fill field | username | with value | standard_user |
+| fill field | password | with value | secret_sauce |
+| click button | loginButton |
+| wait for text | Products | timeout | 10000 |
+| click button | backpack |
+| check | get text | cart badge | 1 |
+| close browser |

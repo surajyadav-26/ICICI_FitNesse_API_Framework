@@ -1,0 +1,17 @@
+{
+  "admin": {
+    "password": "admin123",
+    "role": "admin",
+    "display": "Admin"
+  },
+  "qa": {
+    "password": "qa123",
+    "role": "editor",
+    "display": "QA"
+  },
+  "dev": {
+    "password": "dev123",
+    "role": "viewer",
+    "display": "Dev"
+  }
+}

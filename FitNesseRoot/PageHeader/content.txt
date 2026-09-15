@@ -16,14 +16,14 @@ body { padding-top: 64px !important; margin-top: 0 !important; }
   <!-- Left Side: AML Branding & Background -->
   <div id="icici-login-left">
     <div id="icici-login-left-content">
-      <div id="icici-aml-badge">AML COMPLIANCE</div>
+      <div id="icici-aml-badge">AML APPLICATION</div>
       <h1 id="icici-aml-title">Anti-Money Laundering</h1>
-      <p id="icici-aml-desc">Enterprise Test Automation Suite for ICICI Prudential AML & Compliance Systems. Securing financial integrations and validating automated detection gateways with extreme precision.</p>
+      <p id="icici-aml-desc">A focused workspace for validating AML controls, customer journeys, and compliance evidence across APIs and user interfaces.</p>
       
       <div id="icici-aml-features">
-        <div class="aml-feature-item">🛡️ Transaction Monitoring Gateways</div>
-        <div class="aml-feature-item">👤 KYC & Customer Due Diligence APIs</div>
-        <div class="aml-feature-item">📊 Real-time Sanctions Screening</div>
+        <div class="aml-feature-item">🛡️ Transaction monitoring & alert workflows</div>
+        <div class="aml-feature-item">👤 KYC, due diligence & customer risk checks</div>
+        <div class="aml-feature-item">📊 Sanctions screening & audit-ready evidence</div>
       </div>
     </div>
   </div>
@@ -32,9 +32,9 @@ body { padding-top: 64px !important; margin-top: 0 !important; }
   <div id="icici-login-right">
     <div id="icici-login-box">
       <div id="icici-login-logo" style="background: #ffffff; padding: 28px 32px 22px; display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; text-align: center !important; border-bottom: 4px solid #A6192E;">
-        <img src="/files/fitnesse/icici/img/icici-logo.png" alt="ICICI Prudential" style="height: 68px; width: auto; object-fit: contain; display: block !important; margin: 0 auto 12px !important;" onerror="this.src='/files/images/icici-prudential-logo.png'">
-        <div id="icici-login-title" style="color:#A6192E; font-size:18px; font-weight:700; letter-spacing:.5px; text-align: center !important; width: 100% !important; display: block !important;">ICICI Prudential AML</div>
-        <div id="icici-login-subtitle" style="margin-top: 4px; color:#58595B; font-size:12px; font-weight:600; text-align: center !important; width: 100% !important; display: block !important;">API Test Automation Framework</div>
+        <img src="/files/fitnesse/icici/img/icici-favicon.ico" alt="ICICI Nirikshan" style="height: 68px; width: auto; object-fit: contain; display: block !important; margin: 0 auto 12px !important;">
+        <div id="icici-login-title" style="color:#A6192E; font-size:18px; font-weight:700; letter-spacing:.5px; text-align: center !important; width: 100% !important; display: block !important;">ICICI Nirikshan AML Application</div>
+        <div id="icici-login-subtitle" style="margin-top: 4px; color:#58595B; font-size:12px; font-weight:600; text-align: center !important; width: 100% !important; display: block !important;">API &amp; UI Automation Framework</div>
       </div>
       <div id="icici-login-form">
         <div id="icici-login-error"></div>
@@ -62,11 +62,11 @@ body { padding-top: 64px !important; margin-top: 0 !important; }
 
   <!-- Left: logo + title -->
   <div class="icici-header-left">
-    <img src="/files/images/icici-prudential-logo.png" alt="ICICI Prudential"
-         class="icici-header-logo-img" onerror="this.src='/files/fitnesse/icici/img/icici-logo.png'">
+        <img src="/files/fitnesse/icici/img/icici-favicon.ico" alt="ICICI Nirikshan"
+          class="icici-header-logo-img">
     <div class="icici-header-text">
-      <div class="icici-header-title">ICICI Prudential AML</div>
-      <div class="icici-header-subtitle">API Test Automation Framework</div>
+      <div class="icici-header-title">ICICI Nirikshan AML Application</div>
+      <div class="icici-header-subtitle">API &amp; UI Automation Framework</div>
     </div>
   </div>
 
@@ -96,7 +96,8 @@ body { padding-top: 64px !important; margin-top: 0 !important; }
       </div>
       <!-- Collapsible Profile Dropdown menu -->
       <div id="icici-profile-dropdown" class="icici-profile-dropdown" style="display: none;">
-        <button class="icici-dropdown-item" onclick="iciLogout()">🚪 Sign Out</button>
+        <button id="ici-user-management-menu" class="ici-dropdown-item ici-user-management-hidden" onclick="iciOpenUserManagement()"><span class="ici-dropdown-icon">👥</span><span>Users</span></button>
+        <button class="ici-dropdown-item" onclick="iciLogout()"><span class="ici-dropdown-icon">🚪</span><span>Sign Out</span></button>
       </div>
     </div>
 
@@ -133,6 +134,45 @@ body { padding-top: 64px !important; margin-top: 0 !important; }
     <div class="ici-modal-actions">
       <button class="ici-modal-btn cancel" onclick="iciCloseManageEnvModal()">Cancel</button>
       <button class="ici-modal-btn save" onclick="iciSaveEnvironments()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     USER MANAGEMENT MODAL (ADMIN ONLY)
+     ═══════════════════════════════════════════════════ -->
+<div id="ici-user-modal" class="ici-modal-overlay">
+  <div class="ici-modal-box">
+    <div class="ici-modal-title">User Management</div>
+    <p class="ici-modal-hint">Manage application users and their access levels.</p>
+    <table class="ici-env-table">
+      <thead>
+        <tr>
+          <th>Username</th>
+          <th>Display name</th>
+          <th>Role</th>
+          <th style="width: 10%; text-align: center;">Action</th>
+        </tr>
+      </thead>
+      <tbody id="ici-user-table-body"></tbody>
+    </table>
+
+    <div class="ici-modal-title" style="font-size: 14px; margin-top: 16px; border-top: 1px dashed #eee; padding-top: 16px;">Add User</div>
+    <div class="ici-user-form">
+      <input type="text" id="ici-add-user-name" class="ici-env-input" placeholder="Username" autocomplete="off" />
+      <input type="text" id="ici-add-user-display" class="ici-env-input" placeholder="Display name" autocomplete="off" />
+      <input type="password" id="ici-add-user-password" class="ici-env-input" placeholder="Password" autocomplete="new-password" />
+      <select id="ici-add-user-role" class="ici-env-input">
+        <option value="editor">Editor</option>
+        <option value="viewer">Viewer</option>
+        <option value="admin">Admin</option>
+      </select>
+    </div>
+    <div id="ici-user-management-error" class="ici-user-management-error"></div>
+
+    <div class="ici-modal-actions">
+      <button class="ici-modal-btn cancel" onclick="iciCloseUserManagement()">Cancel</button>
+      <button class="ici-modal-btn save" onclick="iciSaveUserManagement()">Save Changes</button>
     </div>
   </div>
 </div>
@@ -411,7 +451,12 @@ body { padding-top: 64px !important; margin-top: 0 !important; }
 #icici-user-display  { color:#fff; font-size:11px; font-weight:600; }
 .icici-role-badge    { font-size:10px; font-weight:700; padding:2px 7px; border-radius:4px; text-transform:uppercase; letter-spacing:.4px; }
 .role-admin { background:#E06336; color:#fff; }
+.role-editor { background:#155724; color:#fff; }
 .role-user  { background:rgba(255,255,255,.2); color:#fff; }
+.ici-modal-hint { margin: -8px 0 14px; color:#64748b; font-size:12px; }
+.ici-user-form { display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-bottom:8px; }
+.ici-user-management-error { min-height:18px; color:#A6192E; font-size:12px; font-weight:600; }
+@media (max-width: 700px) { .ici-user-form { grid-template-columns: 1fr; } }
 
 /* Collapsible Profile Dropdown styles */
 .icici-profile-dropdown {
@@ -422,13 +467,13 @@ body { padding-top: 64px !important; margin-top: 0 !important; }
   border: 1px solid #cbd5e1 !important;
   border-radius: 6px !important;
   box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
-  width: 130px !important;
+  width: 156px !important;
   z-index: 100000 !important;
   padding: 4px 0 !important;
   overflow: hidden !important;
   animation: iciFadeIn 0.15s ease !important;
 }
-.icici-dropdown-item {
+.ici-dropdown-item {
   display: block !important;
   width: 100% !important;
   text-align: left !important;
@@ -443,9 +488,28 @@ body { padding-top: 64px !important; margin-top: 0 !important; }
   font-family: Arial, sans-serif !important;
   outline: none !important;
 }
-.icici-dropdown-item:hover {
+.ici-dropdown-item:hover {
   background: #f1f5f9 !important;
   color: #A6192E !important;
+}
+.ici-dropdown-icon {
+  display: inline-block !important;
+  width: 22px !important;
+  margin-right: 2px !important;
+  text-align: center !important;
+  font-family: "Segoe UI Emoji", Arial, sans-serif !important;
+  font-size: 12px !important;
+  line-height: 1 !important;
+  vertical-align: -1px !important;
+}
+.ici-dropdown-item > span:not(.ici-dropdown-icon) {
+  font-family: Arial, sans-serif !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  vertical-align: middle !important;
+}
+.ici-user-management-hidden {
+  display: none !important;
 }
 
 @keyframes iciFadeIn {
@@ -763,15 +827,47 @@ body article {
 <script>
 (function() {
 
-  /* ── Credential store ─────────────────────────────────────────────
-     Format: username → { password, role, displayName }
+  /* ── UI user store ─────────────────────────────────────────────────
+     This store is browser-local for the demo application.
   ─────────────────────────────────────────────────────────────────── */
-  var USERS = {
+  var USER_STORE_KEY = "nirikshan_users";
+  var USER_STORE_API = "http://127.0.0.1:8090/users";
+  var DEFAULT_USERS = {
     "admin":  { password: "admin123",  role: "admin",  display: "Admin" },
-    "qa":     { password: "qa123",     role: "admin",  display: "QA Lead" },
-    "dev":    { password: "dev123",    role: "user",   display: "Developer" },
-    "reader": { password: "reader123", role: "user",   display: "Reader" }
+    "editor": { password: "editor123", role: "editor", display: "Editor" },
+    "viewer": { password: "viewer123", role: "viewer", display: "Viewer" }
   };
+
+  function loadUsers() {
+    try {
+      var stored = localStorage.getItem(USER_STORE_KEY);
+      if (stored) return JSON.parse(stored);
+    } catch(e) {}
+    localStorage.setItem(USER_STORE_KEY, JSON.stringify(DEFAULT_USERS));
+    return JSON.parse(JSON.stringify(DEFAULT_USERS));
+  }
+
+  function saveUsers(users) {
+    localStorage.setItem(USER_STORE_KEY, JSON.stringify(users));
+    fetch(USER_STORE_API, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(users)
+    }).catch(function(error) {
+      console.warn("User file store unavailable; browser cache retained:", error);
+    });
+  }
+
+  fetch(USER_STORE_API)
+    .then(function(response) { return response.ok ? response.json() : Promise.reject(response.status); })
+    .then(function(users) {
+      if (users && typeof users === "object") {
+        localStorage.setItem(USER_STORE_KEY, JSON.stringify(users));
+      }
+    })
+    .catch(function(error) {
+      console.warn("User file store unavailable; using browser cache:", error);
+    });
 
   /* ── Nav links per role ────────────────────────────────────────── */
   /* p() = current page path so admin links work on every wiki page */
@@ -813,7 +909,23 @@ body article {
       { label: "☰ Properties",  href: function(){ return p() + "?properties"; }, adminOnly: true },
       { label: "📋 Page History", href: function(){ return p() + "?pageHistory"; } }
     ],
-    user: [
+    editor: [
+      { label: "Home",          href: function(){ return "/"; } },
+      { label: "▶ Run",         href: "#", action: function(e){
+          var btn = e.target;
+          btn.innerHTML = '<span class="ici-spin">⏳</span> Running...';
+          btn.style.pointerEvents = 'none';
+          setTimeout(function(){ location.href = getRunUrl(); }, 100);
+        } },
+      { label: "📊 Report",     href: "/files/report.html", target: "_blank" },
+      { label: "✎ Edit",        href: function(){ return p() + "?edit"; } },
+      { label: "+ Add Test",    href: function(){ return p() + "?new"; } },
+      { label: "❌ Delete",     href: function(){ return p() + "?deletePage"; } },
+      { label: "⚙ Tools",       href: function(){ return p() + "?refactor"; } },
+      { label: "☰ Properties",  href: function(){ return p() + "?properties"; } },
+      { label: "📋 Page History", href: function(){ return p() + "?pageHistory"; } }
+    ],
+    viewer: [
       { label: "Home",          href: function(){ return "/"; } },
       { label: "▶ Run",         href: "#", action: function(e){ 
           var btn = e.target;
@@ -840,6 +952,131 @@ body article {
   function clearSession() {
     sessionStorage.removeItem(SESSION_KEY);
   }
+
+  var tempUsers = {};
+
+  function currentSessionIsAdmin() {
+    var session = loadSession();
+    return !!session && session.role === "admin";
+  }
+
+  window.iciOpenUserManagement = function() {
+    if (!currentSessionIsAdmin()) {
+      alert("Only Admin users can manage users.");
+      return;
+    }
+    tempUsers = JSON.parse(JSON.stringify(loadUsers()));
+    renderUserTable();
+    document.getElementById("ici-user-management-error").textContent = "";
+    document.getElementById("ici-add-user-name").value = "";
+    document.getElementById("ici-add-user-display").value = "";
+    document.getElementById("ici-add-user-password").value = "";
+    document.getElementById("ici-add-user-role").value = "editor";
+    document.getElementById("ici-user-modal").style.display = "flex";
+  };
+
+  window.iciCloseUserManagement = function() {
+    document.getElementById("ici-user-modal").style.display = "none";
+  };
+
+  function renderUserTable() {
+    var tbody = document.getElementById("ici-user-table-body");
+    if (!tbody) return;
+    tbody.innerHTML = "";
+
+    Object.keys(tempUsers).sort().forEach(function(username) {
+      var user = tempUsers[username];
+      var row = document.createElement("tr");
+      var nameCell = document.createElement("td");
+      nameCell.textContent = username;
+      row.appendChild(nameCell);
+
+      var displayCell = document.createElement("td");
+      var displayInput = document.createElement("input");
+      displayInput.className = "ici-env-input";
+      displayInput.value = user.display || username;
+      displayInput.setAttribute("data-user-display", username);
+      displayCell.appendChild(displayInput);
+      row.appendChild(displayCell);
+
+      var roleCell = document.createElement("td");
+      var roleSelect = document.createElement("select");
+      roleSelect.className = "ici-env-input";
+      ["admin", "editor", "viewer"].forEach(function(role) {
+        var option = document.createElement("option");
+        option.value = role;
+        option.textContent = role.charAt(0).toUpperCase() + role.slice(1);
+        option.selected = user.role === role;
+        roleSelect.appendChild(option);
+      });
+      roleSelect.setAttribute("data-user-role", username);
+      roleCell.appendChild(roleSelect);
+      row.appendChild(roleCell);
+
+      var actionCell = document.createElement("td");
+      actionCell.style.textAlign = "center";
+      var deleteButton = document.createElement("button");
+      deleteButton.className = "ici-row-btn";
+      deleteButton.textContent = "❌";
+      deleteButton.title = username === "admin" ? "The primary Admin cannot be deleted" : "Delete user";
+      deleteButton.disabled = username === "admin";
+      deleteButton.onclick = function() {
+        if (username === "admin") return;
+        delete tempUsers[username];
+        renderUserTable();
+      };
+      actionCell.appendChild(deleteButton);
+      row.appendChild(actionCell);
+      tbody.appendChild(row);
+    });
+  }
+
+  window.iciSaveUserManagement = function() {
+    if (!currentSessionIsAdmin()) {
+      alert("Only Admin users can save user changes.");
+      return;
+    }
+
+    var errorEl = document.getElementById("ici-user-management-error");
+    var adminCount = 0;
+    Object.keys(tempUsers).forEach(function(username) {
+      var displayInput = document.querySelector("[data-user-display='" + username + "']");
+      var roleSelect = document.querySelector("[data-user-role='" + username + "']");
+      if (displayInput) tempUsers[username].display = displayInput.value.trim() || username;
+      if (roleSelect) tempUsers[username].role = roleSelect.value;
+      if (tempUsers[username].role === "admin") adminCount++;
+    });
+
+    var username = (document.getElementById("ici-add-user-name").value || "").trim().toLowerCase();
+    var display = (document.getElementById("ici-add-user-display").value || "").trim();
+    var password = document.getElementById("ici-add-user-password").value || "";
+    var role = document.getElementById("ici-add-user-role").value;
+
+    if (username || display || password) {
+      if (!/^[a-z0-9._-]+$/.test(username) || !password || !display) {
+        errorEl.textContent = "Enter a valid username, display name, and password.";
+        return;
+      }
+      if (tempUsers[username]) {
+        errorEl.textContent = "That username already exists.";
+        return;
+      }
+      tempUsers[username] = { password: password, role: role, display: display };
+      if (role === "admin") adminCount++;
+    }
+
+    if (adminCount < 1) {
+      errorEl.textContent = "At least one Admin user must remain.";
+      return;
+    }
+    saveUsers(tempUsers);
+    iciCloseUserManagement();
+    var session = loadSession();
+    if (session && tempUsers[session.user]) {
+      saveSession(session.user, tempUsers[session.user].role, tempUsers[session.user].display);
+      showApp(tempUsers[session.user]);
+    }
+  };
 
   /* ── Zero-Dependency Dynamic Table-to-Excel/CSV Exporter! ── */
   window.iciExportTableToCSV = function() {
@@ -881,7 +1118,7 @@ body article {
   };
 
   function buildNav(role) {
-    var links = NAV[role] || NAV.user;
+    var links = NAV[role] || NAV.viewer;
     var nav = document.getElementById("icici-header-nav");
     if (!nav) return;
     nav.innerHTML = "";
@@ -974,14 +1211,19 @@ body article {
 
       var badge = document.getElementById("icici-role-badge");
       if (badge) {
-        badge.textContent = session.role === "admin" ? "Admin" : "Viewer";
-        badge.className = "icici-role-badge " + (session.role === "admin" ? "role-admin" : "role-user");
+        badge.textContent = session.role.charAt(0).toUpperCase() + session.role.slice(1);
+        badge.className = "icici-role-badge role-" + session.role;
+      }
+
+      var userManagementMenu = document.getElementById("ici-user-management-menu");
+      if (userManagementMenu) {
+        userManagementMenu.classList.toggle("ici-user-management-hidden", session.role !== "admin");
       }
 
       buildNav(session.role);
       populateEnvUI(); // Load Environment selector cleanly on log in!
 
-      if (session.role !== "admin") {
+      if (session.role === "viewer") {
         lockForReadOnly();
       }
     } catch(e) {
@@ -994,13 +1236,16 @@ body article {
   }
 
   function lockForReadOnly() {
-    document.addEventListener("DOMContentLoaded", function() {
+    function applyViewerLock() {
       ["input[type=submit]","button[type=submit]",
        "textarea","input[type=text]"].forEach(function(sel) {
         document.querySelectorAll(sel).forEach(function(el) {
           el.disabled = true;
           el.title = "Read-only access — contact Admin to edit";
         });
+      });
+      document.querySelectorAll("a[href*='?new'], a[href*='?edit'], a[href*='?delete'], a[href*='?properties'], a[href*='?refactor'], #ici-nav-env-container").forEach(function(el) {
+        el.style.display = "none";
       });
       if (/[?&](edit|addChild|saveData|save|delete|properties)/.test(location.search)) {
         document.body.innerHTML =
@@ -1009,7 +1254,12 @@ body article {
           '<p>Your role (<strong>Viewer</strong>) does not have permission to perform this action.</p>' +
           '<a href="/" style="color:#004A80">← Back to Home</a></div>';
       }
-    });
+    }
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", applyViewerLock);
+    } else {
+      applyViewerLock();
+    }
   }
 
   /* ── Public functions ──────────────────────────────────────────── */
@@ -1020,7 +1270,7 @@ body article {
 
     if (!u || !p) { errEl.textContent = "Please enter username and password."; return; }
 
-    var rec = USERS[u];
+    var rec = loadUsers()[u];
     if (!rec || rec.password !== p) {
       errEl.textContent = "Invalid username or password.";
       document.getElementById("icici-password").value = "";
@@ -1269,7 +1519,7 @@ body article {
 
   /* ── Force corporate browser tab title overrides beautifully! ── */
   function updateBrowserTabTitle() {
-    var baseTitle = "ICICI Prudential AML";
+    var baseTitle = "ICICI Nirikshan AML Application";
     if (p() === "/" || p() === "/FrontPage" || p() === "" || p() === "/index.html") {
       document.title = baseTitle;
     } else {

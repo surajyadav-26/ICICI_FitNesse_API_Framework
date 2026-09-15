@@ -50,6 +50,12 @@ class Config:
     DB_USER = os.getenv("DB_USER", "")
     DB_PASSWORD = os.getenv("DB_PASSWORD", "")
     
+    # UI Automation Config
+    UI_BROWSER = os.getenv("UI_BROWSER", "chromium")
+    UI_HEADLESS = os.getenv("UI_HEADLESS", "true").lower() == "true"
+    UI_BASE_URL = os.getenv("UI_BASE_URL", "https://retailnetbanking.icici.bank.in/login-page")
+    UI_WORKERS = int(os.getenv("UI_WORKERS", "1"))
+    
     # Framework Configuration
     DEFAULT_TIMEOUT = int(os.getenv("DEFAULT_TIMEOUT", "15"))
     MAX_RETRIES = int(os.getenv("MAX_RETRIES", "3"))

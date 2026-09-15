@@ -46,6 +46,7 @@ FitNesseRoot/**/*.zip
 *.zip
 
 # Temporary files
+runtime/
 temp_*.html
 temp_*.txt
 temp_check.html
