@@ -89,16 +89,18 @@ body { padding-top: 64px !important; margin-top: 0 !important; }
 
     <!-- Dropdown User Chip Container -->
     <div class="icici-profile-container" id="icici-profile-container">
-      <div class="icici-user-chip" id="icici-user-chip" onclick="iciToggleProfileDropdown(event)" title="Click to view profile options">
-        <span class="icici-user-icon">&#9679;</span>
-        <span id="icici-user-display"></span>
-        <span class="icici-role-badge" id="icici-role-badge"></span>
-      </div>
-      <!-- Collapsible Profile Dropdown menu -->
-      <div id="icici-profile-dropdown" class="icici-profile-dropdown" style="display: none;">
-        <button id="ici-user-management-menu" class="ici-dropdown-item ici-user-management-hidden" onclick="iciOpenUserManagement()"><span class="ici-dropdown-icon">👥</span><span>Users</span></button>
-        <button class="ici-dropdown-item" onclick="iciLogout()"><span class="ici-dropdown-icon">🚪</span><span>Sign Out</span></button>
-      </div>
+    <div class="icici-user-chip" id="icici-user-chip" onclick="iciToggleProfileDropdown(event)" title="Click to view profile options">
+      <span class="icici-user-icon">&#9679;</span>
+      <span id="icici-user-display"></span>
+      <span class="icici-role-badge" id="icici-role-badge"></span>
+    </div>
+    <!-- Collapsible Profile Dropdown menu -->
+    <div id="icici-profile-dropdown" class="icici-profile-dropdown" style="display: none;">
+      <button class="ici-dropdown-item" onclick="iciLiveDebug()"><span class="ici-dropdown-icon">👁️</span><span>Live Debug</span></button>
+      <button class="ici-dropdown-item" onclick="iciToggleDictDrawer()"><span class="ici-dropdown-icon">📖</span><span>Dictionary</span></button>
+      <button id="ici-user-management-menu" class="ici-dropdown-item ici-user-management-hidden" onclick="iciOpenUserManagement()"><span class="ici-dropdown-icon">👥</span><span>Users</span></button>
+      <button class="ici-dropdown-item" onclick="iciLogout()"><span class="ici-dropdown-icon">🚪</span><span>Sign Out</span></button>
+    </div>
     </div>
 
   </div>
@@ -225,9 +227,255 @@ body { padding-top: 64px !important; margin-top: 0 !important; }
 </div>
 
 <!-- ═══════════════════════════════════════════════════
+     LOCATOR DICTIONARY & STEP BUILDER DRAWER
+     ═══════════════════════════════════════════════════ -->
+<div id="ici-dict-drawer" class="ici-drawer">
+  <div class="ici-drawer-header">
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <span style="font-size: 20px;">📖</span>
+      <h2 class="ici-drawer-title" style="color: #fff; font-size: 14px;">Dictionary &amp; Step Builder</h2>
+    </div>
+    <button class="ici-drawer-close-btn" onclick="iciToggleDictDrawer()">&times;</button>
+  </div>
+  
+  <div class="ici-drawer-tabs">
+    <button class="ici-drawer-tab-btn active" id="ici-dict-tab-dict" onclick="iciSwitchDrawerTab('dict')">📖 Locators</button>
+    <button class="ici-drawer-tab-btn" id="ici-dict-tab-builder" onclick="iciSwitchDrawerTab('builder')">✍️ Step Builder</button>
+  </div>
+
+  <!-- Tab 1: Locator Dictionary Pane -->
+  <div id="ici-drawer-pane-dict" class="ici-drawer-pane">
+    <p class="ici-drawer-hint">Copy predefined SwagLabs locators in 1 click:</p>
+    
+    <div class="ici-dict-group">
+      <div class="ici-dict-group-title">👤 Input Fields</div>
+      <div class="ici-dict-item" onclick="iciCopyToClipboard('username')">
+        <span class="ici-dict-key">username</span>
+        <span class="ici-dict-desc">User ID input textbox</span>
+        <span class="ici-dict-copy-icon">📋</span>
+      </div>
+      <div class="ici-dict-item" onclick="iciCopyToClipboard('password')">
+        <span class="ici-dict-key">password</span>
+        <span class="ici-dict-desc">Password input textbox</span>
+        <span class="ici-dict-copy-icon">📋</span>
+      </div>
+    </div>
+
+    <div class="ici-dict-group">
+      <div class="ici-dict-group-title">🎯 Buttons &amp; Badges</div>
+      <div class="ici-dict-item" onclick="iciCopyToClipboard('login button')">
+        <span class="ici-dict-key">login button</span>
+        <span class="ici-dict-desc">Submit Login button</span>
+        <span class="ici-dict-copy-icon">📋</span>
+      </div>
+      <div class="ici-dict-item" onclick="iciCopyToClipboard('cart badge')">
+        <span class="ici-dict-key">cart badge</span>
+        <span class="ici-dict-desc">Shopping cart badge count selector</span>
+        <span class="ici-dict-copy-icon">📋</span>
+      </div>
+    </div>
+    
+    <div class="ici-dict-group-title" style="margin-top: 20px;">💡 Pro Tip:</div>
+    <p class="ici-drawer-hint" style="font-style: italic;">You can also pass standard CSS selectors (e.g. #login-button) directly into your steps!</p>
+  </div>
+
+  <!-- Tab 2: Interactive Step Builder Pane -->
+  <div id="ici-drawer-pane-builder" class="ici-drawer-pane" style="display: none;">
+    <p class="ici-drawer-hint">Select an action and locator to visually compile full test scripts with zero code!</p>
+    
+    <div style="margin-bottom: 12px;">
+      <label class="ici-builder-label">1. Select Action</label>
+      <select id="ici-builder-action" class="ici-env-input" onchange="iciOnBuilderActionChange()">
+        <option value="navigate">Navigate to URL</option>
+        <option value="fill">Fill Field / Type Text</option>
+        <option value="click">Click Button / Link</option>
+        <option value="wait">Wait for Text / Timeout</option>
+        <option value="verify">Verify Text Present</option>
+        <option value="close">Close Browser</option>
+      </select>
+    </div>
+
+    <!-- Locator selection: Dropdown (username, password, login button, cart badge) or custom text input -->
+    <div id="ici-builder-locator-container" style="margin-bottom: 12px; display: none;">
+      <label class="ici-builder-label">2. Target Locator</label>
+      <select id="ici-builder-locator-select" class="ici-env-input" onchange="iciOnBuilderLocatorChange()">
+        <option value="username">username (Input)</option>
+        <option value="password">password (Password)</option>
+        <option value="login button">login button (Button)</option>
+        <option value="cart badge">cart badge (Badge)</option>
+        <option value="custom">Custom Selector / CSS...</option>
+      </select>
+      <input type="text" id="ici-builder-locator-custom" class="ici-env-input" style="margin-top: 6px; display: none;" placeholder="Type custom selector (e.g. #login-button)" oninput="iciGenerateBuilderOutput()" />
+    </div>
+
+    <!-- Parameter 1 (for Navigate, Wait, Verify) -->
+    <div id="ici-builder-param-1-container" style="margin-bottom: 12px;">
+      <label id="ici-builder-param-1-label" class="ici-builder-label">Target URL</label>
+      <input type="text" id="ici-builder-param-1" class="ici-env-input" placeholder="e.g. https://www.saucedemo.com/" oninput="iciGenerateBuilderOutput()" />
+    </div>
+
+    <!-- Parameter 2 (for values or timeouts) -->
+    <div id="ici-builder-param-2-container" style="margin-bottom: 12px; display: none;">
+      <label id="ici-builder-param-2-label" class="ici-builder-label">Value to Type</label>
+      <input type="text" id="ici-builder-param-2" class="ici-env-input" placeholder="" oninput="iciGenerateBuilderOutput()" />
+    </div>
+
+    <!-- Single step preview and Append button -->
+    <div style="margin-top: 14px; margin-bottom: 14px; background: #fff5f5; border: 1px dashed #feb2b2; padding: 10px; border-radius: 6px;">
+      <label class="ici-builder-label" style="color: #c53030; font-weight: bold; margin-bottom: 2px;">Step Preview</label>
+      <div id="ici-builder-step-preview" style="font-family: monospace; font-size: 11px; font-weight: bold; color: #9b2c2c; word-break: break-all;">|navigate to|https://www.saucedemo.com/|</div>
+      <button class="ici-modal-btn save" style="width: 100%; margin-top: 8px; padding: 6px 10px; font-size: 12px; background: #c53030;" onclick="iciAppendStepToScript()">➕ Append Step to Script</button>
+    </div>
+
+    <!-- Compiled FitNesse Wiki Table syntax output -->
+    <div style="margin-top: 14px;">
+      <label class="ici-builder-label" style="color: #003060; font-weight: bold; display: flex; justify-content: space-between;">
+        <span>Current Test Script Table</span>
+        <span style="color: #64748b; font-weight: normal; cursor: pointer; text-decoration: underline;" onclick="iciClearBuilderScript()">Clear</span>
+      </label>
+      <textarea id="ici-builder-script" class="ici-env-input" style="font-family: monospace; font-size: 11px; height: 110px; resize: none; background: #faf9f5; line-height: 1.4; border-color: #003060;" readonly onclick="this.select()"></textarea>
+    </div>
+
+    <button class="ici-modal-btn save" style="width: 100%; margin-top: 10px; background: #003060;" onclick="iciCopyBuilderScript()">📋 Copy Entire Script Table</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
      STYLES
      ═══════════════════════════════════════════════════ -->
 <style>
+/* ── Locator Dictionary Drawer Styling ────────────────── */
+.ici-drawer {
+  position: fixed;
+  top: 0;
+  right: -380px; /* Hidden initially, slides out smoothly! */
+  width: 380px;
+  height: 100vh;
+  background: #ffffff;
+  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.1);
+  z-index: 99998;
+  transition: right 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  text-align: left;
+  border-left: 1px solid #cbd5e1;
+}
+.ici-drawer.open {
+  right: 0; /* Slide out! */
+}
+.ici-drawer-header {
+  padding: 16px 20px;
+  background: #003060;
+  color: #fff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #1e293b;
+}
+.ici-drawer-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0 !important;
+  font-family: Arial, sans-serif;
+}
+.ici-drawer-close-btn {
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  font-size: 24px;
+  cursor: pointer;
+  line-height: 1;
+}
+.ici-drawer-tabs {
+  display: flex;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+}
+.ici-drawer-tab-btn {
+  flex: 1;
+  padding: 12px;
+  border: none;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 700;
+  color: #64748b;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.15s;
+}
+.ici-drawer-tab-btn.active {
+  color: #003060;
+  border-bottom-color: #003060;
+  background: #ffffff;
+}
+.ici-drawer-pane {
+  padding: 20px;
+  flex: 1;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+.ici-drawer-hint {
+  font-size: 12px;
+  color: #64748b;
+  line-height: 1.5;
+  margin: 0 0 16px;
+  font-family: Arial, sans-serif;
+}
+.ici-dict-group {
+  margin-bottom: 16px;
+}
+.ici-dict-group-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+.ici-dict-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.ici-dict-item:hover {
+  border-color: #003060;
+  background: #f0f7ff;
+}
+.ici-dict-key {
+  font-family: monospace;
+  font-size: 12px;
+  font-weight: 700;
+  color: #003060;
+}
+.ici-dict-desc {
+  font-size: 11px;
+  color: #64748b;
+  margin-left: 8px;
+  flex: 1;
+}
+.ici-dict-copy-icon {
+  font-size: 14px;
+  color: #94a3b8;
+  margin-left: 8px;
+}
+.ici-builder-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: #475569;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
 /* ── Login Overlay ──────────────────────────────────── */
 #icici-login-overlay {
   position: fixed; inset: 0;
@@ -1171,42 +1419,6 @@ body article {
     nav.innerHTML = "";
     
     // Check if we have a parent suite page path (contains a dot ".")
-    var hasParentPath = p().indexOf(".") > -1;
-    var isExecutionLog = /[?&]executionLog/.test(location.search);
-    
-    if (isExecutionLog) {
-      // Prepend Back Button to go back from Execution Log to the active test page!
-      var backBtn = document.createElement("a");
-      backBtn.href = p();
-      backBtn.className = "icici-nav-btn admin-only";
-      backBtn.style.background = "#E06336";
-      backBtn.style.borderColor = "#E06336";
-      backBtn.style.color = "#fff";
-      backBtn.style.fontWeight = "bold";
-      backBtn.style.marginRight = "4px";
-      backBtn.style.padding = "6px 12px";
-      backBtn.style.minWidth = "auto";
-      backBtn.textContent = "⬅";
-      backBtn.title = "Back";
-      nav.appendChild(backBtn);
-    } else if (hasParentPath) {
-      // Prepend Back Button to go back from Child page to its parent Suite page!
-      var parentPath = p().substring(0, p().lastIndexOf("."));
-      var backBtn = document.createElement("a");
-      backBtn.href = parentPath;
-      backBtn.className = "icici-nav-btn admin-only";
-      backBtn.style.background = "#E06336";
-      backBtn.style.borderColor = "#E06336";
-      backBtn.style.color = "#fff";
-      backBtn.style.fontWeight = "bold";
-      backBtn.style.marginRight = "4px";
-      backBtn.style.padding = "6px 12px";
-      backBtn.style.minWidth = "auto";
-      backBtn.textContent = "⬅";
-      backBtn.title = "Back to parent";
-      nav.appendChild(backBtn);
-    }
-    
     // Prepend our premium "Export to Excel" button STRICTLY when viewing a specific date's history run! 🟢
     var isSpecificHistoryRun = /pagehistory/i.test(location.search) && /entry/i.test(location.search);
     if (isSpecificHistoryRun) {
@@ -2319,6 +2531,187 @@ body article {
         }
       }
     });
+
+    /* ── Locator Dictionary & Step Builder Controllers ── */
+    window.iciToggleDictDrawer = function() {
+      var drawer = document.getElementById("ici-dict-drawer");
+      if (drawer) {
+        drawer.classList.toggle("open");
+      }
+    };
+
+    window.iciSwitchDrawerTab = function(tabName) {
+      var tabDict = document.getElementById("ici-dict-tab-dict");
+      var tabBuilder = document.getElementById("ici-dict-tab-builder");
+      var paneDict = document.getElementById("ici-drawer-pane-dict");
+      var paneBuilder = document.getElementById("ici-drawer-pane-builder");
+
+      if (tabName === 'dict') {
+        tabDict.classList.add("active");
+        tabBuilder.classList.remove("active");
+        paneDict.style.display = "block";
+        paneBuilder.style.display = "none";
+      } else {
+        tabBuilder.classList.add("active");
+        tabDict.classList.remove("active");
+        paneBuilder.style.display = "block";
+        paneDict.style.display = "none";
+        iciOnBuilderActionChange(); // Auto-render first step
+      }
+    };
+
+    window.iciCopyToClipboard = function(text) {
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(function() {
+          alert("📋 Copied to clipboard: " + text);
+        });
+      } else {
+        var textarea = document.createElement("textarea");
+        textarea.value = text;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+        alert("📋 Copied to clipboard: " + text);
+      }
+    };
+
+    window.iciOnBuilderActionChange = function() {
+      var action = document.getElementById("ici-builder-action").value;
+      var locatorContainer = document.getElementById("ici-builder-locator-container");
+      var param1Container = document.getElementById("ici-builder-param-1-container");
+      var param2Container = document.getElementById("ici-builder-param-2-container");
+      var param1Label = document.getElementById("ici-builder-param-1-label");
+      var param2Label = document.getElementById("ici-builder-param-2-label");
+      var param1Input = document.getElementById("ici-builder-param-1");
+      var param2Input = document.getElementById("ici-builder-param-2");
+
+      if (action === "navigate") {
+        locatorContainer.style.display = "none";
+        param1Container.style.display = "block";
+        param2Container.style.display = "none";
+        param1Label.textContent = "Target URL";
+        param1Input.placeholder = "e.g. https://www.saucedemo.com/";
+      } else if (action === "fill") {
+        locatorContainer.style.display = "block";
+        param1Container.style.display = "none"; // Handled by locator container
+        param2Container.style.display = "block";
+        param2Label.textContent = "Value to Type";
+        param2Input.placeholder = "e.g. standard_user";
+        iciOnBuilderLocatorChange(); // Update locator parameters
+      } else if (action === "click") {
+        locatorContainer.style.display = "block";
+        param1Container.style.display = "none";
+        param2Container.style.display = "none";
+        iciOnBuilderLocatorChange();
+      } else if (action === "wait") {
+        locatorContainer.style.display = "none";
+        param1Container.style.display = "block";
+        param2Container.style.display = "block";
+        param1Label.textContent = "Text Content to wait for";
+        param1Input.placeholder = "e.g. Products";
+        param2Label.textContent = "Timeout (ms)";
+        param2Input.placeholder = "e.g. 5000";
+      } else if (action === "verify") {
+        locatorContainer.style.display = "none";
+        param1Container.style.display = "block";
+        param2Container.style.display = "none";
+        param1Label.textContent = "Expected Text";
+        param1Input.placeholder = "e.g. Products";
+      }
+      iciGenerateBuilderOutput();
+    };
+
+    window.iciOnBuilderLocatorChange = function() {
+      var selectVal = document.getElementById("ici-builder-locator-select").value;
+      var customInput = document.getElementById("ici-builder-locator-custom");
+      if (selectVal === "custom") {
+        customInput.style.display = "block";
+      } else {
+        customInput.style.display = "none";
+      }
+      iciGenerateBuilderOutput();
+    };
+
+    window.iciGenerateBuilderOutput = function() {
+      var action = document.getElementById("ici-builder-action").value;
+      var param1 = document.getElementById("ici-builder-param-1").value || "";
+      var param2 = document.getElementById("ici-builder-param-2").value || "";
+      
+      // Determine the locator string (either selected from dropdown or custom typed)
+      var locatorStr = "";
+      if (action === "fill" || action === "click") {
+        var selectVal = document.getElementById("ici-builder-locator-select").value;
+        if (selectVal === "custom") {
+          locatorStr = document.getElementById("ici-builder-locator-custom").value || "";
+        } else {
+          locatorStr = selectVal;
+        }
+      }
+
+      var output = "";
+      if (action === "navigate") {
+        output = "| navigate to | " + param1 + " |";
+      } else if (action === "fill") {
+        output = "| fill field | " + locatorStr + " | with value | " + param2 + " |";
+      } else if (action === "click") {
+        output = "| click button | " + locatorStr + " |";
+      } else if (action === "wait") {
+        output = "| wait for text | " + param1 + " | timeout | " + (param2 || "5000") + " |";
+      } else if (action === "verify") {
+        output = "| check | verify text present | " + param1 + " | true |";
+      } else if (action === "close") {
+        output = "| close browser |";
+      }
+      
+      // Update single step preview
+      document.getElementById("ici-builder-step-preview").textContent = output;
+    };
+
+    window.iciAppendStepToScript = function() {
+      var step = document.getElementById("ici-builder-step-preview").textContent;
+      if (!step) return;
+      
+      var scriptBox = document.getElementById("ici-builder-script");
+      var currentVal = scriptBox.value.trim();
+      
+      // If script is completely empty, initialize it with a proper SLiM script fixture header block!
+      if (currentVal === "") {
+        currentVal = "| script | fixtures.UiFixture |\n| start browser |";
+      }
+      
+      // Append the new step as a clean line
+      currentVal += "\n" + step;
+      scriptBox.value = currentVal;
+    };
+
+    window.iciClearBuilderScript = function() {
+      document.getElementById("ici-builder-script").value = "";
+    };
+
+    window.iciCopyBuilderScript = function() {
+      var text = document.getElementById("ici-builder-script").value;
+      if (text) {
+        iciCopyToClipboard(text);
+      } else {
+        alert("Your test script table is currently empty. Append some steps first!");
+      }
+    };
+
+    window.iciLiveDebug = function() {
+      // POST to local backend on 8090 to activate the headless=false override
+      fetch("http://127.0.0.1:8090/live-debug", {
+        method: "POST"
+      })
+      .then(function() {
+        // Redirect browser to trigger the test run
+        location.href = getRunUrl();
+      })
+      .catch(function(err) {
+        console.error("Live debug trigger failed:", err);
+        location.href = getRunUrl(); // Fallback to standard run anyway
+      });
+    };
     
     console.log('%c✓ All 6 UX fixes initialized successfully', 'color: green; font-weight: bold;');
   });

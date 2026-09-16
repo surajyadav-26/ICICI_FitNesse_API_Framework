@@ -117,38 +117,38 @@ class RequestValidator:
     def validate_header(name: str, value: str) -> tuple:
         """
         Validate HTTP header name and value.
-        
+
         Args:
             name: Header name
             value: Header value
-            
+
         Returns:
             Tuple of (validated_name, validated_value)
-            
+
         Raises:
             ValidationError: If header is invalid
         """
         if not name:
             raise ValidationError("Header name cannot be empty")
-        
-        # Validate header name (RFC 7230)
-        if not re.match(r'^[!#$%&\'*+\-.0-9A-Z^_`a-z|~]+$', name):
-            raise ValidationError(f"Invalid header name: {name}")
-        
-        # Check for CRLF injection
+
+        # Check for CRLF injection (run this first!)
         for char in RequestValidator.DANGEROUS_HEADER_CHARS:
             if char in name:
                 raise ValidationError(f"Header name contains illegal character: {repr(char)}")
             if char in value:
                 raise ValidationError(f"Header value contains illegal character: {repr(char)}")
-        
+
+        # Validate header name (RFC 7230)
+        if not re.match(r'^[!#$%&\'*+\-.0-9A-Z^_`a-z|~]+$', name):
+            raise ValidationError(f"Invalid header name: {name}")
+
         # Check value length
         if len(value) > RequestValidator.MAX_HEADER_VALUE_LENGTH:
             raise ValidationError(
                 f"Header value exceeds maximum length of "
                 f"{RequestValidator.MAX_HEADER_VALUE_LENGTH} characters"
             )
-        
+
         return name, value.strip()
     
     @staticmethod

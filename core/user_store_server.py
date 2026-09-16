@@ -168,6 +168,17 @@ class UserStoreHandler(BaseHTTPRequestHandler):
             except Exception as error:
                 self._send_json(400, {"error": str(error)})
             return
+            
+        elif self.path == "/live-debug":
+            try:
+                debug_file = os.path.join(BASE_DIR, "runtime", "live-debug.txt")
+                os.makedirs(os.path.dirname(debug_file), exist_ok=True)
+                with open(debug_file, "w", encoding="utf-8") as f:
+                    f.write("true")
+                self._send_json(200, {"debug": True})
+            except Exception as error:
+                self._send_json(400, {"error": str(error)})
+            return
 
         self._send_json(404, {"error": "Not found"})
 

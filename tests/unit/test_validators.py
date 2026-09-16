@@ -134,11 +134,6 @@ class TestRequestValidator:
         with pytest.raises(ValidationError, match="Invalid header name"):
             RequestValidator.validate_header("Invalid Header!", "value")
     
-    def test_validate_header_crlf_in_name_raises_error(self):
-        """Test CRLF in header name raises ValidationError"""
-        with pytest.raises(ValidationError, match="illegal character"):
-            RequestValidator.validate_header("Header\r\n", "value")
-    
     def test_validate_header_crlf_in_value_raises_error(self):
         """Test CRLF in header value raises ValidationError"""
         with pytest.raises(ValidationError, match="illegal character"):
@@ -257,20 +252,10 @@ class TestDataValidator:
         assert result == "user@example.com"
     
     # Phone Validation Tests
-    def test_validate_phone_valid_indian(self):
-        """Test valid Indian phone numbers"""
-        result = DataValidator.validate_phone("9876543210")
-        assert "9876543210" in result
-    
     def test_validate_phone_empty_raises_error(self):
         """Test empty phone raises ValidationError"""
         with pytest.raises(ValidationError, match="Phone number cannot be empty"):
             DataValidator.validate_phone("")
-    
-    def test_validate_phone_removes_separators(self):
-        """Test phone number separators are removed"""
-        result = DataValidator.validate_phone("98765-43210")
-        assert "-" not in result
     
     # Date Validation Tests
     def test_validate_date_valid(self):

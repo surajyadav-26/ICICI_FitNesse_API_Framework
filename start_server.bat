@@ -11,6 +11,9 @@ title NIRIKSHAN AUTOMATION SERVER
 echo [INFO] Commencing system checks...
 echo [INFO] Current Working Directory: %CD%
 
+rem ── Set PYTHONPATH to the absolute workspace root to guarantee clean imports ──
+set PYTHONPATH=%~dp0
+
 rem ── Check for .env file presence ──
 if not exist ".env" (
     echo [WARNING] .env file not found.
@@ -25,6 +28,10 @@ if not exist ".venv" (
     python -m venv .venv
     if errorlevel 1 goto no_python
 )
+
+rem ── Activate Python Virtual Environment in the current session ──
+echo [INFO] Activating Python Virtual Environment...
+call .venv\Scripts\activate.bat
 
 rem ── Check for Java runtime ──
 java -version >nul 2>&1
@@ -45,11 +52,11 @@ rem ── Start FitNesse Standalone Server on port 8080 ──
 echo [INFO] Starting FitNesse Acceptor Engine on port 8080...
 echo [INFO] Launching FitNesse on http://localhost:8080/
 
-rem Inject the ultimate Java 25 bypasses (-Dprevent.system.exit=false) and modular bypass flags (--add-opens) to allow flawless runs on ALL Java versions (8, 11, 17, 21, 23, 24, 25)
+rem Inject Java 25 bypasses (-Dprevent.system.exit=false), timezone silencer (-Duser.timezone=Asia/Kolkata), and modular bypasses (--add-opens) for a pristine console run on ALL Java versions
 if defined JAVA_HOME (
-    "%JAVA_HOME%\bin\java" -Dprevent.system.exit=false -Dfitnesse.security.manager.enabled=false --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED -cp "%~dp0.;%~dp0fitnesse-standalone.jar" fitnesseMain.FitNesseMain -p 8080
+    "%JAVA_HOME%\bin\java" -Duser.timezone=Asia/Kolkata -Dprevent.system.exit=false -Dfitnesse.security.manager.enabled=false --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED -cp "%~dp0.;%~dp0fitnesse-standalone.jar" fitnesseMain.FitNesseMain -p 8080
 ) else (
-    java -Dprevent.system.exit=false -Dfitnesse.security.manager.enabled=false --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED -cp "%~dp0.;%~dp0fitnesse-standalone.jar" fitnesseMain.FitNesseMain -p 8080
+    java -Duser.timezone=Asia/Kolkata -Dprevent.system.exit=false -Dfitnesse.security.manager.enabled=false --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED -cp "%~dp0.;%~dp0fitnesse-standalone.jar" fitnesseMain.FitNesseMain -p 8080
 )
 
 goto end

@@ -87,17 +87,36 @@ class UiFixture:
             b_type = str(browser_type or self._default_browser).lower()
             headless_mode = self._default_headless
             
+            # Check for temporary Live Debug override from the browser UI
+            debug_file = os.path.join(self._workspace_dir, "runtime", "live-debug.txt")
+            if os.path.exists(debug_file):
+                try:
+                    with open(debug_file, "r", encoding="utf-8") as f:
+                        if f.read().strip() == "true":
+                            headless_mode = False
+                            logger.info("[UiFixture] Live Debug Active! Forcing headed browser execution.")
+                    os.remove(debug_file)  # Delete so future runs use the default env setting
+                except Exception:
+                    pass
+            
             logger.info(f"[UiFixture] Starting Playwright engine (browser: {b_type}, headless: {headless_mode})")
             self._playwright = sync_playwright().start()
             
             if "firefox" in b_type:
                 self._browser = self._playwright.firefox.launch(headless=headless_mode)
+                self._context = self._browser.new_context(viewport={"width": 1920, "height": 1080})
             elif "webkit" in b_type or "safari" in b_type:
                 self._browser = self._playwright.webkit.launch(headless=headless_mode)
+                self._context = self._browser.new_context(viewport={"width": 1920, "height": 1080})
             else:
-                self._browser = self._playwright.chromium.launch(headless=headless_mode)
+                # Chromium supports true OS-level window maximization!
+                if not headless_mode:
+                    self._browser = self._playwright.chromium.launch(headless=headless_mode, args=["--start-maximized"])
+                    self._context = self._browser.new_context(no_viewport=True)
+                else:
+                    self._browser = self._playwright.chromium.launch(headless=headless_mode)
+                    self._context = self._browser.new_context(viewport={"width": 1920, "height": 1080})
                 
-            self._context = self._browser.new_context(viewport={"width": 1280, "height": 800})
             self._page = self._context.new_page()
             logger.info("[UiFixture] Browser started successfully.")
             return True
