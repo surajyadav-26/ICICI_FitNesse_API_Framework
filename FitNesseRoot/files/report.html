@@ -600,20 +600,20 @@
             <div class="header-meta">
                 <strong>Active Suite:</strong> SwagLabs<br>
                 <strong>Environment:</strong> UAT Testing Portal<br>
-                <strong>Report Generated:</strong> 2026-09-15 17:07:52<br>
+                <strong>Report Generated:</strong> 2026-09-16 13:06:18<br>
                 <strong>Execution Duration:</strong> 0.00s
             </div>
         </header>
 
         <!-- Master Status Banner -->
-        <div class="status-banner banner-fail">
-            🚨 TEST RUN FAILED — 1 / 1 Test Cases Failed (Action Required)
+        <div class="status-banner banner-pass">
+            🎉 TEST RUN PASSED — 100% Succeeded! All APIs are operational.
         </div>
 
         <div class="fitnesse-assertions-bar">
             <span class="assert-label">Suite Assertions Summary:</span>
-            <span class="assert-badge assert-right">0 right</span>
-            <span class="assert-badge assert-wrong">1 wrong</span>
+            <span class="assert-badge assert-right">1 right</span>
+            <span class="assert-badge assert-wrong">0 wrong</span>
             <span class="assert-badge assert-ignored">0 ignored</span>
             <span class="assert-badge assert-exceptions">0 exceptions</span>
         </div>
@@ -626,21 +626,21 @@
             </div>
             <div class="kpi-card kpi-success">
                 <span class="kpi-label">Succeeded Cases</span>
-                <span class="kpi-value">0</span>
+                <span class="kpi-value">1</span>
                 <div class="progress-container">
                     <div class="progress-bar">
-                        <div class="progress-fill" style="width: 0%;"></div>
+                        <div class="progress-fill" style="width: 100%;"></div>
                     </div>
-                    <span class="progress-text">0%</span>
+                    <span class="progress-text">100%</span>
                 </div>
             </div>
             <div class="kpi-card kpi-failed">
                 <span class="kpi-label">Failed Cases</span>
-                <span class="kpi-value">1</span>
+                <span class="kpi-value">0</span>
             </div>
             <div class="kpi-card kpi-passrate">
                 <span class="kpi-label">Pass Rate</span>
-                <span class="kpi-value">0%</span>
+                <span class="kpi-value">100%</span>
             </div>
         </section>
 
@@ -652,8 +652,8 @@
                     <input type="text" id="search-input" class="search-box" placeholder="🔍 Search Test Cases..." onkeyup="filterAndSearch()">
                     <div class="filter-controls">
                         <button id="filter-all" class="filter-btn active" data-filter="all" onclick="setFilter('all', this)">All (1)</button>
-                        <button id="filter-pass" class="filter-btn" onclick="setFilter('passed', this)">Passed (0)</button>
-                        <button id="filter-fail" class="filter-btn" onclick="setFilter('failed', this)">Failed (1)</button>
+                        <button id="filter-pass" class="filter-btn" onclick="setFilter('passed', this)">Passed (1)</button>
+                        <button id="filter-fail" class="filter-btn" onclick="setFilter('failed', this)">Failed (0)</button>
                     </div>
                 </div>
             </div>
@@ -668,20 +668,20 @@
                 </thead>
                 <tbody>
                     
-        <tr class="summary-row" onclick="togglePage(0)" data-name="SwagLabs.LoginPage" data-status="failed" title="Click to view requests audit trail">
+        <tr class="summary-row" onclick="togglePage(0)" data-name="SwagLabs.DataDrivenLogin" data-status="passed" title="Click to view requests audit trail">
             <td>
                 <div class="test-title">
-                    <strong>SwagLabs.LoginPage</strong>
-                    <span class="assertion-summary">0 right • <span style='color:var(--fail); font-weight:700;'>1 wrong</span></span>
+                    <strong>SwagLabs.DataDrivenLogin</strong>
+                    <span class="assertion-summary">1 right</span>
                 </div>
             </td>
-            <td>2026-09-15 17:07:33</td>
+            <td>2026-09-16 13:06:02</td>
             <td>
-                <span class="status-indicator status-fail">✗ FAILED</span>
-                <div class='defect-msg'>❌ Failed 1 verification checks</div>
+                <span class="status-indicator status-pass">✓ PASSED</span>
+                
             </td>
         </tr>
-        <tr id="page-details-0" class="details-row" style="display: table-row;">
+        <tr id="page-details-0" class="details-row" style="display: none;">
             <td colspan="3">
                 <div class="nested-requests-container">
                     <div class="audit-header">

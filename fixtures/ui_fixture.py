@@ -1,7 +1,7 @@
 """
 Python WaferSlim Reusable UI Automation Fixture.
 Mirrors the step-by-step design of API request fixtures for UI browser testing using Playwright.
-Incorporates Page Object Model (POM), centralized configurations, failure-only screenshots, dynamic UI overrides, HTML URL link sanitization, and native Playwright locator objects with PageRegistry.
+Incorporates Page Object Model (POM), centralized configurations, failure-only screenshots, dynamic UI overrides, HTML URL link sanitization, and native Playwright locator objects with LoginPage.
 Natively automates inline failure screenshots inside failed cells.
 """
 import os
@@ -9,7 +9,7 @@ import re
 from playwright.sync_api import sync_playwright
 from core.config import Config
 from core.logger import logger
-from core.pages.page_registry import PageRegistry
+from core.pages.login_page import LoginPage
 
 
 def clean_html_url(value: str) -> str:
@@ -155,7 +155,7 @@ class UiFixture:
     def navigateTo(self, *args) -> bool:
         return self.navigate_to(*args)
 
-    # Actions using Page Object Model (POM) PageRegistry
+    # Actions using Page Object Model (POM) LoginPage
     def fill_field(self, element_name: str, value: str) -> bool:
         """Fills an input field matching the POM locator with the specified value."""
         if not self._page:
@@ -165,8 +165,8 @@ class UiFixture:
         logger.info(f"[UiFixture] Filling element '{element_name}' with value: {value}")
         
         try:
-            # Correctly retrieve the compiled Playwright Locator directly from the registry
-            locator = PageRegistry.get_locator(self._page, element_name)
+            # Correctly retrieve the compiled Playwright Locator directly from the LoginPage Page Object
+            locator = LoginPage.get_locator(self._page, element_name)
             locator.wait_for(state="visible", timeout=5000)
             locator.fill(value)
             return True
@@ -194,7 +194,7 @@ class UiFixture:
         logger.info(f"[UiFixture] Clicking element '{element_name}'")
         
         try:
-            locator = PageRegistry.get_locator(self._page, element_name)
+            locator = LoginPage.get_locator(self._page, element_name)
             locator.wait_for(state="visible", timeout=5000)
             locator.click()
             return True
@@ -235,7 +235,7 @@ class UiFixture:
             
         logger.info(f"[UiFixture] Retrieving text from element: '{element_name}'")
         try:
-            locator = PageRegistry.get_locator(self._page, element_name)
+            locator = LoginPage.get_locator(self._page, element_name)
             locator.wait_for(state="visible", timeout=5000)
             text_content = locator.text_content()
             return text_content.strip() if text_content is not None else ""
@@ -266,7 +266,7 @@ class UiFixture:
         if not self._page:
             return False
         try:
-            locator = PageRegistry.get_locator(self._page, element_name)
+            locator = LoginPage.get_locator(self._page, element_name)
             return locator.count() > 0
         except Exception:
             return False
@@ -320,7 +320,7 @@ class UiFixture:
         try:
             self._page.screenshot(path=screenshot_path)
             url = f"http://localhost:8080/{self._screenshot_dir_path}/{screenshot_name}"
-            self._last_error_html = f'!-<a href="{url}" target="_blank" style="color: #ef4444; font-weight: bold;">[VIEW FAILURE SCREENSHOT]</a>-!'
+            self._last_error_html = f'<a href="{url}" target="_blank" style="color: #ef4444; font-weight: bold;">[VIEW FAILURE SCREENSHOT]</a>'
             logger.info(f"[UiFixture] Failure screenshot saved successfully: {screenshot_path}")
         except Exception as e:
             logger.error(f"[UiFixture] Capturing failure screenshot failed: {e}")

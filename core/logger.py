@@ -24,9 +24,11 @@ try:
     from core.config import Config
     log_level_name = Config.LOG_LEVEL.upper()
     retention_days = Config.LOG_RETENTION_DAYS
+    screenshot_retention_days = Config.SCREENSHOT_RETENTION_DAYS
 except Exception:
     log_level_name = "DEBUG"
     retention_days = 7
+    screenshot_retention_days = 7
 
 # Map string name to logging level object
 log_level = getattr(logging, log_level_name, logging.DEBUG)
@@ -93,8 +95,41 @@ def cleanup_old_logs(log_directory: str, max_days: int) -> None:
         print(f"[LOGGER WARNING] Log file cleanup failed: {e}")
 
 
-# Run log files cleanup automatically on logger load!
+def cleanup_old_screenshots(screenshot_directory: str, max_days: int) -> None:
+    """
+    Scans the UI automation screenshots folder on load and automatically
+    deletes any captured failure screenshots older than the retention days limit.
+    """
+    try:
+        if not os.path.exists(screenshot_directory):
+            return
+            
+        import glob
+        pattern = os.path.join(screenshot_directory, "*.png")
+        screenshot_files = glob.glob(pattern)
+        
+        cutoff_date = datetime.now() - timedelta(days=max_days)
+        deleted_count = 0
+        
+        for file_path in screenshot_files:
+            try:
+                # Check modification time of file on disk
+                file_mtime = datetime.fromtimestamp(os.path.getmtime(file_path))
+                if file_mtime < cutoff_date:
+                    os.remove(file_path)
+                    deleted_count += 1
+            except Exception:
+                pass
+                
+        if deleted_count > 0:
+            logger.info(f"[LOGGER] Cleaned up {deleted_count} screenshot files older than {max_days} days.")
+    except Exception as e:
+        print(f"[LOGGER WARNING] Screenshot cleanup failed: {e}")
+
+
+# Run log and screenshot files cleanups automatically on logger load!
 cleanup_old_logs(LOG_DIR, retention_days)
+cleanup_old_screenshots(os.path.join(BASE_DIR, "FitNesseRoot", "files", "testResults", "ui-automation"), screenshot_retention_days)
 
 
 def log_request(method: str, url: str, headers: dict = None, payload: dict = None) -> None:

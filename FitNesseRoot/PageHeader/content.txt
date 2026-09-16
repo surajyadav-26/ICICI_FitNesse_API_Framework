@@ -1620,7 +1620,7 @@ body article {
     };
     
     // Natively POST the updated environments to your Python backend to write straight to .env on disk!
-    fetch("http://localhost:8090/environments", {
+    fetch("http://127.0.0.1:8090/environments", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
@@ -2302,7 +2302,25 @@ body article {
       console.log('ICICI UX: Theme observer active');
     }
     
-    console.log('%c✓ All 5 UX fixes initialized successfully', 'color: green; font-weight: bold;');
+    /* ────────────────────────────────────────────────────────────
+       FIX 6: PREVENT DUPLICATE RESPONDER FORM SERIALIZATION
+       ──────────────────────────────────────────────────────────── */
+    document.addEventListener("submit", function(e) {
+      var form = e.target;
+      if (form && form.tagName === "FORM") {
+        var action = form.getAttribute("action") || "";
+        // If action already has a responder query parameter, prevent duplicate form fields
+        if (action.indexOf("responder=") !== -1) {
+          var hiddenResponders = form.querySelectorAll("input[type='hidden'][name='responder']");
+          hiddenResponders.forEach(function(input) {
+            input.removeAttribute("name"); // Prevents the browser from serializing this element!
+            console.log("ICICI UX: Suppressed duplicate hidden responder input name to avoid Java errors.");
+          });
+        }
+      }
+    });
+    
+    console.log('%c✓ All 6 UX fixes initialized successfully', 'color: green; font-weight: bold;');
   });
 
 })();

@@ -8,7 +8,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 USERS_FILE = os.path.join(BASE_DIR, "data", "users.json")
 FITNESSE_USERS_FILE = os.path.join(BASE_DIR, "runtime", "fitnesse-passwords.txt")
-HOST = "127.0.0.1"
+HOST = "0.0.0.0"
 PORT = 8090
 
 
@@ -72,7 +72,7 @@ def update_env_file(payload):
             
             # Check if this key is an environment-wise URL
             is_env_url = False
-            if key.endswith("_BASE_URL") or key.endswith("_UI_URL") or (key.endswith("_URL") and "UI" not in key and "TOKEN" not in key):
+            if key.endswith("_API_URL") or key.endswith("_BASE_URL") or key.endswith("_UI_URL") or (key.endswith("_URL") and "UI" not in key and "TOKEN" not in key):
                 is_env_url = True
                 
             if is_env_url:
@@ -105,7 +105,7 @@ def update_env_file(payload):
         api_url = urls.get("api", "").strip()
         ui_url = urls.get("ui", "").strip()
         
-        new_env_lines.append(f"{env_upper}_BASE_URL={api_url}\n")
+        new_env_lines.append(f"{env_upper}_API_URL={api_url}\n")
         new_env_lines.append(f"{env_upper}_UI_URL={ui_url}\n")
         
     final_lines = preserved_lines + new_env_lines

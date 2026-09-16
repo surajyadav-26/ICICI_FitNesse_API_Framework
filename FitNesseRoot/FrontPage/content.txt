@@ -422,12 +422,6 @@
       topDiv.appendChild(detailsDiv);
       card.appendChild(topDiv);
 
-      // Body Description section
-      var descPara = document.createElement("div");
-      descPara.className = "ici-card-body-desc";
-      descPara.textContent = desc;
-      card.appendChild(descPara);
-
       // Actions section (Run + Open buttons)
       var actionsDiv = document.createElement("div");
       actionsDiv.className = "ici-card-actions";

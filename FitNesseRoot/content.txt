@@ -1,5 +1,9 @@
 !define TEST_SYSTEM {slim}
 !define slim.port {8085}
 !define SLIM_VERSION {0.1}
-!define COMMAND_PATTERN {C:/ICICI_FitNesseAPIFramework/.venv/Scripts/python.exe -m waferslim.server --syspath C:/ICICI_FitNesseAPIFramework;%p}
+!define COMMAND_PATTERN {python -m waferslim.server --syspath .;%p}
 !include -c .VariablePage
+
+# Global JVM & Platform Bypasses to allow flawless runs on Java 11, 17, 21, 23, 24, 25
+!define fitnesse.security.manager.enabled {false}
+!define slim.jvm.arguments {-Dfitnesse.security.manager.enabled=false -Dprevent.system.exit=false}

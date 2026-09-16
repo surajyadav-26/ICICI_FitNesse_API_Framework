@@ -6,7 +6,7 @@
 | start browser |
 | navigate to | ${UI_BASE_URL} |
 | fill field | username | with value | standard_user |
-| fill field | password | with value | secret_sauc |
+| fill field | password | with value | secret_sauce |
 | click button | loginButton |
 | wait for text | Products | timeout | 10000 |
 | check | verify text present | Products | true |

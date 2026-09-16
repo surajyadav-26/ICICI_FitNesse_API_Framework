@@ -38,11 +38,11 @@ class Config:
     OAUTH2_TOKEN_URL = os.getenv("OAUTH2_TOKEN_URL", "")
     
     # API Base URLs
-    DEV_BASE_URL = os.getenv("DEV_BASE_URL", "https://dev-api.example.com")
-    STAGING_BASE_URL = os.getenv("STAGING_BASE_URL", "https://staging-api.example.com")
-    QA_BASE_URL = os.getenv("QA_BASE_URL", "https://dummyjson.com")
-    UAT_BASE_URL = os.getenv("UAT_BASE_URL", "https://uat-api.example.com")
-    PROD_BASE_URL = os.getenv("PROD_BASE_URL", "https://api.example.com")
+    DEV_API_URL = os.getenv("DEV_API_URL", "https://dev-api.example.com")
+    STAGING_API_URL = os.getenv("STAGING_API_URL", "https://staging-api.example.com")
+    QA_API_URL = os.getenv("QA_API_URL", "https://dummyjson.com")
+    UAT_API_URL = os.getenv("UAT_API_URL", "https://uat-api.example.com")
+    PROD_API_URL = os.getenv("PROD_API_URL", "https://api.example.com")
     
     # Database Configuration
     DB_HOST = os.getenv("DB_HOST", "localhost")
@@ -76,6 +76,7 @@ class Config:
     # Logging
     LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
     LOG_RETENTION_DAYS = int(os.getenv("LOG_RETENTION_DAYS", "7"))
+    SCREENSHOT_RETENTION_DAYS = int(os.getenv("SCREENSHOT_RETENTION_DAYS", "7"))
     
     # Mock Server
     MOCK_SERVER_PORT = int(os.getenv("MOCK_SERVER_PORT", "8089"))
@@ -95,12 +96,12 @@ class Config:
             ValueError: If environment is invalid
         """
         env_map = {
-            "dev": cls.DEV_BASE_URL,
-            "staging": cls.STAGING_BASE_URL,
-            "qa": cls.QA_BASE_URL,
-            "uat": cls.UAT_BASE_URL,
-            "prod": cls.PROD_BASE_URL,
-            "production": cls.PROD_BASE_URL
+            "dev": cls.DEV_API_URL,
+            "staging": cls.STAGING_API_URL,
+            "qa": cls.QA_API_URL,
+            "uat": cls.UAT_API_URL,
+            "prod": cls.PROD_API_URL,
+            "production": cls.PROD_API_URL
         }
         
         env_lower = environment.lower()
