@@ -194,6 +194,10 @@ class UserStoreHandler(BaseHTTPRequestHandler):
                     self.send_response(200)
                     self.send_header("Content-Type", content_type)
                     self.send_header("Access-Control-Allow-Origin", "*")
+                    # Force Cache-Busting to prevent browser from caching old Allure report results!
+                    self.send_header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
+                    self.send_header("Pragma", "no-cache")
+                    self.send_header("Expires", "0")
                     self.end_headers()
                     
                     with open(file_path, "rb") as f:
@@ -258,6 +262,7 @@ class UserStoreHandler(BaseHTTPRequestHandler):
         elif self.path == "/clear-allure":
             try:
                 import glob
+                import shutil
                 results_path = os.path.join(BASE_DIR, "FitNesseRoot", "files", "testResults", "allure-results")
                 if os.path.exists(results_path):
                     # Delete all files inside allure-results cleanly to avoid duplicate history logs
@@ -268,6 +273,20 @@ class UserStoreHandler(BaseHTTPRequestHandler):
                                 os.remove(file_path)
                         except Exception:
                             pass
+                            
+                report_path = os.path.join(BASE_DIR, "FitNesseRoot", "files", "testResults", "allure-report")
+                if os.path.exists(report_path):
+                    # Delete compiled allure-report and historical trend logs to prevent Allure CLI from merging them!
+                    files = glob.glob(os.path.join(report_path, "*"))
+                    for file_path in files:
+                        try:
+                            if os.path.isfile(file_path):
+                                os.remove(file_path)
+                            elif os.path.isdir(file_path):
+                                shutil.rmtree(file_path)
+                        except Exception:
+                            pass
+                            
                 self._send_json(200, {"cleared": True})
             except Exception as error:
                 self._send_json(400, {"error": str(error)})

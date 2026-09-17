@@ -2388,11 +2388,15 @@ body article {
      ICICI UX ENHANCEMENTS - All 5 fixes consolidated
      ═══════════════════════════════════════════════════════════════ */
   document.addEventListener("DOMContentLoaded", function() {
-    // Automatically hide any collapsible sections containing "Silent" on load to keep the UI completely clean!
-    var collapsibles = document.querySelectorAll(".collapsible, .collapse_rim, .toc-item");
-    collapsibles.forEach(function(el) {
-      if (el.textContent.indexOf("Silent") > -1) {
-        el.style.setProperty("display", "none", "important");
+    // Target and hide ONLY the specific table of fixtures.SuiteHelper and its closest parent collapsible!
+    // This leaves all other collapsible sections, list of test pages, and contents perfectly intact and visible!
+    var tables = document.querySelectorAll("table");
+    tables.forEach(function(tbl) {
+      if (tbl.textContent.indexOf("fixtures.SuiteHelper") > -1) {
+        var parentCollapsible = tbl.closest(".collapsible, .collapse_rim");
+        if (parentCollapsible) {
+          parentCollapsible.style.setProperty("display", "none", "important");
+        }
       }
     });
 
