@@ -768,6 +768,20 @@ body { padding-top: 64px !important; margin-top: 0 !important; }
   overflow: hidden !important;
   animation: iciFadeIn 0.15s ease !important;
 }
+
+/* Unlocked Symmetrical Report Dropdown styles */
+.icici-report-dropdown {
+  position: absolute !important;
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 6px !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+  width: 180px !important;
+  z-index: 100000 !important;
+  padding: 4px 0 !important;
+  overflow: hidden !important;
+  animation: iciFadeIn 0.15s ease !important;
+}
 .ici-dropdown-item {
   display: block !important;
   width: 100% !important;
@@ -1191,12 +1205,13 @@ body article {
       { label: "Home",          href: function(){ return "/"; } },
       { label: "▶ Run",         href: "#", action: function(e){ 
           var btn = e.target;
-          var originalText = btn.textContent;
           btn.innerHTML = '<span class="ici-spin">⏳</span> Running...';
           btn.style.pointerEvents = 'none';
-          setTimeout(function(){ location.href = getRunUrl(); }, 100);
+          iciClearAllureResults().then(function() {
+            setTimeout(function(){ location.href = getRunUrl(); }, 100);
+          });
         } },
-      { label: "📊 Report",     href: "/files/report.html", target: "_blank" },
+      { label: "📊 Report",     href: "#", action: function(e, btn) { iciToggleReportDropdown(e, btn); } },
       { label: "✎ Edit",        href: function(){ return p() + "?edit"; },       adminOnly: true },
       { label: "+ Add Test",    href: function(){ return p() + "?new"; },        adminOnly: true },
       { label: "❌ Delete",     href: function(){ return p() + "?deletePage"; }, adminOnly: true },
@@ -1210,9 +1225,11 @@ body article {
           var btn = e.target;
           btn.innerHTML = '<span class="ici-spin">⏳</span> Running...';
           btn.style.pointerEvents = 'none';
-          setTimeout(function(){ location.href = getRunUrl(); }, 100);
+          iciClearAllureResults().then(function() {
+            setTimeout(function(){ location.href = getRunUrl(); }, 100);
+          });
         } },
-      { label: "📊 Report",     href: "/files/report.html", target: "_blank" },
+      { label: "📊 Report",     href: "#", action: function(e, btn) { iciToggleReportDropdown(e, btn); } },
       { label: "✎ Edit",        href: function(){ return p() + "?edit"; } },
       { label: "+ Add Test",    href: function(){ return p() + "?new"; } },
       { label: "❌ Delete",     href: function(){ return p() + "?deletePage"; } },
@@ -1224,12 +1241,13 @@ body article {
       { label: "Home",          href: function(){ return "/"; } },
       { label: "▶ Run",         href: "#", action: function(e){ 
           var btn = e.target;
-          var originalText = btn.textContent;
           btn.innerHTML = '<span class="ici-spin">⏳</span> Running...';
           btn.style.pointerEvents = 'none';
-          setTimeout(function(){ location.href = getRunUrl(); }, 100);
+          iciClearAllureResults().then(function() {
+            setTimeout(function(){ location.href = getRunUrl(); }, 100);
+          });
         } },
-      { label: "📊 Report",     href: "/files/report.html", target: "_blank" },
+      { label: "📊 Report",     href: "#", action: function(e, btn) { iciToggleReportDropdown(e, btn); } },
       { label: "📋 Page History", href: function(){ return p() + "?pageHistory"; } }
     ]
   };
@@ -1441,9 +1459,13 @@ body article {
         a.target = l.target;
       }
       if (l.action) {
-        a.onclick = function(e) {
-          e.preventDefault();
-          l.action(e);
+        a.onclick = function(event) {
+          var ev = event || window.event;
+          if (ev) {
+            if (ev.preventDefault) ev.preventDefault();
+            if (ev.stopPropagation) ev.stopPropagation();
+          }
+          l.action(ev, this); // Pass 'this' (the exact physical <a> element!)
         };
       }
       a.className = "icici-nav-btn" + (l.adminOnly ? " admin-only" : "");
@@ -1663,6 +1685,16 @@ body article {
     .catch(function(err) {
       console.error("Failed to write to VariablePage:", err);
       location.reload();
+    });
+  };
+
+  window.iciSetActivePage = function() {
+    return fetch("http://127.0.0.1:8090/active-page", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ page: location.pathname })
+    }).catch(function(err) {
+      console.warn("User store offline; active page not set:", err);
     });
   };
 
@@ -2356,6 +2388,14 @@ body article {
      ICICI UX ENHANCEMENTS - All 5 fixes consolidated
      ═══════════════════════════════════════════════════════════════ */
   document.addEventListener("DOMContentLoaded", function() {
+    // Automatically hide any collapsible sections containing "Silent" on load to keep the UI completely clean!
+    var collapsibles = document.querySelectorAll(".collapsible, .collapse_rim, .toc-item");
+    collapsibles.forEach(function(el) {
+      if (el.textContent.indexOf("Silent") > -1) {
+        el.style.setProperty("display", "none", "important");
+      }
+    });
+
     console.log('%c═══ ICICI UX ENHANCEMENTS LOADED ═══', 'background: #A6192E; color: #fff; padding: 5px; font-weight: bold;');
     console.log('Page URL:', window.location.href);
     
@@ -2531,6 +2571,133 @@ body article {
         }
       }
     });
+
+    /* ── Report Selection Dropdown Controllers ── */
+    window.iciToggleReportDropdown = function(e, btn) {
+      var ev = e || window.event;
+      if (ev) {
+        if (ev.stopPropagation) ev.stopPropagation();
+        ev.cancelBubble = true;
+      }
+
+      // Close profile dropdown if open
+      var profDropdown = document.getElementById("icici-profile-dropdown");
+      if (profDropdown) profDropdown.style.display = "none";
+
+      var dropdown = document.getElementById("ici-report-dropdown");
+      if (!dropdown) {
+        // Create the report dropdown dynamically matching profile design exactly!
+        dropdown = document.createElement("div");
+        dropdown.id = "ici-report-dropdown";
+        dropdown.className = "icici-report-dropdown"; // Natively uses the new, unlocked class!
+        dropdown.style.width = "180px";
+        dropdown.innerHTML =
+          '<button class="ici-dropdown-item" onclick="iciOpenSimpleReport()"><span class="ici-dropdown-icon">📝</span><span>Simple Report</span></button>' +
+          '<button class="ici-dropdown-item" onclick="iciOpenAllureReport()"><span class="ici-dropdown-icon">📈</span><span>Allure Report</span></button>';
+        document.body.appendChild(dropdown);
+      }
+
+      if (dropdown.style.display === "none" || !dropdown.style.display) {
+        // Directly utilize the passed 'btn' element (which is guaranteed to be the <a> tag!)
+        var targetBtn = btn || (ev ? (ev.currentTarget || ev.target) : null) || document.querySelector(".icici-nav-btn");
+        var rect = targetBtn.getBoundingClientRect();
+        dropdown.style.left = rect.left + "px";
+        dropdown.style.top = (rect.bottom + window.scrollY + 6) + "px";
+        dropdown.style.display = "block";
+      } else {
+        dropdown.style.display = "none";
+      }
+    };
+
+    window.iciOpenSimpleReport = function() {
+      window.open("/files/report.html", "_blank");
+      var repDropdown = document.getElementById("ici-report-dropdown");
+      if (repDropdown) repDropdown.style.display = "none";
+    };
+
+    window.iciOpenAllureReport = function() {
+      // Prevent opening Allure Report prematurely if a test suite is actively running!
+      var stopBtn = document.getElementById("stop-test") || document.querySelector(".stop-test");
+      if (!stopBtn) {
+        var els = document.querySelectorAll("input, button, a");
+        for (var idx = 0; idx < els.length; idx++) {
+          var val = (els[idx].value || els[idx].textContent || "").trim();
+          if (val.indexOf("Stop") > -1) {
+            stopBtn = els[idx];
+            break;
+          }
+        }
+      }
+      if (stopBtn) {
+        alert("⚠️ Suite execution is still in progress!\n\nPlease wait for the FitNesse run to completely finish (turn green/red) before opening your Allure Report.");
+        return;
+      }
+
+      var repDropdown = document.getElementById("ici-report-dropdown");
+      if (repDropdown) repDropdown.style.display = "none";
+
+      var progressSpinner = document.getElementById("ici-header-progress");
+      if (progressSpinner) progressSpinner.style.display = "flex";
+
+      fetch("http://127.0.0.1:8090/serve-allure")
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (progressSpinner) progressSpinner.style.display = "none";
+        if (data.error) {
+          alert("Allure Launch Failed:\n\nAllure command-line utility was not found in your system PATH!\n\nTo install Allure globally on Windows, open your command prompt and run:\nnpm install -g allure-commandline\n\nOnce installed, restart start_server.bat and click Allure Report again!");
+        } else if (data.url) {
+          // Open the permanent, local FitNesse-hosted Allure dashboard directly on port 8080!
+          window.open(data.url, "_blank");
+        }
+      })
+      .catch(function(err) {
+        if (progressSpinner) progressSpinner.style.display = "none";
+        console.error("Allure launch request failed:", err);
+        alert("Failed to connect to local server on port 8090. Make sure your start_server.bat is active!");
+      });
+    };
+
+    // Close both collapsible dropdowns natively on document click (focus lost)
+    document.addEventListener("click", function(event) {
+      var target = event.target;
+      
+      // 1. Only close the user profile dropdown if we didn't click inside the user chip
+      var userChip = document.getElementById("icici-user-chip");
+      if (userChip && !userChip.contains(target)) {
+        var profDropdown = document.getElementById("icici-profile-dropdown");
+        if (profDropdown) profDropdown.style.display = "none";
+      }
+      
+      // 2. Only close the report dropdown if we didn't click inside the Report navbar button itself!
+      var isClickingReportBtn = false;
+      var navButtons = document.querySelectorAll(".icici-nav-btn");
+      navButtons.forEach(function(btn) {
+        if (btn.textContent.indexOf("Report") !== -1 && (btn === target || btn.contains(target))) {
+          isClickingReportBtn = true;
+        }
+      });
+      
+      if (!isClickingReportBtn) {
+        var repDropdown = document.getElementById("ici-report-dropdown");
+        if (repDropdown) repDropdown.style.display = "none";
+      }
+    });
+
+    window.iciClearAllureResults = function() {
+      // 1. Silently register the running page name in the server's memory-queue with ZERO table edits!
+      fetch("http://127.0.0.1:8090/register-run", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ page: location.pathname })
+      }).catch(function(err) {});
+
+      // 2. Silently clear older allure results to keep the history logs fresh and clean!
+      return fetch("http://127.0.0.1:8090/clear-allure", {
+        method: "POST"
+      }).catch(function(err) {
+        console.warn("User store offline; allure results not cleared:", err);
+      });
+    };
 
     /* ── Locator Dictionary & Step Builder Controllers ── */
     window.iciToggleDictDrawer = function() {

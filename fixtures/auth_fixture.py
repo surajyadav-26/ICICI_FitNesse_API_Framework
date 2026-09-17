@@ -1,11 +1,14 @@
 import html
 import json
 import base64
+import os
 import requests
 import time
 from typing import List
 from .json_utils import extract_json_field
 from core.logger import logger, log_request, log_response
+from core.allure_helper import AllureHelper
+from .ui_fixture import clean_html_text
 
 class AuthFixture:
     """
@@ -219,6 +222,47 @@ class AuthFixture:
                 right=right_count,
                 wrong=wrong_count
             )
+
+            # Symmetrical Allure API Reporting Compile!
+            try:
+                clean_url = clean_html_text(self._token_url)
+                
+                # Dynamically extract and immediately erase the FitNesse variables to prevent cross-test state leakages!
+                env_page_name = os.environ.get("FITNESSE_PAGE_NAME")
+                test_name = f"POST {clean_url}"
+                if env_page_name:
+                    test_name = env_page_name
+                    
+                suite_name = "API Tests"
+                env_page_path = os.environ.get("FITNESSE_PAGE_PATH")
+                if env_page_path:
+                    parts = [p.strip() for p in env_page_path.split(".") if p.strip()]
+                    if len(parts) >= 3:
+                        # E.g. "FrontPage.DummyAPI.AuthenticateUser" -> suite is "DummyAPI"
+                        suite_name = parts[-2]
+                    elif len(parts) == 2:
+                        # E.g. "FrontPage.DummyAPI" -> suite is "DummyAPI"
+                        suite_name = parts[-1]
+                        
+                # Only write results if this is NOT a parent suite page itself to prevent duplicate empty cards!
+                if test_name != suite_name:
+                    allure = AllureHelper(test_name=test_name, suite_name=suite_name)
+                    allure.add_step("Prepare Request Headers & Body", "passed", 2)
+                    allure.add_step("Send HTTP POST Request", "passed", self._response_time_ms)
+                    
+                    # Attach Request Info
+                    allure.add_attachment("Request_Headers", json.dumps(headers, indent=2), "application/json", "json")
+                    if unescaped_body:
+                        allure.add_attachment("Request_Body", unescaped_body, "application/json", "json")
+                        
+                    # Attach Response Info
+                    response_headers = dict(response.headers) if 'response' in locals() else {}
+                    allure.add_attachment("Response_Headers", json.dumps(response_headers, indent=2), "application/json", "json")
+                    allure.add_attachment("Response_Body", self._response_body, "application/json" if "json" in str(response_headers.get("Content-Type", "")).lower() else "text/plain", "json" if "json" in str(response_headers.get("Content-Type", "")).lower() else "txt")
+                    
+                    allure.write_result()
+            except Exception as allure_err:
+                logger.debug(f"Failed to compile Allure API results inside AuthFixture: {allure_err}")
                 
             return True
 

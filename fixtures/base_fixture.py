@@ -1,5 +1,6 @@
 import html
 import json
+import os
 import time
 import base64
 from typing import List, Optional
@@ -7,6 +8,8 @@ import requests
 from .auth_fixture import AuthFixture
 from .json_utils import extract_json_field
 from core.logger import logger, log_request, log_response
+from core.allure_helper import AllureHelper
+from .ui_fixture import clean_html_text
 
 class BaseRequestFixture:
     """
@@ -289,6 +292,47 @@ class BaseRequestFixture:
                     wrong=wrong_count
                 )
                 
+                # Symmetrical Allure API Reporting Compile!
+                try:
+                    clean_url = clean_html_text(self._url)
+                    
+                    # Dynamically extract the FitNesse variables cleanly with ZERO hardcoding!
+                    env_page_name = os.environ.get("FITNESSE_PAGE_NAME")
+                    test_name = f"{method} {clean_url}"
+                    if env_page_name:
+                        test_name = env_page_name
+                        
+                    suite_name = "API Tests"
+                    env_page_path = os.environ.get("FITNESSE_PAGE_PATH")
+                    if env_page_path:
+                        parts = [p.strip() for p in env_page_path.split(".") if p.strip()]
+                        if len(parts) >= 3:
+                            # E.g. "FrontPage.DummyAPI.Get_All_Products" -> suite is "DummyAPI"
+                            suite_name = parts[-2]
+                        elif len(parts) == 2:
+                            # E.g. "FrontPage.DummyAPI" -> suite is "DummyAPI"
+                            suite_name = parts[-1]
+                            
+                    allure = AllureHelper(test_name=test_name, suite_name=suite_name)
+                    allure.add_step("Prepare Request Headers & Body", "passed", 2)
+                    allure.add_step(f"Send HTTP {method} Request", "passed", self._response_time_ms)
+                    
+                    # Attach Request Info
+                    allure.add_attachment("Request_Headers", json.dumps(headers, indent=2), "application/json", "json")
+                    if unescaped_body:
+                        allure.add_attachment("Request_Body", unescaped_body, "application/json", "json")
+                        
+                    # Attach Response Info
+                    allure.add_attachment("Response_Headers", json.dumps(self._response_headers, indent=2), "application/json", "json")
+                    allure.add_attachment("Response_Body", self._response_body, "application/json" if "json" in str(self._response_headers.get("Content-Type", "")).lower() else "text/plain", "json" if "json" in str(self._response_headers.get("Content-Type", "")).lower() else "txt")
+                    
+                    if wrong_count > 0:
+                        allure.set_failed(f"Expected status codes {self._expected_codes} but got {self._actual_status_code}!")
+                    
+                    allure.write_result()
+                except Exception as allure_err:
+                    logger.debug(f"Failed to compile Allure API results: {allure_err}")
+                
                 self._executed = True
                 return True
 
@@ -309,6 +353,30 @@ class BaseRequestFixture:
                         response_body=f"exception after {self._max_retries + 1} attempts: {str(last_exception)}",
                         exceptions=1
                     )
+                    try:
+                        clean_url = clean_html_text(self._url)
+                        
+                        env_page_name = os.environ.get("FITNESSE_PAGE_NAME")
+                        test_name = f"{method} {clean_url}"
+                        if env_page_name:
+                            test_name = env_page_name
+                            
+                        suite_name = "API Tests"
+                        env_page_path = os.environ.get("FITNESSE_PAGE_PATH")
+                        if env_page_path:
+                            parts = [p.strip() for p in env_page_path.split(".") if p.strip()]
+                            if len(parts) >= 3:
+                                suite_name = parts[-2]
+                            elif len(parts) == 2:
+                                suite_name = parts[-1]
+                                
+                        if test_name != suite_name:
+                            allure = AllureHelper(test_name=test_name, suite_name=suite_name)
+                            allure.add_step(f"Send HTTP {method} Request (FAILED)", "failed", 10)
+                            allure.set_failed(f"Network error: {str(e)}", str(e))
+                            allure.write_result()
+                    except Exception:
+                        pass
                     return False
                 # Continue to next retry attempt
                 
@@ -321,11 +389,36 @@ class BaseRequestFixture:
                     url=self._url,
                     status_code=0,
                     response_time_ms=0,
-                    curl_cmd=curl_fallback,
-                    request_body=self._body_json or "",
-                    response_body=f"exception: {str(e)}",
-                    exceptions=1
+                    curl_cmd=self._generate_curl_command(method, headers),
+                    request_body=unescaped_body or "",
+                    response_body=self._response_body or "",
+                    right=0,
+                    wrong=1
                 )
+                try:
+                    clean_url = clean_html_text(self._url)
+                    
+                    env_page_name = os.environ.get("FITNESSE_PAGE_NAME")
+                    test_name = f"{method} {clean_url}"
+                    if env_page_name:
+                        test_name = env_page_name
+                        
+                    suite_name = "API Tests"
+                    env_page_path = os.environ.get("FITNESSE_PAGE_PATH")
+                    if env_page_path:
+                        parts = [p.strip() for p in env_page_path.split(".") if p.strip()]
+                        if len(parts) >= 3:
+                            suite_name = parts[-2]
+                        elif len(parts) == 2:
+                            suite_name = parts[-1]
+                            
+                    if test_name != suite_name:
+                        allure = AllureHelper(test_name=test_name, suite_name=suite_name)
+                        allure.add_step(f"Send HTTP {method} Request (CRASHED)", "failed", 5)
+                        allure.set_failed(f"Unexpected exception: {str(e)}", str(e))
+                        allure.write_result()
+                except Exception:
+                    pass
                 return False
         
         # Should not reach here, but just in case

@@ -10,6 +10,7 @@ from playwright.sync_api import sync_playwright
 from core.config import Config
 from core.logger import logger
 from core.pages.login_page import LoginPage
+from core.allure_helper import AllureHelper
 
 
 def clean_html_url(value: str) -> str:
@@ -29,12 +30,29 @@ def clean_html_url(value: str) -> str:
     return cleaned
 
 
+def clean_html_text(value: str) -> str:
+    """
+    Strips away FitNesse's auto-generated HTML anchor tags (<a href="...">...</a>)
+    and returns only the visible text inside the link.
+    """
+    val_str = str(value).strip()
+    
+    # Extract the text between <a ...> and </a>
+    match = re.search(r'<a[^>]*>([\s\S]*?)</a>', val_str)
+    if match:
+        return match.group(1).strip()
+        
+    # Fallback: strip any HTML tags
+    cleaned = re.sub(r'<[^<]+?>', '', val_str).strip()
+    return cleaned
+
+
 class UiFixture:
     """
     Generic, step-by-step browser automation fixture for FitNesse.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, page_name: str = "UI Test Run") -> None:
         self._workspace_dir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
         self._fitnesse_root = os.path.join(self._workspace_dir, "FitNesseRoot")
         self._screenshot_dir_path = "files/testResults/ui-automation"
@@ -50,8 +68,47 @@ class UiFixture:
         self._page = None
         self._screenshot_counter = 0
         self._last_error_html = ""
+        self._allure = None
+        
+        # 1. Natively extract and sanitize the FitNesse page name passed from constructor or system environment!
+        env_page_name = os.environ.get("FITNESSE_PAGE_NAME")
+        if env_page_name:
+            self._test_name = clean_html_text(env_page_name)
+        else:
+            self._test_name = clean_html_text(page_name)
+        
+        # 2. Dynamically extract the FitNesse parent Suite Name!
+        self._suite_name = "UI Tests"
+        env_page_path = os.environ.get("FITNESSE_PAGE_PATH")
+        if env_page_path:
+            parts = [p.strip() for p in env_page_path.split(".") if p.strip()]
+            if len(parts) >= 3:
+                # E.g. "FrontPage.SwagLabs.LoginPage" -> suite is "SwagLabs"
+                self._suite_name = parts[-2]
+            elif len(parts) == 2:
+                # E.g. "FrontPage.SwagLabs" -> suite is "SwagLabs"
+                self._suite_name = parts[-1]
 
     # UI-Level Configuration Setters (Allows managing config directly from FitNesse UI!)
+    def set_test_name(self, name: str) -> None:
+        """Dynamically overrides the test case name inside Allure (resolves collapsing)."""
+        self._test_name = clean_html_text(name)
+        if self._allure:
+            self._allure.test_name = self._test_name
+        logger.info(f"[UiFixture] Allure Test Name set dynamically: '{self._test_name}'")
+
+    def setTestName(self, name: str) -> None:
+        self.set_test_name(name)
+
+    def set_suite_name(self, name: str) -> None:
+        """Dynamically overrides the suite name inside Allure."""
+        self._suite_name = clean_html_text(name)
+        if self._allure:
+            self._allure.suite_name = self._suite_name
+        logger.info(f"[UiFixture] Allure Suite Name set dynamically: '{self._suite_name}'")
+
+    def setSuiteName(self, name: str) -> None:
+        self.set_suite_name(name)
     def set_url(self, value: str) -> None:
         """Dynamically overrides the target URL from the FitNesse UI (with HTML cleanup)."""
         self._default_url = clean_html_url(value)
@@ -87,6 +144,19 @@ class UiFixture:
             b_type = str(browser_type or self._default_browser).lower()
             headless_mode = self._default_headless
             
+            # Query the local One-Time POP queue to dynamically resolve the running page name with ZERO table edits!
+            try:
+                import urllib.request
+                import json
+                with urllib.request.urlopen("http://127.0.0.1:8090/pop-run", timeout=2) as response:
+                    res_data = json.loads(response.read().decode("utf-8"))
+                    retrieved_name = res_data.get("page_name", "")
+                    if retrieved_name and retrieved_name != "UI Test Run":
+                        self._test_name = retrieved_name
+                        logger.info(f"[UiFixture] Auto-popped running page name from queue: '{self._test_name}'")
+            except Exception as pop_err:
+                logger.debug(f"[UiFixture] Failed to pop active page from queue: {pop_err}")
+            
             # Check for temporary Live Debug override from the browser UI
             debug_file = os.path.join(self._workspace_dir, "runtime", "live-debug.txt")
             if os.path.exists(debug_file):
@@ -98,6 +168,10 @@ class UiFixture:
                     os.remove(debug_file)  # Delete so future runs use the default env setting
                 except Exception:
                     pass
+            
+            # Lazy initialize the Allure UI Results helper, skipping parent suite pages to avoid empty cards!
+            if self._test_name != self._suite_name:
+                self._allure = AllureHelper(test_name=self._test_name, suite_name=self._suite_name)
             
             logger.info(f"[UiFixture] Starting Playwright engine (browser: {b_type}, headless: {headless_mode})")
             self._playwright = sync_playwright().start()
@@ -119,6 +193,10 @@ class UiFixture:
                 
             self._page = self._context.new_page()
             logger.info("[UiFixture] Browser started successfully.")
+            
+            if self._allure:
+                self._allure.add_step(f"Start Headed {b_type.upper()} Browser" if not headless_mode else f"Start Headless {b_type.upper()} Browser", "passed")
+                
             return True
         except Exception as e:
             logger.error(f"[UiFixture] Failed to start browser: {e}")
@@ -130,6 +208,15 @@ class UiFixture:
 
     def close_browser(self) -> None:
         """Closes the browser instance and stops Playwright."""
+        try:
+            if self._allure:
+                self._allure.add_step("Close Browser & Free Resources", "passed")
+                self._allure.write_result()
+        except Exception:
+            pass
+        finally:
+            self._allure = None
+            
         try:
             if self._context:
                 self._context.close()
@@ -164,6 +251,10 @@ class UiFixture:
         try:
             self._page.goto(target_url, timeout=20000, wait_until="commit")
             self._last_error_html = ""
+            
+            if self._allure:
+                self._allure.add_step(f"Navigate to {target_url}", "passed")
+                
             return True
         except Exception as e:
             logger.error(f"[UiFixture] Navigation failed: {e}")
@@ -188,6 +279,10 @@ class UiFixture:
             locator = LoginPage.get_locator(self._page, element_name)
             locator.wait_for(state="visible", timeout=5000)
             locator.fill(value)
+            
+            if self._allure:
+                self._allure.add_step(f"Fill field '{element_name}' with value '{value}'", "passed")
+                
             return True
         except Exception as e:
             logger.error(f"[UiFixture] Failed to fill field '{element_name}': {e}")
@@ -216,6 +311,10 @@ class UiFixture:
             locator = LoginPage.get_locator(self._page, element_name)
             locator.wait_for(state="visible", timeout=5000)
             locator.click()
+            
+            if self._allure:
+                self._allure.add_step(f"Click element '{element_name}'", "passed")
+                
             return True
         except Exception as e:
             logger.error(f"[UiFixture] Failed to click selector '{element_name}': {e}")
@@ -236,6 +335,10 @@ class UiFixture:
             t_ms = int(str(timeout).strip())
             logger.info(f"[UiFixture] Waiting for text '{text}' to appear (timeout: {t_ms}ms)...")
             self._page.wait_for_selector(f"text={text}", state="visible", timeout=t_ms)
+            
+            if self._allure:
+                self._allure.add_step(f"Wait for text '{text}'", "passed")
+                
             return True
         except Exception as e:
             logger.error(f"[UiFixture] Timeout waiting for text '{text}': {e}")
@@ -273,8 +376,11 @@ class UiFixture:
             return False
         try:
             is_visible = self._page.is_visible(f"text={text}", timeout=3000)
+            if not is_visible:
+                self._capture_failure_state(f"verify_text_present_failed_{text}")
             return is_visible
         except Exception:
+            self._capture_failure_state(f"verify_text_present_failed_{text}")
             return False
 
     def verifyTextPresent(self, text: str) -> bool:
@@ -286,8 +392,12 @@ class UiFixture:
             return False
         try:
             locator = LoginPage.get_locator(self._page, element_name)
-            return locator.count() > 0
+            is_present = locator.count() > 0
+            if not is_present:
+                self._capture_failure_state(f"verify_element_present_failed_{element_name}")
+            return is_present
         except Exception:
+            self._capture_failure_state(f"verify_element_present_failed_{element_name}")
             return False
 
     def verifyElementPresent(self, element_name: str) -> bool:
@@ -338,6 +448,21 @@ class UiFixture:
         
         try:
             self._page.screenshot(path=screenshot_path)
+            
+            # Symmetrical Allure UI Reporting Sourcing!
+            if self._allure:
+                try:
+                    # Read the screenshot bytes and attach to Allure
+                    with open(screenshot_path, "rb") as sf:
+                        screenshot_bytes = sf.read()
+                    self._allure.add_attachment(f"Failure_Screenshot_{reason_prefix}", screenshot_bytes, "image/png", "png")
+                    self._allure.set_failed(f"Assertion failed on step: {reason_prefix}")
+                    # Write the final failed result immediately so it is captured on crash
+                    self._allure.write_result()
+                    self._allure = None
+                except Exception as allure_err:
+                    logger.debug(f"Failed to attach screenshot to Allure: {allure_err}")
+            
             url = f"http://localhost:8080/{self._screenshot_dir_path}/{screenshot_name}"
             self._last_error_html = f'<a href="{url}" target="_blank" style="color: #ef4444; font-weight: bold;">[VIEW FAILURE SCREENSHOT]</a>'
             logger.info(f"[UiFixture] Failure screenshot saved successfully: {screenshot_path}")

@@ -43,3 +43,7 @@ faker>=24.0.0
 
 # Browser Automation
 playwright>=1.52.0
+
+# Interactive Reporting
+allure-pytest>=2.13.2
+allure-python-commons>=2.13.2

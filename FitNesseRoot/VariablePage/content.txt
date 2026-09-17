@@ -1,3 +1,4 @@
 !define API_BASE_URL {https://dummyjson.com}
-!define UI_BASE_URL {https://retailnetbanking.icici.bank.in/login-page}
-!define runInParallel {false}
+!define UI_BASE_URL {https://www.saucedemo.com/}
+!define runInParallel {true}
+!define fitnesse.runner.parallel {3}

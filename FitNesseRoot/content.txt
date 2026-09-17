@@ -1,9 +1,9 @@
 !define TEST_SYSTEM {slim}
 !define slim.port {0}
 !define SLIM_VERSION {0.1}
-!define COMMAND_PATTERN {.\.venv\Scripts\python.exe -m waferslim.server --syspath .. %p}
+!define COMMAND_PATTERN {.\.venv\Scripts\python.exe -m waferslim.server --syspath .. --pagename "${PAGE_NAME}" --pagepath "${RUNNING_PAGE_PATH}" %p}
 !include -c .VariablePage
 
 # Global JVM & Platform Bypasses to allow flawless runs on Java 11, 17, 21, 23, 24, 25
 !define fitnesse.security.manager.enabled {false}
-!define slim.jvm.arguments {-Dfitnesse.security.manager.enabled=false -Dprevent.system.exit=false}
+!define slim.jvm.arguments {-Dfitnesse.security.manager.enabled=false -Dprevent.system.exit=false -Duser.timezone=Asia/Kolkata -Dsun.timezone.ids.oldmapping=false}

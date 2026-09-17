@@ -11,6 +11,9 @@ FITNESSE_USERS_FILE = os.path.join(BASE_DIR, "runtime", "fitnesse-passwords.txt"
 HOST = "0.0.0.0"
 PORT = 8090
 
+# Memory-only Queue to dynamically source FitNesse page names with ZERO table modifications!
+ACTIVE_RUNS_QUEUE = []
+
 
 def read_users():
     with open(USERS_FILE, "r", encoding="utf-8") as file:
@@ -133,13 +136,85 @@ class UserStoreHandler(BaseHTTPRequestHandler):
         self._send_json(204, {})
 
     def do_GET(self):
-        if self.path != "/users":
-            self._send_json(404, {"error": "Not found"})
+        if self.path == "/users":
+            try:
+                self._send_json(200, read_users())
+            except (OSError, json.JSONDecodeError) as error:
+                self._send_json(500, {"error": str(error)})
             return
-        try:
-            self._send_json(200, read_users())
-        except (OSError, json.JSONDecodeError) as error:
-            self._send_json(500, {"error": str(error)})
+            
+        elif self.path == "/serve-allure":
+            try:
+                import subprocess
+                results_path = os.path.join(BASE_DIR, "FitNesseRoot", "files", "testResults", "allure-results")
+                report_path = os.path.join(BASE_DIR, "FitNesseRoot", "files", "testResults", "allure-report")
+                os.makedirs(results_path, exist_ok=True)
+                
+                # Compile the results permanently as a static folder inside your project!
+                try:
+                    # Generate the permanent report
+                    gen_proc = subprocess.run(f"allure generate \"{results_path}\" -o \"{report_path}\" --clean", shell=True, capture_output=True, text=True)
+                    self._send_json(200, {"served": True, "url": "http://localhost:8090/allure/index.html"})
+                except FileNotFoundError:
+                    self._send_json(400, {"error": "Allure CLI command was not found in your system PATH! Make sure Allure is installed."})
+            except Exception as error:
+                self._send_json(500, {"error": str(error)})
+            return
+
+        elif self.path.startswith("/allure"):
+            try:
+                # Strip query parameters (e.g. "?t=1273918237") to bypass FitNesse blocks and load files cleanly!
+                clean_path = self.path.split("?")[0]
+                
+                # Resolve the physical file path on disk
+                relative_file_path = clean_path.replace("/allure", "").lstrip("/")
+                if not relative_file_path or relative_file_path == "":
+                    relative_file_path = "index.html"
+                
+                file_path = os.path.join(BASE_DIR, "FitNesseRoot", "files", "testResults", "allure-report", relative_file_path)
+                
+                if os.path.exists(file_path) and os.path.isfile(file_path):
+                    # Determine MIME type
+                    content_type = "text/plain"
+                    if file_path.endswith(".html"):
+                        content_type = "text/html"
+                    elif file_path.endswith(".js"):
+                        content_type = "application/javascript"
+                    elif file_path.endswith(".css"):
+                        content_type = "text/css"
+                    elif file_path.endswith(".json"):
+                        content_type = "application/json"
+                    elif file_path.endswith(".png"):
+                        content_type = "image/png"
+                    elif file_path.endswith(".jpg") or file_path.endswith(".jpeg"):
+                        content_type = "image/jpeg"
+                    elif file_path.endswith(".svg"):
+                        content_type = "image/svg+xml"
+                    
+                    self.send_response(200)
+                    self.send_header("Content-Type", content_type)
+                    self.send_header("Access-Control-Allow-Origin", "*")
+                    self.end_headers()
+                    
+                    with open(file_path, "rb") as f:
+                        self.wfile.write(f.read())
+                else:
+                    self._send_json(404, {"error": f"File not found: {relative_file_path}"})
+            except Exception as error:
+                self._send_json(500, {"error": str(error)})
+            return
+
+        elif self.path == "/pop-run":
+            try:
+                page_name = "UI Test Run"
+                if ACTIVE_RUNS_QUEUE:
+                    page_name = ACTIVE_RUNS_QUEUE.pop()  # Get and erase so it is one-time use!
+                self._send_json(200, {"page_name": page_name})
+            except Exception as error:
+                self._send_json(400, {"error": str(error)})
+            return
+
+        self._send_json(404, {"error": "Not found"})
 
     def do_POST(self):
         if self.path == "/users":
@@ -176,6 +251,40 @@ class UserStoreHandler(BaseHTTPRequestHandler):
                 with open(debug_file, "w", encoding="utf-8") as f:
                     f.write("true")
                 self._send_json(200, {"debug": True})
+            except Exception as error:
+                self._send_json(400, {"error": str(error)})
+            return
+            
+        elif self.path == "/clear-allure":
+            try:
+                import glob
+                results_path = os.path.join(BASE_DIR, "FitNesseRoot", "files", "testResults", "allure-results")
+                if os.path.exists(results_path):
+                    # Delete all files inside allure-results cleanly to avoid duplicate history logs
+                    files = glob.glob(os.path.join(results_path, "*"))
+                    for file_path in files:
+                        try:
+                            if os.path.isfile(file_path):
+                                os.remove(file_path)
+                        except Exception:
+                            pass
+                self._send_json(200, {"cleared": True})
+            except Exception as error:
+                self._send_json(400, {"error": str(error)})
+            return
+
+        elif self.path == "/register-run":
+            try:
+                length = int(self.headers.get("Content-Length", "0"))
+                payload = json.loads(self.rfile.read(length).decode("utf-8"))
+                page_path = payload.get("page", "")
+                if page_path:
+                    page_name = page_path.split(".")[-1].split("/")[-1]
+                    ACTIVE_RUNS_QUEUE.append(page_name)
+                    # Limit queue size to avoid bloat
+                    if len(ACTIVE_RUNS_QUEUE) > 10:
+                        ACTIVE_RUNS_QUEUE.pop(0)
+                self._send_json(200, {"registered": True})
             except Exception as error:
                 self._send_json(400, {"error": str(error)})
             return
