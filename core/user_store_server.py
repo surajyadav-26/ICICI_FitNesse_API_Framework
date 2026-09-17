@@ -126,7 +126,7 @@ class UserStoreHandler(BaseHTTPRequestHandler):
         self.send_response(status)
         self.send_header("Content-Type", "application/json")
         self.send_header("Content-Length", str(len(body)))
-        self.send_header("Access-Control-Allow-Origin", "http://localhost:8080")
+        self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Headers", "Content-Type")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
         self.end_headers()
@@ -146,14 +146,58 @@ class UserStoreHandler(BaseHTTPRequestHandler):
         elif self.path == "/serve-allure":
             try:
                 import subprocess
+                import shutil
                 results_path = os.path.join(BASE_DIR, "FitNesseRoot", "files", "testResults", "allure-results")
                 report_path = os.path.join(BASE_DIR, "FitNesseRoot", "files", "testResults", "allure-report")
                 os.makedirs(results_path, exist_ok=True)
+                
+                # Write Environment Metadata to populate the Allure Environment widget!
+                env_path = os.path.join(results_path, "environment.properties")
+                with open(env_path, "w", encoding="utf-8") as ef:
+                    ef.write("Browser=Chromium (Playwright)\n")
+                    ef.write("Headless=Headed (Live Debug Supported)\n")
+                    ef.write("Platform=Windows 10/11\n")
+                    ef.write("Framework=Python-native Playwright Symmetrical Automation\n")
+                    ef.write("Active_URL=https://dummyjson.com / https://www.saucedemo.com\n")
+                    
+                # Write Executor Metadata to populate the Allure Executors widget beautifully (removing 'Unknown')!
+                exec_path = os.path.join(results_path, "executor.json")
+                with open(exec_path, "w", encoding="utf-8") as exf:
+                    json.dump({
+                        "name": "Nirikshan Test Automation Runner",
+                        "type": "fitnesse",
+                        "url": "http://localhost:8080",
+                        "buildOrder": 1,
+                        "buildName": "Local Run",
+                        "buildUrl": "http://localhost:8080/FrontPage"
+                    }, exf, indent=2)
+                
+                # Symmetrical Allure History Copier (Natively preserves Trend and History graphs!)
+                prev_history_path = os.path.join(report_path, "history")
+                dest_history_path = os.path.join(results_path, "history")
+                if os.path.exists(prev_history_path):
+                    try:
+                        # Copy previous history directory to allure-results before generating
+                        shutil.copytree(prev_history_path, dest_history_path, dirs_exist_ok=True)
+                    except Exception as hist_err:
+                        pass
                 
                 # Compile the results permanently as a static folder inside your project!
                 try:
                     # Generate the permanent report
                     gen_proc = subprocess.run(f"allure generate \"{results_path}\" -o \"{report_path}\" --clean", shell=True, capture_output=True, text=True)
+                    
+                    # Inject a native script inside the compiled HTML to force Allure to load in its premium Dark Mode theme!
+                    index_html_path = os.path.join(report_path, "index.html")
+                    if os.path.exists(index_html_path):
+                        with open(index_html_path, "r", encoding="utf-8") as f:
+                            html_content = f.read()
+                        if "allure-theme" not in html_content:
+                            dark_script = '<script>localStorage.setItem("allure-theme", "dark"); localStorage.setItem("allure-playbook-theme", "dark"); if(!document.body.classList.contains("theme_dark")){document.body.classList.add("theme_dark");}</script>'
+                            html_content = html_content.replace("</head>", f"{dark_script}</head>")
+                            with open(index_html_path, "w", encoding="utf-8") as f:
+                                f.write(html_content)
+                                
                     self._send_json(200, {"served": True, "url": "http://localhost:8090/allure/index.html"})
                 except FileNotFoundError:
                     self._send_json(400, {"error": "Allure CLI command was not found in your system PATH! Make sure Allure is installed."})
@@ -276,10 +320,14 @@ class UserStoreHandler(BaseHTTPRequestHandler):
                             
                 report_path = os.path.join(BASE_DIR, "FitNesseRoot", "files", "testResults", "allure-report")
                 if os.path.exists(report_path):
-                    # Delete compiled allure-report and historical trend logs to prevent Allure CLI from merging them!
+                    # Delete compiled allure-report files but EXPLICITLY preserve the 'history' folder for Trend graphs!
                     files = glob.glob(os.path.join(report_path, "*"))
                     for file_path in files:
                         try:
+                            # Skip deleting the history directory to preserve past execution runs' Trends!
+                            if os.path.isdir(file_path) and os.path.basename(file_path).lower() == "history":
+                                continue
+                                
                             if os.path.isfile(file_path):
                                 os.remove(file_path)
                             elif os.path.isdir(file_path):

@@ -64,11 +64,11 @@ rem ── Start FitNesse Standalone Server on port 8080 ──
 echo [INFO] Starting FitNesse Acceptor Engine on port 8080...
 echo [INFO] Launching FitNesse on http://localhost:8080/
 
-rem Inject Java 25 bypasses (-Dprevent.system.exit=false), timezone silencer (-Duser.timezone=Asia/Kolkata -Dsun.timezone.ids.oldmapping=false), and modular bypasses (--add-opens) for a pristine console run on ALL Java versions
+rem Inject Java 25 bypasses (-Dprevent.system.exit=false), timezone silencer (-Duser.timezone=Asia/Kolkata -Dsun.timezone.ids.oldmapping=false), sequential thread pool (-Dfitnesse.runner.parallel=1), and modular bypasses (--add-opens) for a pristine console run on ALL Java versions
 if defined JAVA_HOME (
-    "%JAVA_HOME%\bin\java" -Duser.timezone=Asia/Kolkata -Dsun.timezone.ids.oldmapping=false -Dprevent.system.exit=false -Dfitnesse.security.manager.enabled=false --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED -cp "%~dp0.;%~dp0fitnesse-standalone.jar" fitnesseMain.FitNesseMain -p 8080
+    "%JAVA_HOME%\bin\java" -Dfitnesse.runner.parallel=1 -Duser.timezone=Asia/Kolkata -Dsun.timezone.ids.oldmapping=false -Dprevent.system.exit=false -Dfitnesse.security.manager.enabled=false --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED -cp "%~dp0.;%~dp0fitnesse-standalone.jar" fitnesseMain.FitNesseMain -p 8080
 ) else (
-    java -Duser.timezone=Asia/Kolkata -Dsun.timezone.ids.oldmapping=false -Dprevent.system.exit=false -Dfitnesse.security.manager.enabled=false --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED -cp "%~dp0.;%~dp0fitnesse-standalone.jar" fitnesseMain.FitNesseMain -p 8080
+    java -Dfitnesse.runner.parallel=1 -Duser.timezone=Asia/Kolkata -Dsun.timezone.ids.oldmapping=false -Dprevent.system.exit=false -Dfitnesse.security.manager.enabled=false --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED -cp "%~dp0.;%~dp0fitnesse-standalone.jar" fitnesseMain.FitNesseMain -p 8080
 )
 
 goto end

@@ -6,4 +6,5 @@
 
 # Global JVM & Platform Bypasses to allow flawless runs on Java 11, 17, 21, 23, 24, 25
 !define fitnesse.security.manager.enabled {false}
+!define fitnesse.suite.sort {alphabetical}
 !define slim.jvm.arguments {-Dfitnesse.security.manager.enabled=false -Dprevent.system.exit=false -Duser.timezone=Asia/Kolkata -Dsun.timezone.ids.oldmapping=false}

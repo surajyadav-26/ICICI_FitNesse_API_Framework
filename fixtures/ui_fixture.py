@@ -438,31 +438,57 @@ class UiFixture:
         """Captures a screenshot automatically only on failure states."""
         if not self._page:
             return
-            
+
         self._screenshot_counter += 1
         screenshot_name = f"failure-{reason_prefix}-{self._screenshot_counter}.png"
-        
+
         full_dir = os.path.join(self._fitnesse_root, self._screenshot_dir_path)
         os.makedirs(full_dir, exist_ok=True)
         screenshot_path = os.path.join(full_dir, screenshot_name)
-        
+
         try:
             self._page.screenshot(path=screenshot_path)
-            
+
+            # Symmetrically Translate technical keys into highly professional corporate QA labels!
+            raw_key = str(reason_prefix).strip()
+            attachment_label = "Failure Screenshot"
+            error_message = f"Execution failed on step: {raw_key.replace('_', ' ').title()}"
+
+            if raw_key.startswith("click_failed_"):
+                el = raw_key.replace("click_failed_", "")
+                attachment_label = f"Failure Screenshot - Click failed on '{el}'"
+                error_message = f"Click button failed on element '{el}'"
+            elif raw_key.startswith("fill_failed_"):
+                el = raw_key.replace("fill_failed_", "")
+                attachment_label = f"Failure Screenshot - Fill failed on '{el}'"
+                error_message = f"Fill field failed on element '{el}'"
+            elif raw_key.startswith("verify_text_present_failed_"):
+                txt = raw_key.replace("verify_text_present_failed_", "")
+                attachment_label = f"Failure Screenshot - Text not present '{txt}'"
+                error_message = f"Verification failed: Text '{txt}' was not found on the page."
+            elif raw_key.startswith("verify_element_present_failed_"):
+                el = raw_key.replace("verify_element_present_failed_", "")
+                attachment_label = f"Failure Screenshot - Element not present '{el}'"
+                error_message = f"Verification failed: Element '{el}' was not found on the page."
+            elif raw_key.startswith("wait_text_failed_"):
+                txt = raw_key.replace("wait_text_failed_", "")
+                attachment_label = f"Failure Screenshot - Wait for text failed '{txt}'"
+                error_message = f"Timeout failed: Wait for text '{txt}' timed out."
+
             # Symmetrical Allure UI Reporting Sourcing!
             if self._allure:
                 try:
                     # Read the screenshot bytes and attach to Allure
                     with open(screenshot_path, "rb") as sf:
                         screenshot_bytes = sf.read()
-                    self._allure.add_attachment(f"Failure_Screenshot_{reason_prefix}", screenshot_bytes, "image/png", "png")
-                    self._allure.set_failed(f"Assertion failed on step: {reason_prefix}")
+                    self._allure.add_attachment(attachment_label, screenshot_bytes, "image/png", "png")
+                    self._allure.set_failed(error_message)
                     # Write the final failed result immediately so it is captured on crash
                     self._allure.write_result()
                     self._allure = None
                 except Exception as allure_err:
                     logger.debug(f"Failed to attach screenshot to Allure: {allure_err}")
-            
+
             url = f"http://localhost:8080/{self._screenshot_dir_path}/{screenshot_name}"
             self._last_error_html = f'<a href="{url}" target="_blank" style="color: #ef4444; font-weight: bold;">[VIEW FAILURE SCREENSHOT]</a>'
             logger.info(f"[UiFixture] Failure screenshot saved successfully: {screenshot_path}")

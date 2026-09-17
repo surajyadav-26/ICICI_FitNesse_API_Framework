@@ -1208,7 +1208,9 @@ body article {
           btn.innerHTML = '<span class="ici-spin">⏳</span> Running...';
           btn.style.pointerEvents = 'none';
           iciClearAllureResults().then(function() {
-            setTimeout(function(){ location.href = getRunUrl(); }, 100);
+            location.href = getRunUrl();
+          }).catch(function() {
+            location.href = getRunUrl();
           });
         } },
       { label: "📊 Report",     href: "#", action: function(e, btn) { iciToggleReportDropdown(e, btn); } },
@@ -1226,7 +1228,9 @@ body article {
           btn.innerHTML = '<span class="ici-spin">⏳</span> Running...';
           btn.style.pointerEvents = 'none';
           iciClearAllureResults().then(function() {
-            setTimeout(function(){ location.href = getRunUrl(); }, 100);
+            location.href = getRunUrl();
+          }).catch(function() {
+            location.href = getRunUrl();
           });
         } },
       { label: "📊 Report",     href: "#", action: function(e, btn) { iciToggleReportDropdown(e, btn); } },
@@ -1244,7 +1248,9 @@ body article {
           btn.innerHTML = '<span class="ici-spin">⏳</span> Running...';
           btn.style.pointerEvents = 'none';
           iciClearAllureResults().then(function() {
-            setTimeout(function(){ location.href = getRunUrl(); }, 100);
+            location.href = getRunUrl();
+          }).catch(function() {
+            location.href = getRunUrl();
           });
         } },
       { label: "📊 Report",     href: "#", action: function(e, btn) { iciToggleReportDropdown(e, btn); } },
@@ -1661,14 +1667,8 @@ body article {
     var activeUrl = config.environments[selectedEnv].api || "";
     var activeUiUrl = config.environments[selectedEnv].ui || "https://retailnetbanking.icici.bank.in/login-page";
     
-    // Read dynamic UI Workers to enable multi-threaded parallel execution in FitNesse!
-    var workers = parseInt(config.workers || "1");
-    var parallelStr = "";
-    if (workers > 1) {
-      parallelStr = "!define runInParallel {true}\n!define fitnesse.runner.parallel {" + workers + "}\n";
-    } else {
-      parallelStr = "!define runInParallel {false}\n";
-    }
+    // Force strictly sequential suite-by-suite executions to prevent parallel thread clashing!
+    var parallelStr = "!define runInParallel {false}\n!define fitnesse.runner.parallel {1}\n";
     
     var formData = new URLSearchParams();
     formData.append("responder", "saveData");
