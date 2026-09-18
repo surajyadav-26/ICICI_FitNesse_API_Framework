@@ -98,6 +98,7 @@ body { padding-top: 64px !important; margin-top: 0 !important; }
     <div id="icici-profile-dropdown" class="icici-profile-dropdown" style="display: none;">
       <button class="ici-dropdown-item" onclick="iciLiveDebug()"><span class="ici-dropdown-icon">👁️</span><span>Live Debug</span></button>
       <button class="ici-dropdown-item" onclick="iciToggleDictDrawer()"><span class="ici-dropdown-icon">📖</span><span>Dictionary</span></button>
+      <button id="ici-logs-menu" class="ici-dropdown-item" onclick="iciOpenLogs()"><span class="ici-dropdown-icon">📋</span><span>Logs</span></button>
       <button id="ici-user-management-menu" class="ici-dropdown-item ici-user-management-hidden" onclick="iciOpenUserManagement()"><span class="ici-dropdown-icon">👥</span><span>Users</span></button>
       <button class="ici-dropdown-item" onclick="iciLogout()"><span class="ici-dropdown-icon">🚪</span><span>Sign Out</span></button>
     </div>
@@ -2614,9 +2615,15 @@ body article {
     };
 
     window.iciOpenSimpleReport = function() {
-      window.open("/files/report.html", "_blank");
+      window.open("http://localhost:8090/report.html", "_blank");
       var repDropdown = document.getElementById("ici-report-dropdown");
       if (repDropdown) repDropdown.style.display = "none";
+    };
+
+    window.iciOpenLogs = function() {
+      window.open("http://localhost:8090/framework-logs", "_blank");
+      var profDropdown = document.getElementById("icici-profile-dropdown");
+      if (profDropdown) profDropdown.style.display = "none";
     };
 
     window.iciOpenAllureReport = function() {

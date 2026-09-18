@@ -196,6 +196,8 @@ class UiFixture:
             
             if self._allure:
                 self._allure.add_step(f"Start Headed {b_type.upper()} Browser" if not headless_mode else f"Start Headless {b_type.upper()} Browser", "passed")
+            
+            self._log_simple_step(f"Start Browser (browser: {b_type}, headless: {headless_mode})")
                 
             return True
         except Exception as e:
@@ -254,6 +256,8 @@ class UiFixture:
             
             if self._allure:
                 self._allure.add_step(f"Navigate to {target_url}", "passed")
+            
+            self._log_simple_step(f"Navigate to '{target_url}'")
                 
             return True
         except Exception as e:
@@ -282,6 +286,8 @@ class UiFixture:
             
             if self._allure:
                 self._allure.add_step(f"Fill field '{element_name}' with value '{value}'", "passed")
+            
+            self._log_simple_step(f"Fill field '{element_name}' with value '{value}'")
                 
             return True
         except Exception as e:
@@ -314,6 +320,8 @@ class UiFixture:
             
             if self._allure:
                 self._allure.add_step(f"Click element '{element_name}'", "passed")
+            
+            self._log_simple_step(f"Click element '{element_name}'")
                 
             return True
         except Exception as e:
@@ -338,6 +346,8 @@ class UiFixture:
             
             if self._allure:
                 self._allure.add_step(f"Wait for text '{text}'", "passed")
+            
+            self._log_simple_step(f"Wait for text '{text}' to appear (timeout: {t_ms}ms)")
                 
             return True
         except Exception as e:
@@ -378,6 +388,8 @@ class UiFixture:
             is_visible = self._page.is_visible(f"text={text}", timeout=3000)
             if not is_visible:
                 self._capture_failure_state(f"verify_text_present_failed_{text}")
+            else:
+                self._log_simple_step(f"Verify text present '{text}'")
             return is_visible
         except Exception:
             self._capture_failure_state(f"verify_text_present_failed_{text}")
@@ -395,6 +407,8 @@ class UiFixture:
             is_present = locator.count() > 0
             if not is_present:
                 self._capture_failure_state(f"verify_element_present_failed_{element_name}")
+            else:
+                self._log_simple_step(f"Verify element present '{element_name}'")
             return is_present
         except Exception:
             self._capture_failure_state(f"verify_element_present_failed_{element_name}")
@@ -487,10 +501,48 @@ class UiFixture:
                     self._allure.write_result()
                     self._allure = None
                 except Exception as allure_err:
-                    logger.debug(f"Failed to attach screenshot to Allure: {allure_err}")
+                    logger.debug(f"[UiFixture] Failed to attach screenshot to Allure: {allure_err}")
+
+            # Symmetrical Simple Report UI Sourcing!
+            # Registers the failure screenshot directly into report.html's audit trail!
+            try:
+                from core.report_generator import add_record
+                import datetime
+                add_record({
+                    "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    "method": "SCREENSHOT",
+                    "url": f"failure-{raw_key}",
+                    "status_code": 500, # Pass integer to prevent TypeError crashes in report generator!
+                    "response_time_ms": 0,
+                    "request_body": f"UI Assertion failed on step: {raw_key.replace('_', ' ').title()}",
+                    "response_body": f'<div style="text-align: center; padding: 10px;"><img src="/{self._screenshot_dir_path}/{screenshot_name}" style="max-width: 100%; max-height: 450px; border: 2px solid var(--fail); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" alt="Failure Screenshot" /></div>',
+                    "curl": f"http://localhost:8080/{self._screenshot_dir_path}/{screenshot_name}",
+                    "json_file": "" # No JSON file for UI failures!
+                })
+            except Exception as simple_err:
+                logger.debug(f"[UiFixture] Failed to log failure to Simple Report: {simple_err}")
 
             url = f"http://localhost:8080/{self._screenshot_dir_path}/{screenshot_name}"
             self._last_error_html = f'<a href="{url}" target="_blank" style="color: #ef4444; font-weight: bold;">[VIEW FAILURE SCREENSHOT]</a>'
             logger.info(f"[UiFixture] Failure screenshot saved successfully: {screenshot_path}")
         except Exception as e:
             logger.error(f"[UiFixture] Capturing failure screenshot failed: {e}")
+
+    def _log_simple_step(self, step_name: str, status: str = "PASSED", body: str = "") -> None:
+        """Symmetrically logs Playwright execution steps directly to report.html's audit trail!"""
+        try:
+            from core.report_generator import add_record
+            import datetime
+            add_record({
+                "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "method": "STEP",
+                "url": step_name,
+                "status_code": 200 if status == "PASSED" else 500,
+                "response_time_ms": 0,
+                "request_body": "",
+                "response_body": body,
+                "curl": "",
+                "json_file": "" # No JSON file for UI steps!
+            })
+        except Exception as simple_err:
+            logger.debug(f"[UiFixture] Failed to log step to Simple Report: {simple_err}")

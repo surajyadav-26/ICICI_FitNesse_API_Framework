@@ -1,4 +1,5 @@
 """Small local file-backed user store for the FitNesse UI demo."""
+import html
 import json
 import os
 import re
@@ -6,6 +7,9 @@ import sys
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if BASE_DIR not in sys.path:
+    sys.path.insert(0, BASE_DIR)
+
 USERS_FILE = os.path.join(BASE_DIR, "data", "users.json")
 FITNESSE_USERS_FILE = os.path.join(BASE_DIR, "runtime", "fitnesse-passwords.txt")
 HOST = "0.0.0.0"
@@ -205,6 +209,223 @@ class UserStoreHandler(BaseHTTPRequestHandler):
                 self._send_json(500, {"error": str(error)})
             return
 
+        elif self.path == "/report.html":
+            try:
+                file_path = os.path.join(BASE_DIR, "FitNesseRoot", "files", "report.html")
+                if os.path.exists(file_path):
+                    self.send_response(200)
+                    self.send_header("Content-Type", "text/html")
+                    self.send_header("Access-Control-Allow-Origin", "*")
+                    self.send_header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
+                    self.send_header("Pragma", "no-cache")
+                    self.send_header("Expires", "0")
+                    self.end_headers()
+                    with open(file_path, "rb") as f:
+                        self.wfile.write(f.read())
+                else:
+                    self._send_json(404, {"error": "Report not found"})
+            except Exception as error:
+                self._send_json(500, {"error": str(error)})
+            return
+
+        elif self.path == "/favicon.ico":
+            try:
+                fav_path = os.path.join(BASE_DIR, "FitNesseRoot", "files", "fitnesse", "icici", "img", "favicon.ico")
+                if os.path.exists(fav_path):
+                    self.send_response(200)
+                    self.send_header("Content-Type", "image/x-icon")
+                    self.send_header("Access-Control-Allow-Origin", "*")
+                    self.end_headers()
+                    with open(fav_path, "rb") as f:
+                        self.wfile.write(f.read())
+                else:
+                    self._send_json(404, {"error": "Favicon not found"})
+            except Exception as error:
+                self._send_json(500, {"error": str(error)})
+            return
+
+        elif self.path == "/logo.png":
+            try:
+                logo_path = os.path.join(BASE_DIR, "FitNesseRoot", "files", "fitnesse", "icici", "img", "icici-logo.png")
+                if os.path.exists(logo_path):
+                    self.send_response(200)
+                    self.send_header("Content-Type", "image/png")
+                    self.send_header("Access-Control-Allow-Origin", "*")
+                    self.end_headers()
+                    with open(logo_path, "rb") as f:
+                        self.wfile.write(f.read())
+                else:
+                    self._send_json(404, {"error": "Logo not found"})
+            except Exception as error:
+                self._send_json(500, {"error": str(error)})
+            return
+
+        elif self.path == "/framework-logs":
+            try:
+                import glob
+                log_dir = os.path.join(BASE_DIR, "logs")
+                log_files = sorted(glob.glob(os.path.join(log_dir, "framework-*.log")), reverse=True)
+                
+                log_content = "No log files found in logs/ directory."
+                log_filename = "N/A"
+                if log_files:
+                    latest_log = log_files[0]
+                    log_filename = os.path.basename(latest_log)
+                    with open(latest_log, "r", encoding="utf-8", errors="ignore") as lf:
+                        log_content = lf.read()
+                        
+                # Wrap in a gorgeous, readable corporate-grade dark log viewer with Auto-Refresh!
+                html_logs = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ICICI Nirikshan - Framework Execution Logs ({log_filename})</title>
+    <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        body {{
+            background-color: #0f1115;
+            color: #e2e8f0;
+            font-family: 'Outfit', sans-serif;
+            margin: 0;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            box-sizing: border-box;
+        }}
+        header {{
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            border-bottom: 1px solid #2e3035;
+            padding-bottom: 16px;
+        }}
+        h1 {{
+            font-size: 20px;
+            margin: 0;
+            font-weight: 800;
+            background: linear-gradient(135deg, #fb7185 0%, #A6192E 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }}
+        .meta {{
+            font-size: 13px;
+            color: #94a3b8;
+        }}
+        .actions {{
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }}
+        .btn {{
+            background: #1c1d21;
+            border: 1px solid #2e3035;
+            color: #e2e8f0;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.15s;
+        }}
+        .btn:hover {{
+            background: #2e3035;
+            border-color: #475569;
+        }}
+        pre {{
+            background: #07080a;
+            border: 1px solid #1c1d21;
+            border-radius: 8px;
+            padding: 20px;
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: auto;
+            margin: 0;
+            font-family: 'Fira Code', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }}
+    </style>
+    <script>
+        var refreshInterval = null;
+        
+        function startAutoRefresh() {{
+            refreshInterval = setInterval(function() {{
+                window.location.reload();
+            }}, 3000);
+        }}
+        
+        function toggleAutoRefresh(chk) {{
+            if (chk.checked) {{
+                startAutoRefresh();
+                localStorage.setItem("ici_logs_auto_refresh", "true");
+            }} else {{
+                clearInterval(refreshInterval);
+                localStorage.setItem("ici_logs_auto_refresh", "false");
+            }}
+        }}
+
+        function refreshLogs() {{
+            window.location.reload();
+        }}
+        
+        function scrollToBottom() {{
+            var container = document.getElementById("log-box");
+            if (container) {{
+                container.scrollTop = container.scrollHeight;
+            }}
+        }}
+        
+        window.onload = function() {{
+            scrollToBottom();
+            
+            // Restore auto-refresh checkbox preference from localStorage!
+            var autoPref = localStorage.getItem("ici_logs_auto_refresh") !== "false";
+            var chk = document.getElementById("auto-refresh-toggle");
+            if (chk) {{
+                chk.checked = autoPref;
+                if (autoPref) {{
+                    startAutoRefresh();
+                }}
+            }}
+        }};
+    </script>
+</head>
+<body>
+    <header>
+        <div style="display: flex; align-items: center; gap: 16px;">
+            <img src="/logo.png" alt="ICICI Nirikshan" style="height: 52px; width: auto; object-fit: contain;">
+            <div>
+                <h1>📋 ICICI Nirikshan AML Framework Execution Logs</h1>
+                <div class="meta" style="margin-top: 4px;">Viewing active log file: <strong>{log_filename}</strong></div>
+            </div>
+        </div>
+        <div class="actions">
+            <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: #94a3b8; font-weight: 600; cursor: pointer; margin-right: 12px; user-select: none;">
+                <input type="checkbox" id="auto-refresh-toggle" onchange="toggleAutoRefresh(this)" checked style="cursor: pointer; width: 14px; height: 14px;">
+                <span>Auto-Refresh (3s)</span>
+            </label>
+            <button class="btn" onclick="refreshLogs()">🔄 Refresh Logs</button>
+            <button class="btn" onclick="scrollToBottom()">⬇ Scroll to Bottom</button>
+        </div>
+    </header>
+    <pre id="log-box">{html.escape(log_content)}</pre>
+</body>
+</html>"""
+                self.send_response(200)
+                self.send_header("Content-Type", "text/html")
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.send_header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
+                self.end_headers()
+                self.wfile.write(html_logs.encode("utf-8"))
+            except Exception as error:
+                self._send_json(500, {"error": str(error)})
+            return
+
         elif self.path.startswith("/allure"):
             try:
                 # Strip query parameters (e.g. "?t=1273918237") to bypass FitNesse blocks and load files cleanly!
@@ -307,9 +528,10 @@ class UserStoreHandler(BaseHTTPRequestHandler):
             try:
                 import glob
                 import shutil
+                
+                # 1. Wipe older Allure results cleanly
                 results_path = os.path.join(BASE_DIR, "FitNesseRoot", "files", "testResults", "allure-results")
                 if os.path.exists(results_path):
-                    # Delete all files inside allure-results cleanly to avoid duplicate history logs
                     files = glob.glob(os.path.join(results_path, "*"))
                     for file_path in files:
                         try:
@@ -318,20 +540,51 @@ class UserStoreHandler(BaseHTTPRequestHandler):
                         except Exception:
                             pass
                             
+                # 2. Wipe older Allure report but preserve 'history' folder for Trend graphs
                 report_path = os.path.join(BASE_DIR, "FitNesseRoot", "files", "testResults", "allure-report")
                 if os.path.exists(report_path):
-                    # Delete compiled allure-report files but EXPLICITLY preserve the 'history' folder for Trend graphs!
                     files = glob.glob(os.path.join(report_path, "*"))
                     for file_path in files:
                         try:
-                            # Skip deleting the history directory to preserve past execution runs' Trends!
                             if os.path.isdir(file_path) and os.path.basename(file_path).lower() == "history":
                                 continue
-                                
                             if os.path.isfile(file_path):
                                 os.remove(file_path)
                             elif os.path.isdir(file_path):
                                 shutil.rmtree(file_path)
+                        except Exception:
+                            pass
+                            
+                # 3. Wipe Simple Report database and HTML file to prevent historical merging!
+                history_json = os.path.join(BASE_DIR, "FitNesseRoot", "files", "report_history.json")
+                report_html = os.path.join(BASE_DIR, "FitNesseRoot", "files", "report.html")
+                for path in (history_json, report_html):
+                    try:
+                        if os.path.exists(path):
+                            os.remove(path)
+                    except Exception:
+                        pass
+                        
+                # Pre-generate a beautiful, branded "Empty" report so they never see a raw 404!
+                try:
+                    from core.report_generator import generate_html_report
+                    generate_html_report()
+                except Exception:
+                    pass
+                        
+                # 4. Clean FitNesse XML test subfolders recursively (excluding allure results/report!)
+                test_results_dir = os.path.join(BASE_DIR, "FitNesseRoot", "files", "testResults")
+                if os.path.exists(test_results_dir):
+                    subdirs = glob.glob(os.path.join(test_results_dir, "*"))
+                    for s in subdirs:
+                        basename = os.path.basename(s).lower()
+                        if basename in ("allure-results", "allure-report", "ui-automation"):
+                            continue
+                        try:
+                            if os.path.isfile(s):
+                                os.remove(s)
+                            elif os.path.isdir(s):
+                                shutil.rmtree(s)
                         except Exception:
                             pass
                             
@@ -368,4 +621,12 @@ if __name__ == "__main__":
         sync_fitnesse_password_file()
         raise SystemExit(0)
     sync_fitnesse_password_file()
+    
+    # Pre-generate a beautiful, branded "Empty" report on boot so they never see a raw 404!
+    try:
+        from core.report_generator import generate_html_report
+        generate_html_report()
+    except Exception:
+        pass
+        
     ThreadingHTTPServer((HOST, PORT), UserStoreHandler).serve_forever()

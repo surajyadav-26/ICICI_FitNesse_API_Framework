@@ -1,3 +1,4 @@
+|VariablePage||11:49:26 Fri, Sep 18, 2026|
 |FrontPage.Labs.Invalid||16:34:50 Thu, Sep 17, 2026|
 |FrontPage.Labs||16:34:24 Thu, Sep 17, 2026|
 |FrontPage.DummyAPI.Search_Product||16:33:33 Thu, Sep 17, 2026|
@@ -8,7 +9,6 @@
 |FrontPage.saucedemo||16:06:37 Thu, Sep 17, 2026|
 |FrontPage.SwagLabs.InventoryPage||12:00:05 Thu, Sep 17, 2026|
 |FrontPage.SwagLabs.LoginPage||11:59:46 Thu, Sep 17, 2026|
-|VariablePage||09:48:54 Thu, Sep 17, 2026|
 |FrontPage.SwagLabs.dummy||14:25:53 Wed, Sep 16, 2026|
 |FrontPage.Smoke_UI||12:20:37 Wed, Sep 16, 2026|
 |FrontPage.DummyAPI.Add_User.sdxcd||11:47:23 Wed, Sep 16, 2026|

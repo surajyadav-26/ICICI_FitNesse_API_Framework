@@ -2,84 +2,151 @@ import os
 import glob
 import datetime
 import json
+import xml.etree.ElementTree as ET
+from typing import List, Optional
 
 report_history = []
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+HISTORY_FILE = os.path.join(BASE_DIR, "FitNesseRoot", "files", "report_history.json")
 REPORT_FILE = os.path.join(BASE_DIR, "FitNesseRoot", "files", "report.html")
-HISTORY_JSON = os.path.join(BASE_DIR, "FitNesseRoot", "files", "report_history.json")
 
 def html_escape(text: str) -> str:
-    if not isinstance(text, str):
-        text = str(text)
-    return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;").replace("'", "&#x27;")
+    """Symmetrical HTML escape helper."""
+    if not text:
+        return ""
+    return (str(text)
+            .replace("&", "&amp;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+            .replace('"', "&quot;")
+            .replace("'", "&#x27;"))
 
 def load_history() -> None:
     global report_history
-    if os.path.exists(HISTORY_JSON):
+    if os.path.exists(HISTORY_FILE):
         try:
-            with open(HISTORY_JSON, "r", encoding="utf-8") as f:
+            with open(HISTORY_FILE, "r", encoding="utf-8") as f:
                 report_history = json.load(f)
         except Exception:
             report_history = []
-    else:
-        report_history = []
 
 def save_history() -> None:
-    global report_history
     try:
-        os.makedirs(os.path.dirname(HISTORY_JSON), exist_ok=True)
-        # Cap history list to last 150 requests to maintain speed and file size limits
-        history_to_save = report_history[-150:]
-        with open(HISTORY_JSON, "w", encoding="utf-8") as f:
-            json.dump(history_to_save, f, indent=2)
+        os.makedirs(os.path.dirname(HISTORY_FILE), exist_ok=True)
+        with open(HISTORY_FILE, "w", encoding="utf-8") as f:
+            json.dump(report_history, f, indent=2)
     except Exception:
         pass
 
-def scan_test_results() -> list:
+def scan_test_results() -> List[dict]:
+    """Scans FitNesse Zip History and XML run outputs to get actual assertion counts."""
     results = []
-    test_results_dir = os.path.join(BASE_DIR, "FitNesseRoot", "files", "testResults")
-    if not os.path.exists(test_results_dir):
+    fitnesse_root_dir = os.path.join(BASE_DIR, "FitNesseRoot")
+    if not os.path.exists(fitnesse_root_dir):
         return results
 
-    # Walk through the test results directory to find test run XML files
-    for root, dirs, files in os.walk(test_results_dir):
-        for d in dirs:
-            dir_path = os.path.join(root, d)
-            xml_files = glob.glob(os.path.join(dir_path, "*.xml"))
-            if not xml_files:
+    import zipfile
+    # Symmetrically scan FitNesse .zip execution history archives recursively inside FitNesseRoot!
+    zip_files = glob.glob(os.path.join(fitnesse_root_dir, "**", "*.zip"), recursive=True)
+    for zip_path in zip_files:
+        try:
+            # The directory name under FitNesseRoot represents the test page path (e.g. FrontPage/SwagLabs/LoginPage)
+            rel_dir = os.path.dirname(os.path.relpath(zip_path, fitnesse_root_dir))
+            clean_name = rel_dir.replace(os.sep, ".").replace("FrontPage.", "")
+            
+            if not clean_name or clean_name.endswith("SuiteSetUp") or clean_name.endswith("SuiteTearDown"):
                 continue
 
-            # Get the latest XML run file by sorting filenames (starts with timestamp)
-            latest_file = max(xml_files, key=os.path.basename)
-            filename = os.path.basename(latest_file)
+            with zipfile.ZipFile(zip_path, 'r') as z:
+                for member in z.namelist():
+                    if member.endswith(".xml"):
+                        filename = os.path.basename(member)
+                        timestamp_str = filename.replace(".xml", "")
+                        
+                        xml_bytes = z.read(member)
+                        root = ET.fromstring(xml_bytes)
+                        
+                        # Find the standard FitNesse counts block
+                        counts_el = root.find(".//counts")
+                        if counts_el is not None:
+                            right = int(counts_el.find("right").text or 0)
+                            wrong = int(counts_el.find("wrong").text or 0)
+                            ignored = int(counts_el.find("ignores").text or 0)
+                            exceptions = int(counts_el.find("exceptions").text or 0)
+                        else:
+                            right, wrong, ignored, exceptions = 0, 0, 0, 0
+                            
+                        try:
+                            formatted_time = f"{timestamp_str[0:4]}-{timestamp_str[4:6]}-{timestamp_str[6:8]} {timestamp_str[8:10]}:{timestamp_str[10:12]}:{timestamp_str[12:14]}"
+                        except Exception:
+                            formatted_time = timestamp_str
 
-            # Format: YYYYMMDDHHMMSS_R_W_I_E.xml
-            name_part = filename.replace(".xml", "")
-            parts = name_part.split("_")
-            if len(parts) >= 5:
-                timestamp_str = parts[0]
-                right = int(parts[1])
-                wrong = int(parts[2])
-                ignored = int(parts[3])
-                exceptions = int(parts[4])
+                        results.append({
+                            "name": clean_name,
+                            "timestamp": formatted_time,
+                            "timestamp_raw": timestamp_str,
+                            "right": right,
+                            "wrong": wrong,
+                            "ignored": ignored,
+                            "exceptions": exceptions
+                        })
+        except Exception:
+            pass
 
-                try:
-                    formatted_time = f"{timestamp_str[0:4]}-{timestamp_str[4:6]}-{timestamp_str[6:8]} {timestamp_str[8:10]}:{timestamp_str[10:12]}:{timestamp_str[12:14]}"
-                except Exception:
-                    formatted_time = timestamp_str
+    # Also fallback to scanning raw XML files if any exist inside files/testResults
+    test_results_dir = os.path.join(BASE_DIR, "FitNesseRoot", "files", "testResults")
+    if os.path.exists(test_results_dir):
+        xml_files = glob.glob(os.path.join(test_results_dir, "**", "*.xml"), recursive=True)
+        for path in xml_files:
+            if "allure" in path.lower():
+                continue
+            try:
+                filename = os.path.basename(path)
+                # Check for standard FitNesse XML suffix: YYYYMMDDHHMMSS_R_W_I_E.xml
+                if "_" in filename and filename.endswith(".xml"):
+                    parts = filename.split("_")
+                    timestamp_str = parts[0]
+                    counts = parts[1].replace(".xml", "").split(" ")
+                    
+                    # Check for standard results naming
+                    if len(counts) >= 4:
+                        right = int(counts[0])
+                        wrong = int(counts[1])
+                        ignored = int(counts[2])
+                        exceptions = int(counts[3])
+                    else:
+                        parts_dash = parts[1].replace(".xml", "").split("-")
+                        if len(parts_dash) >= 4:
+                            right = int(parts_dash[0])
+                            wrong = int(parts_dash[1])
+                            ignored = int(parts_dash[2])
+                            exceptions = int(parts_dash[3])
+                        else:
+                            continue
 
-                # Exclude root directory runs and format names beautifully
-                clean_name = d.replace("FrontPage.", "")
-                if clean_name and not clean_name.endswith("SuiteSetUp") and not clean_name.endswith("SuiteTearDown"):
-                    results.append({
-                        "name": clean_name,
-                        "timestamp": formatted_time,
-                        "timestamp_raw": timestamp_str,
-                        "right": right,
-                        "wrong": wrong,
-                        "ignored": ignored,
-                        "exceptions": exceptions
-                    })
+                    # Get clean path relative to testResults folder
+                    rel_path = os.path.relpath(path, test_results_dir)
+                    d = os.path.dirname(rel_path).replace(os.sep, ".")
+                    
+                    try:
+                        formatted_time = f"{timestamp_str[0:4]}-{timestamp_str[4:6]}-{timestamp_str[6:8]} {timestamp_str[8:10]}:{timestamp_str[10:12]}:{timestamp_str[12:14]}"
+                    except Exception:
+                        formatted_time = timestamp_str
+
+                    clean_name = d.replace("FrontPage.", "")
+                    if clean_name and not clean_name.endswith("SuiteSetUp") and not clean_name.endswith("SuiteTearDown"):
+                        results.append({
+                            "name": clean_name,
+                            "timestamp": formatted_time,
+                            "timestamp_raw": timestamp_str,
+                            "right": right,
+                            "wrong": wrong,
+                            "ignored": ignored,
+                            "exceptions": exceptions
+                        })
+            except Exception:
+                pass
+            
     # Sort results showing the most recently executed tests first
     results.sort(key=lambda x: x["timestamp_raw"], reverse=True)
     return results
@@ -87,17 +154,16 @@ def scan_test_results() -> list:
 def trigger_delayed_report() -> None:
     import subprocess
     import sys
-    
-    # We want to run the report generator after FitNesse writes the XML results to disk.
-    # This happens immediately after the waferslim process exits.
+
+    # Delay execution slightly to ensure FitNesse finished writing XML files
     creationflags = 0
     if os.name == 'nt':
-        creationflags = 0x08000000  # CREATE_NO_WINDOW on Windows to prevent console flashing
-
+        creationflags = 0x08000000  # CREATE_NO_WINDOW
+        
     cmd = [
         sys.executable,
         "-c",
-        "import time, core.report_generator; time.sleep(2.0); core.report_generator.generate_html_report()"
+        "import time, core.report_generator; time.sleep(1.5); core.report_generator.generate_html_report()"
     ]
     try:
         subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, close_fds=True, creationflags=creationflags)
@@ -108,69 +174,39 @@ def add_record(record: dict) -> None:
     load_history()
     report_history.append(record)
     save_history()
-    # Write the report immediately (fallback with current memory data)
+    # Regenerate immediately with current memory cache
     generate_html_report()
-    # Trigger the delayed report so that it updates with the fresh XML file 2 seconds later!
+    # Trigger a delayed refresh to merge with fresh XML result logs 2 seconds later!
     trigger_delayed_report()
 
 def generate_html_report() -> None:
     if not report_history:
         load_history()
 
-    # Scan native FitNesse XML run history to get actual assertion counts
     results = scan_test_results()
-
-    # Detect if the latest execution session is a Suite Run or a Single Test Run.
-    # results contains ALL pages, including suite pages (e.g., "DummyAPI", "Sanity")
-    # and individual test pages (e.g., "DummyAPI.Add_User", "Sanity.loginTrubi").
     active_pages = []
     suite_name = "FITNESSE RUN"
 
     if results:
         latest_page = results[0]["name"]
         suite_name = latest_page.split(".")[0] if "." in latest_page else latest_page
-        
-        # Filter all results for the active namespace (excluding the parent suite page itself)
+
+        # Filter results for the active parent suite namespace
         current_suite_pages = [r for r in results if (r["name"].startswith(suite_name + ".") or r["name"] == suite_name) and r["name"] != suite_name]
-        
         if current_suite_pages:
-            latest_raw = current_suite_pages[0]["timestamp_raw"]
-            try:
-                latest_dt = datetime.datetime.strptime(latest_raw[:14], "%Y%m%d%H%M%S")
-                
-                # Find all pages in the suite completed within 60 seconds of the latest completion
-                recent_pages = []
-                for r in current_suite_pages:
-                    try:
-                        dt = datetime.datetime.strptime(r["timestamp_raw"][:14], "%Y%m%d%H%M%S")
-                        if abs((latest_dt - dt).total_seconds()) <= 60:
-                            recent_pages.append(r)
-                    except Exception:
-                        pass
-                
-                # If more than 1 page completed recently, it's a Suite Run!
-                if len(recent_pages) > 1:
-                    active_pages = recent_pages
-                else:
-                    # Single Test Run: Only include the latest page
-                    active_pages = [current_suite_pages[0]]
-            except Exception:
-                active_pages = [current_suite_pages[0]]
+            # Symmetrically include ALL test pages executed during this session!
+            active_pages = current_suite_pages
 
     # Initialize empty request lists on all active pages
     for p in active_pages:
         p["requests"] = []
 
-    # Map HTTP requests directly to their parent Test Pages using a strict proximity-matching logic.
-    # Each request is matched to EXACTLY ONE page (the closest page in time), preventing duplicates
-    # and mixing up requests between adjacent tests in a suite run.
-    # OPTIMIZATION: Only consider recent requests (last 50) instead of all historical data
-    recent_history = report_history[-50:] if len(report_history) > 50 else report_history
+    # Map HTTP requests / Playwright steps directly to their parent test pages
+    recent_history = report_history[-100:] if len(report_history) > 100 else report_history
     active_requests = []
     for req in recent_history:
         try:
             req_dt = datetime.datetime.strptime(req["timestamp"], "%Y-%m-%d %H:%M:%S")
-            
             closest_page = None
             min_diff = 999999
             
@@ -179,8 +215,8 @@ def generate_html_report() -> None:
                     p_dt = datetime.datetime.strptime(p["timestamp_raw"][:14], "%Y%m%d%H%M%S")
                     diff = (p_dt - req_dt).total_seconds()
                     
-                    # Request must execute during the page execution window (typically within 12s before completion)
-                    if -2 <= diff <= 12:
+                    # 60s window safely maps both fast API and slower Playwright UI execution steps!
+                    if -5 <= diff <= 60:
                         abs_diff = abs(diff)
                         if abs_diff < min_diff:
                             min_diff = abs_diff
@@ -195,15 +231,13 @@ def generate_html_report() -> None:
         except Exception:
             pass
 
-    # Sort active pages showing the most recently executed first
+    # Sort pages showing most recent first
     grouped_pages = sorted(active_pages, key=lambda x: x["timestamp_raw"], reverse=True)
 
-    # Determine Active Suite Name from first active page
     if grouped_pages:
         latest_name = grouped_pages[0]["name"]
         suite_name = latest_name.split(".")[0] if "." in latest_name else latest_name
 
-    # Calculate page-level metrics (Executive Summary KPI Cards)
     total_pages = len(grouped_pages)
     passed_pages = sum(1 for p in grouped_pages if p["wrong"] == 0 and p["exceptions"] == 0 and p["right"] > 0)
     failed_pages = total_pages - passed_pages
@@ -211,35 +245,38 @@ def generate_html_report() -> None:
     total_duration_ms = sum(r["response_time_ms"] for r in active_requests)
     formatted_duration = f"{total_duration_ms / 1000:.2f}s"
 
-    # Calculate overall health summary across the active session test pages
     total_right = sum(r["right"] for r in active_pages) if active_pages else 0
     total_wrong = sum(r["wrong"] for r in active_pages) if active_pages else 0
     total_ignored = sum(r["ignored"] for r in active_pages) if active_pages else 0
     total_exceptions = sum(r["exceptions"] for r in active_pages) if active_pages else 0
 
-    # Status Banner Details (Executive Level)
     if failed_pages > 0:
         status_banner_class = "banner-fail"
         status_banner_text = f"🚨 TEST RUN FAILED — {failed_pages} / {total_pages} Test Cases Failed (Action Required)"
     elif total_pages > 0:
         status_banner_class = "banner-pass"
-        status_banner_text = "🎉 TEST RUN PASSED — 100% Succeeded! All APIs are operational."
+        status_banner_text = "🎉 TEST RUN PASSED — 100% Succeeded! All tests executed cleanly."
     else:
         status_banner_class = "banner-empty"
         status_banner_text = "⚪ NO TEST RESULTS CAPTURED"
 
-    # Compile HTML Rows for the Single Unified Dashboard Table (Simplified: Removed Assertions Column)
     pages_html = ""
     for idx, p in enumerate(grouped_pages):
+        full_name = p["name"]
+        display_suite = ""
+        display_test = full_name
+        if "." in full_name:
+            parts = full_name.split(".")
+            display_suite = parts[0]
+            display_test = ".".join(parts[1:])
+
         is_page_pass = p["wrong"] == 0 and p["exceptions"] == 0 and p["right"] > 0
         page_status_class = "status-pass" if is_page_pass else "status-fail"
         page_status_text = "✓ PASSED" if is_page_pass else "✗ FAILED"
         page_status_value = "passed" if is_page_pass else "failed"
 
-        # Auto-expand failed rows automatically for QA & Dev immediate troubleshooting
         row_display_style = "table-row" if not is_page_pass else "none"
         
-        # Build defect helpers if page failed
         defect_helper = ""
         if not is_page_pass:
             if p["exceptions"] > 0:
@@ -247,7 +284,6 @@ def generate_html_report() -> None:
             elif p["wrong"] > 0:
                 defect_helper = f"<div class='defect-msg'>❌ Failed {p['wrong']} verification checks</div>"
 
-        # Build clean assertion text
         assertion_info = f"{p['right']} right"
         if p['wrong'] > 0:
             assertion_info += f" • <span style='color:var(--fail); font-weight:700;'>{p['wrong']} wrong</span>"
@@ -257,7 +293,36 @@ def generate_html_report() -> None:
         requests_sub_html = ""
         if p["requests"]:
             for r_idx, r in enumerate(p["requests"]):
-                is_success = 200 <= r["status_code"] < 400 or r["status_code"] == 204
+                if r["method"] == "SCREENSHOT":
+                    # Render a highly customized, gorgeous inline failure screenshot card!
+                    requests_sub_html += f"""
+                    <div class="nested-request-row" style="border-color: var(--fail); margin-bottom: 12px; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+                        <div class="nested-request-header" onclick="toggleRequest({idx}, {r_idx})" style="display: flex; align-items: center; gap: 16px; padding: 14px 20px; cursor: pointer; user-select: none; transition: background 0.15s; background: #fff5f5;">
+                            <span class="badge badge-screenshot" style="background: rgba(244, 63, 94, 0.15); color: #fb7185; border: 1px solid rgba(244, 63, 94, 0.3); display: inline-block; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; width: 110px; text-align: center;">📷 SCREENSHOT</span>
+                            <span class="nested-url" style="color: var(--fail); font-weight: 700; font-family: monospace; font-size: 13px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{html_escape(r['request_body'])}</span>
+                            <span class="nested-time" style="color: var(--fail); font-weight: 700; font-size: 12px;">FAIL</span>
+                        </div>
+                        <div id="req-details-{idx}-{r_idx}" class="nested-request-details" style="display: block; background: #fff5f5; border-top: 1px solid rgba(244,63,94,0.15); padding: 20px 24px;">
+                            {r['response_body']}
+                        </div>
+                    </div>
+                    """
+                    continue
+                    
+                if r["method"] == "STEP":
+                    # Render a highly customized, gorgeous Playwright action step card!
+                    requests_sub_html += f"""
+                    <div class="nested-request-row" style="border-color: #0284c7; margin-bottom: 12px; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+                        <div class="nested-request-header" style="display: flex; align-items: center; gap: 16px; padding: 14px 20px; cursor: default; user-select: none;">
+                            <span class="badge badge-step" style="background: rgba(2, 132, 199, 0.1); color: #0284c7; border: 1px solid rgba(2, 132, 199, 0.2); display: inline-block; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; width: 110px; text-align: center;">⚙ STEP</span>
+                            <span class="nested-url" style="color: var(--text-main); font-weight: 600; font-size: 13px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{html_escape(r['url'])}</span>
+                            <span class="nested-time" style="color: var(--success); font-weight: 700; font-size: 12px;">PASS</span>
+                        </div>
+                    </div>
+                    """
+                    continue
+
+                is_success = isinstance(r["status_code"], int) and (200 <= r["status_code"] < 400 or r["status_code"] == 204)
                 status_class = "status-pass" if is_success else "status-fail"
                 method_class = f"badge-{r['method'].lower()}"
                 
@@ -265,7 +330,6 @@ def generate_html_report() -> None:
                 resp_body = html_escape(r["response_body"])
                 curl_cmd = html_escape(r["curl"])
                 
-                # Get JSON file path for download button
                 json_file = r.get("json_file", "")
                 download_btn = ""
                 if json_file:
@@ -306,9 +370,8 @@ def generate_html_report() -> None:
                 </div>
                 """
         else:
-            requests_sub_html = "<div class='no-requests'>No API HTTP requests were logged for this page run.</div>"
+            requests_sub_html = "<div class='no-requests'>No API HTTP requests or UI execution steps were logged for this page run.</div>"
 
-        # Collect all JSON file paths for "Download All" button
         json_files = [r.get("json_file", "") for r in p["requests"] if r.get("json_file")]
         download_all_btn = ""
         if json_files:
@@ -323,8 +386,9 @@ def generate_html_report() -> None:
         <tr class="summary-row" onclick="togglePage({idx})" data-name="{html_escape(p['name'])}" data-status="{page_status_value}" title="Click to view requests audit trail">
             <td>
                 <div class="test-title">
-                    <strong>{html_escape(p['name'])}</strong>
-                    <span class="assertion-summary">{assertion_info}</span>
+                    <span class="suite-badge">{html_escape(display_suite or 'Suite')}</span>
+                    <strong>{html_escape(display_test)}</strong>
+                    <span class="assertion-summary" style="margin-left: 10px;">{assertion_info}</span>
                 </div>
             </td>
             <td>{p['timestamp']}</td>
@@ -355,8 +419,8 @@ def generate_html_report() -> None:
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ICICI Nirikshan AML Application API & UI Report - Latest Test Run</title>
-    <link rel="shortcut icon" type="image/x-icon" href="/files/fitnesse/icici/img/favicon.ico" />
-    <link rel="icon" type="image/x-icon" href="/files/fitnesse/icici/img/favicon.ico" />
+    <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {{
@@ -625,6 +689,21 @@ def generate_html_report() -> None:
         .test-title strong {{
             font-size: 15px;
             font-weight: 700;
+        }}
+        .suite-badge {{
+            display: inline-block;
+            background: #f1f5f9;
+            color: var(--text-sub);
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            border: 1px solid var(--border);
+            margin-right: 8px;
+            vertical-align: middle;
+            width: fit-content;
         }}
         .assertion-summary {{
             font-size: 11px;
@@ -942,7 +1021,7 @@ def generate_html_report() -> None:
     <div class="container">
         <header>
             <div style="display: flex; align-items: center; gap: 16px;">
-                <img src="/files/fitnesse/icici/img/icici-favicon.ico" alt="ICICI Nirikshan" style="height: 52px; width: auto; object-fit: contain;">
+                <img src="/logo.png" alt="ICICI Nirikshan" style="height: 52px; width: auto; object-fit: contain;">
                 <div class="header-title">
                     <h1>ICICI Nirikshan AML Application API & UI Report</h1>
                     <p>Latest Test Run - Showing Most Recent Results</p>
@@ -1030,5 +1109,5 @@ def generate_html_report() -> None:
         os.makedirs(os.path.dirname(REPORT_FILE), exist_ok=True)
         with open(REPORT_FILE, "w", encoding="utf-8") as f:
             f.write(html_content)
-    except Exception:
-        pass
+    except Exception as e:
+        print("ERROR WRITING REPORT_FILE:", e)

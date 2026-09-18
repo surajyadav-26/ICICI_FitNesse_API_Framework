@@ -49,9 +49,16 @@ for /f "tokens=5" %%a in ('netstat -aon 2^>nul ^| findstr 8085') do taskkill /f 
 for /f "tokens=5" %%a in ('netstat -aon 2^>nul ^| findstr 8080') do taskkill /f /pid %%a >nul 2>&1
 for /f "tokens=5" %%a in ('netstat -aon 2^>nul ^| findstr 8090') do taskkill /f /pid %%a >nul 2>&1
 
-echo [INFO] Cleansing old Allure results to start session fresh...
+echo [INFO] Cleansing old results to start session fresh...
 del /q /s "%~dp0FitNesseRoot\files\testResults\allure-results\*" >nul 2>&1
 del /q /s "%~dp0FitNesseRoot\files\testResults\allure-report\*" >nul 2>&1
+del /q "%~dp0FitNesseRoot\files\report_history.json" >nul 2>&1
+del /q "%~dp0FitNesseRoot\files\report.html" >nul 2>&1
+for /d %%p in ("%~dp0FitNesseRoot\files\testResults\*") do (
+    if /i not "%%~nxp"=="allure-results" if /i not "%%~nxp"=="allure-report" if /i not "%%~nxp"=="ui-automation" (
+        rd /s /q "%%p" >nul 2>&1
+    )
+)
 
 rem ── Start Nirikshan User Store Server on port 8090 in the background ──
 echo [INFO] Starting JSON-backed Local User Store Server on port 8090...
