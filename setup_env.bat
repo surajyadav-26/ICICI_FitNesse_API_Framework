@@ -23,25 +23,10 @@ if errorlevel 1 (
 echo [SUCCESS] Python detected.
 echo.
 
-rem ── Create Virtual Environment (.venv) ──
-if exist ".venv" (
-    echo [INFO] Virtual environment (.venv) already exists. Skipping creation...
-) else (
-    echo [INFO] Creating Python Virtual Environment (.venv)...
-    python -m venv .venv
-    if errorlevel 1 (
-        echo [ERROR] Failed to create Python virtual environment!
-        pause
-        exit /b 1
-    )
-    echo [SUCCESS] Virtual environment (.venv) created successfully.
-)
-echo.
-
 rem ── Upgrade Pip and Install Dependencies ──
 echo [INFO] Installing required libraries from requirements.txt...
-.venv\Scripts\python -m pip install --upgrade pip --quiet
-.venv\Scripts\python -m pip install -r requirements.txt --quiet
+python -m pip install --upgrade pip --quiet
+python -m pip install -r requirements.txt --quiet
 if errorlevel 1 (
     echo [ERROR] Failed to install Python dependencies from requirements.txt!
     pause
@@ -52,7 +37,7 @@ echo.
 
 rem ── Install Playwright Browsers ──
 echo [INFO] Installing Playwright browser binaries (Chromium, Firefox, WebKit)...
-.venv\Scripts\playwright install
+python -m playwright install
 if errorlevel 1 (
     echo [ERROR] Failed to install Playwright browser binaries!
     pause

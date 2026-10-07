@@ -2,8 +2,8 @@
  
 /* Navbar */
 .icici-navbar {
-  background: linear-gradient(135deg, #1E3A8A 0%, #0F172A 100%) !important;
-  border-bottom: 3px solid #2563EB !important;
+  background: linear-gradient(135deg, #053C6D 0%, #0F172A 100%) !important;
+  border-bottom: 3px solid #E77817 !important;
 }
  
 .icici-brand img {
@@ -31,7 +31,7 @@ nav .nav-link,
 .navbar .nav-link:hover,
 .navbar a:hover,
 nav a:hover {
-  color: #EFF6FF !important;
+  color: #FCEEE2 !important;
 }
  
 /* Dropdown menu items (Tools, Add) */
@@ -40,7 +40,7 @@ nav a:hover {
 .dropdown-menu li a,
 .navbar .dropdown-menu a,
 nav .dropdown-menu a {
-  color: #1E3A8A !important;
+  color: #053C6D !important;
   background-color: #FFFFFF !important;
 }
  
@@ -49,32 +49,32 @@ nav .dropdown-menu a {
 .dropdown-menu li a:hover,
 .navbar .dropdown-menu a:hover,
 nav .dropdown-menu a:hover {
-  color: #2563EB !important;
-  background-color: #EFF6FF !important;
+  color: #E77817 !important;
+  background-color: #FCEEE2 !important;
 }
  
 /* Headings */
 h1, h2, h3, h4, h5, h6 {
-  color: #1E3A8A;
+  color: #053C6D;
 }
  
 h1 {
-  border-bottom: 2px solid #2563EB;
+  border-bottom: 2px solid #E77817;
   padding-bottom: 8px;
 }
  
 /* Links */
 a {
-  color: #2563EB;
+  color: #E77817;
 }
  
 a:hover {
-  color: #1D4ED8;
+  color: #DC6009;
 }
  
 /* Breadcrumb */
 .breadcrumb {
-  background-color: #EFF6FF !important;
+  background-color: #FCEEE2 !important;
 }
  
 .breadcrumb a,
@@ -82,16 +82,16 @@ a:hover {
 .breadcrumb .breadcrumb-item,
 .breadcrumb .breadcrumb-item a,
 .breadcrumb span {
-  color: #1E3A8A !important;
+  color: #053C6D !important;
 }
  
 .breadcrumb .breadcrumb-item.active {
-  color: #2563EB !important;
+  color: #E77817 !important;
 }
  
 .breadcrumb a:hover,
 .breadcrumb .breadcrumb-item a:hover {
-  color: #2563EB !important;
+  color: #E77817 !important;
 }
  
 /* Body */
@@ -104,18 +104,18 @@ body {
 table.hash_table th,
 table.decision_table th,
 table th {
-  background-color: #1E3A8A !important;
+  background-color: #053C6D !important;
   color: #FFFFFF !important;
 }
  
 /* Buttons */
 .btn-primary {
-  background-color: #2563EB !important;
-  border-color: #1D4ED8 !important;
+  background-color: #E77817 !important;
+  border-color: #DC6009 !important;
 }
  
 .btn-primary:hover {
-  background-color: #1D4ED8 !important;
+  background-color: #DC6009 !important;
 }
  
 /* Pass/Fail */

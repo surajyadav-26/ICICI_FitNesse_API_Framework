@@ -1,6 +1,0 @@
-^TestGutterGameTiming
-^TestNoMarksTiming
-^TestSpareAndStrikeTiming
-^PerfectGameTiming
-
-!contents -R2 -g -p -h

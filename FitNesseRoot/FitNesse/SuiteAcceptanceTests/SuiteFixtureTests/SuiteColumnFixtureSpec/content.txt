@@ -1,6 +1,0 @@
-^TestSaveAndRecallSymbol
-^TestArraysInColumnFixture
-^TestMissingField
-^TestMissingMethod
-
-!contents -R2 -g -p -h

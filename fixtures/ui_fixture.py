@@ -9,8 +9,10 @@ import re
 from playwright.sync_api import sync_playwright
 from core.config import Config
 from core.logger import logger
-from core.pages.login_page import LoginPage
 from core.allure_helper import AllureHelper
+from .ui_flow import FlowMixin, step
+from .ui_actions import BrowserActionsMixin
+from .ui_visual import VisualTestingMixin
 
 
 def clean_html_url(value: str) -> str:
@@ -47,7 +49,7 @@ def clean_html_text(value: str) -> str:
     return cleaned
 
 
-class UiFixture:
+class UiFixture(FlowMixin, BrowserActionsMixin, VisualTestingMixin):
     """
     Generic, step-by-step browser automation fixture for FitNesse.
     """
@@ -69,6 +71,9 @@ class UiFixture:
         self._screenshot_counter = 0
         self._last_error_html = ""
         self._allure = None
+        self._init_flow()
+        self._init_actions()
+        self._init_visual()
         
         # 1. Natively extract and sanitize the FitNesse page name passed from constructor or system environment!
         env_page_name = os.environ.get("FITNESSE_PAGE_NAME")
@@ -83,10 +88,10 @@ class UiFixture:
         if env_page_path:
             parts = [p.strip() for p in env_page_path.split(".") if p.strip()]
             if len(parts) >= 3:
-                # E.g. "FrontPage.SwagLabs.LoginPage" -> suite is "SwagLabs"
+                # E.g. "FrontPage.Suite.TestPage" -> suite is "Suite"
                 self._suite_name = parts[-2]
             elif len(parts) == 2:
-                # E.g. "FrontPage.SwagLabs" -> suite is "SwagLabs"
+                # E.g. "FrontPage.Suite" -> suite is "Suite"
                 self._suite_name = parts[-1]
 
     # UI-Level Configuration Setters (Allows managing config directly from FitNesse UI!)
@@ -135,6 +140,7 @@ class UiFixture:
         self.set_headless(value)
 
     # Browser Management
+    @step(raw=True)
     def start_browser(self, *args) -> bool:
         """Starts a native Playwright browser instance based on config or UI overrides."""
         try:
@@ -192,6 +198,9 @@ class UiFixture:
                     self._context = self._browser.new_context(viewport={"width": 1920, "height": 1080})
                 
             self._page = self._context.new_page()
+            self._frame = None
+            self._attach_page_listeners(self._page)
+            self._context.on("page", self._on_new_page)
             logger.info("[UiFixture] Browser started successfully.")
             
             if self._allure:
@@ -208,6 +217,7 @@ class UiFixture:
     def startBrowser(self, *args) -> bool:
         return self.start_browser(*args)
 
+    @step(raw=True, always=True)
     def close_browser(self) -> None:
         """Closes the browser instance and stops Playwright."""
         try:
@@ -230,6 +240,7 @@ class UiFixture:
             logger.warning(f"[UiFixture] Ignored error during browser cleanup: {e}")
         finally:
             self._page = None
+            self._frame = None
             self._context = None
             self._browser = None
             self._playwright = None
@@ -239,6 +250,7 @@ class UiFixture:
         self.close_browser()
 
     # Navigation
+    @step(raw=True)
     def navigate_to(self, *args) -> bool:
         """Navigates the browser to the specified URL or UI-configured default."""
         if not self._page:
@@ -270,6 +282,7 @@ class UiFixture:
         return self.navigate_to(*args)
 
     # Actions using Page Object Model (POM) LoginPage
+    @step(raw=True)
     def fill_field(self, element_name: str, value: str) -> bool:
         """Fills an input field matching the POM locator with the specified value."""
         if not self._page:
@@ -280,7 +293,7 @@ class UiFixture:
         
         try:
             # Correctly retrieve the compiled Playwright Locator directly from the LoginPage Page Object
-            locator = LoginPage.get_locator(self._page, element_name)
+            locator = self._locator(element_name)
             locator.wait_for(state="visible", timeout=5000)
             locator.fill(value)
             
@@ -298,13 +311,15 @@ class UiFixture:
     def fillField(self, element_name: str, value: str) -> bool:
         return self.fill_field(element_name, value)
 
+    @step(raw=True)
     def fill_field_with_value(self, element_name: str, value: str) -> bool:
         """Fills an input field - maps to FitNesse: | fill field | name | with value | val |"""
-        return self.fill_field(element_name, value)
+        return self.fill_field.__wrapped__(self, element_name, value)
 
     def fillFieldWithValue(self, element_name: str, value: str) -> bool:
         return self.fill_field_with_value(element_name, value)
 
+    @step(raw=True)
     def click_button(self, element_name: str) -> bool:
         """Clicks an element matching the POM locator."""
         if not self._page:
@@ -314,7 +329,7 @@ class UiFixture:
         logger.info(f"[UiFixture] Clicking element '{element_name}'")
         
         try:
-            locator = LoginPage.get_locator(self._page, element_name)
+            locator = self._locator(element_name)
             locator.wait_for(state="visible", timeout=5000)
             locator.click()
             
@@ -333,6 +348,7 @@ class UiFixture:
         return self.click_button(element_name)
 
     # Browser Waiting Utilities
+    @step(raw=True)
     def wait_for_text_timeout(self, text: str, timeout: str) -> bool:
         """Waits for the specified text to appear on the page with a timeout in milliseconds."""
         if not self._page:
@@ -359,6 +375,7 @@ class UiFixture:
         return self.wait_for_text_timeout(text, timeout)
 
     # Value Extraction Utilities
+    @step(raw=True, getter=True)
     def get_text(self, element_name: str) -> str:
         """Retrieves the text content of an element matching the POM locator."""
         if not self._page:
@@ -367,7 +384,7 @@ class UiFixture:
             
         logger.info(f"[UiFixture] Retrieving text from element: '{element_name}'")
         try:
-            locator = LoginPage.get_locator(self._page, element_name)
+            locator = self._locator(element_name)
             locator.wait_for(state="visible", timeout=5000)
             text_content = locator.text_content()
             return text_content.strip() if text_content is not None else ""
@@ -380,6 +397,7 @@ class UiFixture:
         return self.get_text(element_name)
 
     # Assertions / Verifications
+    @step(raw=True)
     def verify_text_present(self, text: str) -> bool:
         """Returns True if the specified text is present on the page."""
         if not self._page:
@@ -398,12 +416,13 @@ class UiFixture:
     def verifyTextPresent(self, text: str) -> bool:
         return self.verify_text_present(text)
 
+    @step(raw=True)
     def verify_element_present(self, element_name: str) -> bool:
         """Returns True if an element matching the POM locator is present on the page."""
         if not self._page:
             return False
         try:
-            locator = LoginPage.get_locator(self._page, element_name)
+            locator = self._locator(element_name)
             is_present = locator.count() > 0
             if not is_present:
                 self._capture_failure_state(f"verify_element_present_failed_{element_name}")
@@ -450,7 +469,7 @@ class UiFixture:
     # Private Helpers
     def _capture_failure_state(self, reason_prefix: str) -> None:
         """Captures a screenshot automatically only on failure states."""
-        if not self._page:
+        if not self._page or self._suppress_failure_capture:
             return
 
         self._screenshot_counter += 1

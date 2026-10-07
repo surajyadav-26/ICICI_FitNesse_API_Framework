@@ -37,12 +37,12 @@ class Config:
     OAUTH2_CLIENT_SECRET = os.getenv("OAUTH2_CLIENT_SECRET", "")
     OAUTH2_TOKEN_URL = os.getenv("OAUTH2_TOKEN_URL", "")
     
-    # API Base URLs
-    DEV_API_URL = os.getenv("DEV_API_URL", "https://dev-api.example.com")
-    STAGING_API_URL = os.getenv("STAGING_API_URL", "https://staging-api.example.com")
-    QA_API_URL = os.getenv("QA_API_URL", "https://dummyjson.com")
-    UAT_API_URL = os.getenv("UAT_API_URL", "https://uat-api.example.com")
-    PROD_API_URL = os.getenv("PROD_API_URL", "https://api.example.com")
+    # API Base URLs (never hardcoded - synced from the FitNesse UI environment drawer into .env)
+    DEV_API_URL = os.getenv("DEV_API_URL", "")
+    STAGING_API_URL = os.getenv("STAGING_API_URL", "")
+    QA_API_URL = os.getenv("QA_API_URL", "")
+    UAT_API_URL = os.getenv("UAT_API_URL", "")
+    PROD_API_URL = os.getenv("PROD_API_URL", "")
     
     # Database Configuration
     DB_HOST = os.getenv("DB_HOST", "localhost")
@@ -54,15 +54,15 @@ class Config:
     # UI Automation Config
     UI_BROWSER = os.getenv("UI_BROWSER", "chromium")
     UI_HEADLESS = os.getenv("UI_HEADLESS", "true").lower() == "true"
-    UI_BASE_URL = os.getenv("UI_BASE_URL", "https://retailnetbanking.icici.bank.in/login-page")
+    UI_BASE_URL = os.getenv("UI_BASE_URL", "")
     UI_WORKERS = int(os.getenv("UI_WORKERS", "1"))
     
     # Environment-Wise UI URLs
-    DEV_UI_URL = os.getenv("DEV_UI_URL", "https://dev-retailnetbanking.icici.bank.in/login-page")
-    STAGING_UI_URL = os.getenv("STAGING_UI_URL", "https://staging-retailnetbanking.icici.bank.in/login-page")
-    QA_UI_URL = os.getenv("QA_UI_URL", "https://qa-retailnetbanking.icici.bank.in/login-page")
-    UAT_UI_URL = os.getenv("UAT_UI_URL", "https://retailnetbanking.icici.bank.in/login-page")
-    PROD_UI_URL = os.getenv("PROD_UI_URL", "https://retailnetbanking.icici.bank.in/login-page")
+    DEV_UI_URL = os.getenv("DEV_UI_URL", "")
+    STAGING_UI_URL = os.getenv("STAGING_UI_URL", "")
+    QA_UI_URL = os.getenv("QA_UI_URL", "")
+    UAT_UI_URL = os.getenv("UAT_UI_URL", "")
+    PROD_UI_URL = os.getenv("PROD_UI_URL", "")
     
     # Framework Configuration
     DEFAULT_TIMEOUT = int(os.getenv("DEFAULT_TIMEOUT", "15"))
@@ -78,6 +78,13 @@ class Config:
     LOG_RETENTION_DAYS = int(os.getenv("LOG_RETENTION_DAYS", "7"))
     SCREENSHOT_RETENTION_DAYS = int(os.getenv("SCREENSHOT_RETENTION_DAYS", "7"))
     
+    # Visual testing (screenshot comparison against baselines in data/visual/baselines)
+    VISUAL_THRESHOLD = float(os.getenv("VISUAL_THRESHOLD", "0.1"))              # allowed % of differing pixels
+    VISUAL_PIXEL_TOLERANCE = int(os.getenv("VISUAL_PIXEL_TOLERANCE", "10"))     # 0-255 per colour channel
+    VISUAL_UPDATE_BASELINE = os.getenv("VISUAL_UPDATE_BASELINE", "false").lower() == "true"
+    VISUAL_FAIL_ON_NEW = os.getenv("VISUAL_FAIL_ON_NEW", "false").lower() == "true"  # strict mode for CI
+    VISUAL_FULL_PAGE = os.getenv("VISUAL_FULL_PAGE", "true").lower() == "true"
+
     # Mock Server
     MOCK_SERVER_PORT = int(os.getenv("MOCK_SERVER_PORT", "8089"))
     
@@ -108,7 +115,14 @@ class Config:
         if env_lower not in env_map:
             raise ValueError(f"Invalid environment: {environment}. Must be one of: {list(env_map.keys())}")
         
-        return env_map[env_lower]
+        return cls._require_url(env_map[env_lower], env_lower, "API")
+    
+    @staticmethod
+    def _require_url(url: str, environment: str, kind: str) -> str:
+        """Fail clearly when an environment URL has not been set from the UI."""
+        if not url:
+            raise ValueError(f"{kind} URL for environment '{environment}' is not configured. Add it from the UI environment settings.")
+        return url
     
     @classmethod
     def get_ui_url(cls, environment: str) -> str:
@@ -137,7 +151,7 @@ class Config:
         if env_lower not in env_map:
             raise ValueError(f"Invalid environment: {environment}. Must be one of: {list(env_map.keys())}")
         
-        return env_map[env_lower]
+        return cls._require_url(env_map[env_lower], env_lower, "UI")
     
     @classmethod
     def get_credentials(cls, user_type: str = "admin") -> tuple:

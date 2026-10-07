@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ICICI Nirikshan AML Application API & UI Report - Latest Test Run</title>
+    <title>ICICI Nirikshan - Test Report</title>
     <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -13,8 +13,8 @@
             --bg-card: #ffffff;
             --text-main: #0f172a;
             --text-sub: #475569;
-            --primary: #A6192E;
-            --primary-hover: #7E1322;
+            --primary: #C23029;
+            --primary-hover: #97291E;
             --success: #16a34a;
             --fail: #ef4444;
             --border: #e2e8f0;
@@ -46,7 +46,7 @@
         .header-title h1 {
             font-size: 28px;
             font-weight: 800;
-            background: linear-gradient(135deg, #7E1322 0%, #A6192E 100%);
+            background: linear-gradient(135deg, #97291E 0%, #C23029 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
@@ -606,23 +606,23 @@
     <div class="container">
         <header>
             <div style="display: flex; align-items: center; gap: 16px;">
-                <img src="/logo.png" alt="ICICI Nirikshan" style="height: 52px; width: auto; object-fit: contain;">
+                <img src="/logo.png" alt="ICICI Nirikshan" style="height: 46px; width: auto; object-fit: contain;">
                 <div class="header-title">
                     <h1>ICICI Nirikshan AML Application API & UI Report</h1>
                     <p>Latest Test Run - Showing Most Recent Results</p>
                 </div>
             </div>
             <div class="header-meta">
-                <strong>Active Suite:</strong> DummyAPI<br>
+                <strong>Active Suite:</strong> VariablePage<br>
                 <strong>Environment:</strong> UAT Testing Portal<br>
-                <strong>Report Generated:</strong> 2026-09-18 13:55:38<br>
+                <strong>Report Generated:</strong> 2026-10-07 16:31:30<br>
                 <strong>Execution Duration:</strong> 0.00s
             </div>
         </header>
 
         <!-- Master Status Banner -->
-        <div class="status-banner banner-fail">
-            🚨 TEST RUN FAILED — 12 / 12 Test Cases Failed (Action Required)
+        <div class="status-banner banner-empty">
+            ⚪ NO TEST RESULTS CAPTURED
         </div>
 
         <div class="fitnesse-assertions-bar">
@@ -637,7 +637,7 @@
         <section class="dashboard-grid">
             <div class="kpi-card kpi-total">
                 <span class="kpi-label">Total Test Cases</span>
-                <span class="kpi-value">12</span>
+                <span class="kpi-value">0</span>
             </div>
             <div class="kpi-card kpi-success">
                 <span class="kpi-label">Succeeded Cases</span>
@@ -651,7 +651,7 @@
             </div>
             <div class="kpi-card kpi-failed">
                 <span class="kpi-label">Failed Cases</span>
-                <span class="kpi-value">12</span>
+                <span class="kpi-value">0</span>
             </div>
             <div class="kpi-card kpi-passrate">
                 <span class="kpi-label">Pass Rate</span>
@@ -666,9 +666,9 @@
                 <div class="table-controls">
                     <input type="text" id="search-input" class="search-box" placeholder="🔍 Search Test Cases..." onkeyup="filterAndSearch()">
                     <div class="filter-controls">
-                        <button id="filter-all" class="filter-btn active" data-filter="all" onclick="setFilter('all', this)">All (12)</button>
+                        <button id="filter-all" class="filter-btn active" data-filter="all" onclick="setFilter('all', this)">All (0)</button>
                         <button id="filter-pass" class="filter-btn" onclick="setFilter('passed', this)">Passed (0)</button>
-                        <button id="filter-fail" class="filter-btn" onclick="setFilter('failed', this)">Failed (12)</button>
+                        <button id="filter-fail" class="filter-btn" onclick="setFilter('failed', this)">Failed (0)</button>
                     </div>
                 </div>
             </div>
@@ -682,319 +682,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    
-        <tr class="summary-row" onclick="togglePage(0)" data-name="DummyAPI.Add_User" data-status="failed" title="Click to view requests audit trail">
-            <td>
-                <div class="test-title">
-                    <span class="suite-badge">DummyAPI</span>
-                    <strong>Add_User</strong>
-                    <span class="assertion-summary" style="margin-left: 10px;">0 right</span>
-                </div>
-            </td>
-            <td>prop-er-ti es::</td>
-            <td>
-                <span class="status-indicator status-fail">✗ FAILED</span>
-                
-            </td>
-        </tr>
-        <tr id="page-details-0" class="details-row" style="display: table-row;">
-            <td colspan="3">
-                <div class="nested-requests-container">
-                    <div class="audit-header">
-                        <h3>🔍 Executed API Requests Audit Trail</h3>
-                        
-                    </div>
-                    <div class='no-requests'>No API HTTP requests or UI execution steps were logged for this page run.</div>
-                </div>
-            </td>
-        </tr>
-        
-        <tr class="summary-row" onclick="togglePage(1)" data-name="DummyAPI.AuthenticateUser" data-status="failed" title="Click to view requests audit trail">
-            <td>
-                <div class="test-title">
-                    <span class="suite-badge">DummyAPI</span>
-                    <strong>AuthenticateUser</strong>
-                    <span class="assertion-summary" style="margin-left: 10px;">0 right</span>
-                </div>
-            </td>
-            <td>prop-er-ti es::</td>
-            <td>
-                <span class="status-indicator status-fail">✗ FAILED</span>
-                
-            </td>
-        </tr>
-        <tr id="page-details-1" class="details-row" style="display: table-row;">
-            <td colspan="3">
-                <div class="nested-requests-container">
-                    <div class="audit-header">
-                        <h3>🔍 Executed API Requests Audit Trail</h3>
-                        
-                    </div>
-                    <div class='no-requests'>No API HTTP requests or UI execution steps were logged for this page run.</div>
-                </div>
-            </td>
-        </tr>
-        
-        <tr class="summary-row" onclick="togglePage(2)" data-name="DummyAPI.Delete_User" data-status="failed" title="Click to view requests audit trail">
-            <td>
-                <div class="test-title">
-                    <span class="suite-badge">DummyAPI</span>
-                    <strong>Delete_User</strong>
-                    <span class="assertion-summary" style="margin-left: 10px;">0 right</span>
-                </div>
-            </td>
-            <td>prop-er-ti es::</td>
-            <td>
-                <span class="status-indicator status-fail">✗ FAILED</span>
-                
-            </td>
-        </tr>
-        <tr id="page-details-2" class="details-row" style="display: table-row;">
-            <td colspan="3">
-                <div class="nested-requests-container">
-                    <div class="audit-header">
-                        <h3>🔍 Executed API Requests Audit Trail</h3>
-                        
-                    </div>
-                    <div class='no-requests'>No API HTTP requests or UI execution steps were logged for this page run.</div>
-                </div>
-            </td>
-        </tr>
-        
-        <tr class="summary-row" onclick="togglePage(3)" data-name="DummyAPI.End_to_End_Flow" data-status="failed" title="Click to view requests audit trail">
-            <td>
-                <div class="test-title">
-                    <span class="suite-badge">DummyAPI</span>
-                    <strong>End_to_End_Flow</strong>
-                    <span class="assertion-summary" style="margin-left: 10px;">0 right</span>
-                </div>
-            </td>
-            <td>prop-er-ti es::</td>
-            <td>
-                <span class="status-indicator status-fail">✗ FAILED</span>
-                
-            </td>
-        </tr>
-        <tr id="page-details-3" class="details-row" style="display: table-row;">
-            <td colspan="3">
-                <div class="nested-requests-container">
-                    <div class="audit-header">
-                        <h3>🔍 Executed API Requests Audit Trail</h3>
-                        
-                    </div>
-                    <div class='no-requests'>No API HTTP requests or UI execution steps were logged for this page run.</div>
-                </div>
-            </td>
-        </tr>
-        
-        <tr class="summary-row" onclick="togglePage(4)" data-name="DummyAPI.Get_All_Products" data-status="failed" title="Click to view requests audit trail">
-            <td>
-                <div class="test-title">
-                    <span class="suite-badge">DummyAPI</span>
-                    <strong>Get_All_Products</strong>
-                    <span class="assertion-summary" style="margin-left: 10px;">0 right</span>
-                </div>
-            </td>
-            <td>prop-er-ti es::</td>
-            <td>
-                <span class="status-indicator status-fail">✗ FAILED</span>
-                
-            </td>
-        </tr>
-        <tr id="page-details-4" class="details-row" style="display: table-row;">
-            <td colspan="3">
-                <div class="nested-requests-container">
-                    <div class="audit-header">
-                        <h3>🔍 Executed API Requests Audit Trail</h3>
-                        
-                    </div>
-                    <div class='no-requests'>No API HTTP requests or UI execution steps were logged for this page run.</div>
-                </div>
-            </td>
-        </tr>
-        
-        <tr class="summary-row" onclick="togglePage(5)" data-name="DummyAPI.Get_All_User" data-status="failed" title="Click to view requests audit trail">
-            <td>
-                <div class="test-title">
-                    <span class="suite-badge">DummyAPI</span>
-                    <strong>Get_All_User</strong>
-                    <span class="assertion-summary" style="margin-left: 10px;">0 right</span>
-                </div>
-            </td>
-            <td>prop-er-ti es::</td>
-            <td>
-                <span class="status-indicator status-fail">✗ FAILED</span>
-                
-            </td>
-        </tr>
-        <tr id="page-details-5" class="details-row" style="display: table-row;">
-            <td colspan="3">
-                <div class="nested-requests-container">
-                    <div class="audit-header">
-                        <h3>🔍 Executed API Requests Audit Trail</h3>
-                        
-                    </div>
-                    <div class='no-requests'>No API HTTP requests or UI execution steps were logged for this page run.</div>
-                </div>
-            </td>
-        </tr>
-        
-        <tr class="summary-row" onclick="togglePage(6)" data-name="DummyAPI.Get_All_User" data-status="failed" title="Click to view requests audit trail">
-            <td>
-                <div class="test-title">
-                    <span class="suite-badge">DummyAPI</span>
-                    <strong>Get_All_User</strong>
-                    <span class="assertion-summary" style="margin-left: 10px;">0 right</span>
-                </div>
-            </td>
-            <td>prop-er-ti es::</td>
-            <td>
-                <span class="status-indicator status-fail">✗ FAILED</span>
-                
-            </td>
-        </tr>
-        <tr id="page-details-6" class="details-row" style="display: table-row;">
-            <td colspan="3">
-                <div class="nested-requests-container">
-                    <div class="audit-header">
-                        <h3>🔍 Executed API Requests Audit Trail</h3>
-                        
-                    </div>
-                    <div class='no-requests'>No API HTTP requests or UI execution steps were logged for this page run.</div>
-                </div>
-            </td>
-        </tr>
-        
-        <tr class="summary-row" onclick="togglePage(7)" data-name="DummyAPI.Get_Logged_User_Profile" data-status="failed" title="Click to view requests audit trail">
-            <td>
-                <div class="test-title">
-                    <span class="suite-badge">DummyAPI</span>
-                    <strong>Get_Logged_User_Profile</strong>
-                    <span class="assertion-summary" style="margin-left: 10px;">0 right</span>
-                </div>
-            </td>
-            <td>prop-er-ti es::</td>
-            <td>
-                <span class="status-indicator status-fail">✗ FAILED</span>
-                
-            </td>
-        </tr>
-        <tr id="page-details-7" class="details-row" style="display: table-row;">
-            <td colspan="3">
-                <div class="nested-requests-container">
-                    <div class="audit-header">
-                        <h3>🔍 Executed API Requests Audit Trail</h3>
-                        
-                    </div>
-                    <div class='no-requests'>No API HTTP requests or UI execution steps were logged for this page run.</div>
-                </div>
-            </td>
-        </tr>
-        
-        <tr class="summary-row" onclick="togglePage(8)" data-name="DummyAPI.Get_User_by_Id" data-status="failed" title="Click to view requests audit trail">
-            <td>
-                <div class="test-title">
-                    <span class="suite-badge">DummyAPI</span>
-                    <strong>Get_User_by_Id</strong>
-                    <span class="assertion-summary" style="margin-left: 10px;">0 right</span>
-                </div>
-            </td>
-            <td>prop-er-ti es::</td>
-            <td>
-                <span class="status-indicator status-fail">✗ FAILED</span>
-                
-            </td>
-        </tr>
-        <tr id="page-details-8" class="details-row" style="display: table-row;">
-            <td colspan="3">
-                <div class="nested-requests-container">
-                    <div class="audit-header">
-                        <h3>🔍 Executed API Requests Audit Trail</h3>
-                        
-                    </div>
-                    <div class='no-requests'>No API HTTP requests or UI execution steps were logged for this page run.</div>
-                </div>
-            </td>
-        </tr>
-        
-        <tr class="summary-row" onclick="togglePage(9)" data-name="DummyAPI.Search_Product" data-status="failed" title="Click to view requests audit trail">
-            <td>
-                <div class="test-title">
-                    <span class="suite-badge">DummyAPI</span>
-                    <strong>Search_Product</strong>
-                    <span class="assertion-summary" style="margin-left: 10px;">0 right</span>
-                </div>
-            </td>
-            <td>prop-er-ti es::</td>
-            <td>
-                <span class="status-indicator status-fail">✗ FAILED</span>
-                
-            </td>
-        </tr>
-        <tr id="page-details-9" class="details-row" style="display: table-row;">
-            <td colspan="3">
-                <div class="nested-requests-container">
-                    <div class="audit-header">
-                        <h3>🔍 Executed API Requests Audit Trail</h3>
-                        
-                    </div>
-                    <div class='no-requests'>No API HTTP requests or UI execution steps were logged for this page run.</div>
-                </div>
-            </td>
-        </tr>
-        
-        <tr class="summary-row" onclick="togglePage(10)" data-name="DummyAPI.Search_User" data-status="failed" title="Click to view requests audit trail">
-            <td>
-                <div class="test-title">
-                    <span class="suite-badge">DummyAPI</span>
-                    <strong>Search_User</strong>
-                    <span class="assertion-summary" style="margin-left: 10px;">0 right</span>
-                </div>
-            </td>
-            <td>prop-er-ti es::</td>
-            <td>
-                <span class="status-indicator status-fail">✗ FAILED</span>
-                
-            </td>
-        </tr>
-        <tr id="page-details-10" class="details-row" style="display: table-row;">
-            <td colspan="3">
-                <div class="nested-requests-container">
-                    <div class="audit-header">
-                        <h3>🔍 Executed API Requests Audit Trail</h3>
-                        
-                    </div>
-                    <div class='no-requests'>No API HTTP requests or UI execution steps were logged for this page run.</div>
-                </div>
-            </td>
-        </tr>
-        
-        <tr class="summary-row" onclick="togglePage(11)" data-name="DummyAPI.Update_User" data-status="failed" title="Click to view requests audit trail">
-            <td>
-                <div class="test-title">
-                    <span class="suite-badge">DummyAPI</span>
-                    <strong>Update_User</strong>
-                    <span class="assertion-summary" style="margin-left: 10px;">0 right</span>
-                </div>
-            </td>
-            <td>prop-er-ti es::</td>
-            <td>
-                <span class="status-indicator status-fail">✗ FAILED</span>
-                
-            </td>
-        </tr>
-        <tr id="page-details-11" class="details-row" style="display: table-row;">
-            <td colspan="3">
-                <div class="nested-requests-container">
-                    <div class="audit-header">
-                        <h3>🔍 Executed API Requests Audit Trail</h3>
-                        
-                    </div>
-                    <div class='no-requests'>No API HTTP requests or UI execution steps were logged for this page run.</div>
-                </div>
-            </td>
-        </tr>
-        
+                    <tr><td colspan='3' style='text-align:center; color:var(--text-sub);'>No active test session execution history found. Executing a test will populate this.</td></tr>
                 </tbody>
             </table>
         </section>

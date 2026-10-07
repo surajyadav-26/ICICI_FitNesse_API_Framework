@@ -1,5 +1,0 @@
-^TestFinalScores
-^TestGames
-^TestGamesWithFancyFixture
-
-!contents -R2 -g -p -h

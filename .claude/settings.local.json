@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rm -rf FitNesse FrontPage/DummyAPI FrontPage/SwagLabs*)",
+      "Bash(rm -rf files/*)",
+      "Bash(find . -name '*.zip' -delete)"
+    ]
+  }
+}

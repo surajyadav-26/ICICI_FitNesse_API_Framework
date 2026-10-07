@@ -4,7 +4,24 @@
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
 
-  <title>ICICI Prudential AML - $title</title>
+  <title>ICICI Nirikshan - $title</title>
+  <script>
+   (function() {
+    /* Friendly URLs: /home is the front page; /Name is shorthand for /FrontPage.Name (see PageHeader). */
+    var path = location.pathname;
+    if (path === "/home") { location.replace("/FrontPage" + location.search + location.hash); return; }
+    document.addEventListener("DOMContentLoaded", function() {
+      if (!/Page doesn't exist/i.test(document.title)) { return; }
+      var name = path.replace(/^\//, "");
+      if (!name || name.indexOf("/") > -1 || name.indexOf("FrontPage.") === 0) { return; }
+      var target = "/FrontPage." + name;
+      fetch(target, { credentials: "same-origin" }).then(function(r) { return r.text(); }).then(function(text) {
+        var found = /<title>([^<]*)<\/title>/i.exec(text);
+        if (found && !/Page doesn't exist/i.test(found[1])) { location.replace(target + location.search + location.hash); }
+      }).catch(function() {});
+    });
+   })();
+  </script>
   <!--[if lt IE 9]>
    <script>
     document.createElement('header');

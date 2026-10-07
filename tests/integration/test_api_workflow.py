@@ -1,3 +1,4 @@
+from unittest.mock import patch
 """
 Integration tests for API testing workflow
 Tests end-to-end request execution, token management, and reporting
@@ -186,7 +187,8 @@ class TestConfigurationIntegration:
     
     def test_get_environment_base_url(self):
         """Test getting base URL from config"""
-        dev_url = Config.get_base_url("dev")
+        with patch.object(Config, "DEV_API_URL", "https://configured.invalid"):
+            dev_url = Config.get_base_url("dev")
         assert dev_url is not None
         assert len(dev_url) > 0
     

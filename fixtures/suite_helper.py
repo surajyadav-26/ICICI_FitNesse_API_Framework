@@ -21,10 +21,10 @@ class SuiteHelper:
         if clean_path:
             parts = [p.strip() for p in clean_path.split(".") if p.strip()]
             if len(parts) >= 3:
-                # E.g. "FrontPage.DummyAPI.Get_All_Products" -> suite is "DummyAPI"
+                # E.g. "FrontPage.Suite.TestPage" -> suite is "Suite"
                 CURRENT_SUITE_NAME = parts[-2]
             elif len(parts) == 2:
-                # E.g. "FrontPage.DummyAPI" -> suite is "DummyAPI"
+                # E.g. "FrontPage.Suite" -> suite is "Suite"
                 CURRENT_SUITE_NAME = parts[-1]
                 
         # Also store them in os.environ for backwards compatibility with existing fixtures

@@ -124,6 +124,48 @@ def update_env_file(payload):
     os.replace(temporary_file, env_file)
 
 
+def colorize_log(text):
+    """Escape a log file for HTML and highlight WARNING / ERROR lines on the light background."""
+    lines = []
+    for line in text.splitlines():
+        escaped = html.escape(line)
+        if "[ERROR]" in line or "[CRITICAL]" in line:
+            escaped = f'<span class="log-error">{escaped}</span>'
+        elif "[WARNING]" in line:
+            escaped = f'<span class="log-warn">{escaped}</span>'
+        lines.append(escaped)
+    return "\n".join(lines)
+
+
+def message_page(title, message):
+    """Small branded page shown instead of raw JSON when a report is not available yet."""
+    return f"""<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><title>ICICI Nirikshan - {html.escape(title)}</title>
+<link rel="icon" type="image/x-icon" href="/favicon.ico" />
+<style>
+body {{ margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center; background: #f5f7fa; font-family: Arial, sans-serif; color: #1e293b; }}
+.card {{ background: #fff; border: 1px solid #e2e8f0; border-top: 4px solid #C23029; border-radius: 12px; padding: 36px 44px; max-width: 460px; text-align: center; box-shadow: 0 8px 28px rgba(15, 23, 42, 0.08); }}
+.card img {{ height: 56px; margin-bottom: 18px; }}
+h1 {{ font-size: 20px; margin: 0 0 10px; color: #053C6D; }}
+p {{ font-size: 14px; line-height: 1.6; color: #64748b; margin: 0 0 20px; }}
+a {{ display: inline-block; background: #053C6D; color: #fff; text-decoration: none; padding: 10px 20px; border-radius: 8px; font-size: 13px; font-weight: 700; }}
+a:hover {{ background: #00488f; }}
+</style></head><body>
+<div class="card"><img src="/logo.png" alt="ICICI Nirikshan"><h1>{html.escape(title)}</h1><p>{html.escape(message)}</p>
+<a href="http://localhost:8080/">Back to Nirikshan</a></div></body></html>"""
+
+
+def active_urls():
+    """Read the active API/UI URLs the UI wrote to FitNesse's VariablePage."""
+    try:
+        path = os.path.join(BASE_DIR, "FitNesseRoot", "VariablePage", "content.txt")
+        with open(path, encoding="utf-8") as f:
+            found = re.findall(r"!define (?:API|UI)_BASE_URL \{([^}]*)\}", f.read())
+        return " / ".join(u for u in found if u) or "not set"
+    except OSError:
+        return "not set"
+
+
 class UserStoreHandler(BaseHTTPRequestHandler):
     def _send_json(self, status, payload):
         body = json.dumps(payload).encode("utf-8")
@@ -133,6 +175,15 @@ class UserStoreHandler(BaseHTTPRequestHandler):
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Headers", "Content-Type")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.end_headers()
+        self.wfile.write(body)
+
+    def _send_message_page(self, status, title, message):
+        body = message_page(title, message).encode("utf-8")
+        self.send_response(status)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Cache-Control", "no-store")
         self.end_headers()
         self.wfile.write(body)
 
@@ -162,7 +213,7 @@ class UserStoreHandler(BaseHTTPRequestHandler):
                     ef.write("Headless=Headed (Live Debug Supported)\n")
                     ef.write("Platform=Windows 10/11\n")
                     ef.write("Framework=Python-native Playwright Symmetrical Automation\n")
-                    ef.write("Active_URL=https://dummyjson.com / https://www.saucedemo.com\n")
+                    ef.write(f"Active_URL={active_urls()}\n")
                     
                 # Write Executor Metadata to populate the Allure Executors widget beautifully (removing 'Unknown')!
                 exec_path = os.path.join(results_path, "executor.json")
@@ -223,14 +274,14 @@ class UserStoreHandler(BaseHTTPRequestHandler):
                     with open(file_path, "rb") as f:
                         self.wfile.write(f.read())
                 else:
-                    self._send_json(404, {"error": "Report not found"})
+                    self._send_message_page(404, "No report yet", "No test run has produced a report so far. Run a test or suite from FitNesse, then open the report again.")
             except Exception as error:
                 self._send_json(500, {"error": str(error)})
             return
 
         elif self.path == "/favicon.ico":
             try:
-                fav_path = os.path.join(BASE_DIR, "FitNesseRoot", "files", "fitnesse", "icici", "img", "favicon.ico")
+                fav_path = os.path.join(BASE_DIR, "FitNesseRoot", "files", "fitnesse", "icici", "img", "icici-favicon.ico")
                 if os.path.exists(fav_path):
                     self.send_response(200)
                     self.send_header("Content-Type", "image/x-icon")
@@ -246,7 +297,10 @@ class UserStoreHandler(BaseHTTPRequestHandler):
 
         elif self.path == "/logo.png":
             try:
-                logo_path = os.path.join(BASE_DIR, "FitNesseRoot", "files", "fitnesse", "icici", "img", "icici-logo.png")
+                img_dir = os.path.join(BASE_DIR, "FitNesseRoot", "files", "fitnesse", "icici", "img")
+                logo_path = os.path.join(img_dir, "icici-i-logo.png")
+                if not os.path.exists(logo_path):
+                    logo_path = os.path.join(img_dir, "icici-logo.png")
                 if os.path.exists(logo_path):
                     self.send_response(200)
                     self.send_header("Content-Type", "image/png")
@@ -274,7 +328,7 @@ class UserStoreHandler(BaseHTTPRequestHandler):
                     with open(latest_log, "r", encoding="utf-8", errors="ignore") as lf:
                         log_content = lf.read()
                         
-                # Wrap in a gorgeous, readable corporate-grade dark log viewer with Auto-Refresh!
+                # Wrap in a clean, readable corporate-grade light log viewer with Auto-Refresh!
                 html_logs = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -285,9 +339,9 @@ class UserStoreHandler(BaseHTTPRequestHandler):
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
     <style>
         body {{
-            background-color: #0f1115;
-            color: #e2e8f0;
-            font-family: 'Outfit', sans-serif;
+            background-color: #f5f7fa;
+            color: #1e293b;
+            font-family: 'Outfit', Arial, sans-serif;
             margin: 0;
             padding: 24px;
             display: flex;
@@ -300,20 +354,18 @@ class UserStoreHandler(BaseHTTPRequestHandler):
             align-items: center;
             justify-content: space-between;
             margin-bottom: 16px;
-            border-bottom: 1px solid #2e3035;
+            border-bottom: 3px solid #C23029;
             padding-bottom: 16px;
         }}
         h1 {{
             font-size: 20px;
             margin: 0;
             font-weight: 800;
-            background: linear-gradient(135deg, #fb7185 0%, #A6192E 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: #053C6D;
         }}
         .meta {{
             font-size: 13px;
-            color: #94a3b8;
+            color: #64748b;
         }}
         .actions {{
             display: flex;
@@ -321,9 +373,9 @@ class UserStoreHandler(BaseHTTPRequestHandler):
             gap: 12px;
         }}
         .btn {{
-            background: #1c1d21;
-            border: 1px solid #2e3035;
-            color: #e2e8f0;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            color: #1e293b;
             padding: 6px 12px;
             border-radius: 6px;
             cursor: pointer;
@@ -332,23 +384,27 @@ class UserStoreHandler(BaseHTTPRequestHandler):
             transition: all 0.15s;
         }}
         .btn:hover {{
-            background: #2e3035;
-            border-color: #475569;
+            background: #f1f5f9;
+            border-color: #053C6D;
         }}
         pre {{
-            background: #07080a;
-            border: 1px solid #1c1d21;
+            background: #ffffff;
+            color: #1e293b;
+            border: 1px solid #e2e8f0;
             border-radius: 8px;
             padding: 20px;
             flex: 1;
             overflow-y: auto;
             overflow-x: auto;
             margin: 0;
-            font-family: 'Fira Code', monospace;
+            font-family: 'Fira Code', Consolas, monospace;
             font-size: 13px;
             line-height: 1.6;
             white-space: pre-wrap;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
         }}
+        .log-error {{ color: #b91c1c; font-weight: 600; }}
+        .log-warn {{ color: #b45309; }}
     </style>
     <script>
         var refreshInterval = null;
@@ -398,14 +454,14 @@ class UserStoreHandler(BaseHTTPRequestHandler):
 <body>
     <header>
         <div style="display: flex; align-items: center; gap: 16px;">
-            <img src="/logo.png" alt="ICICI Nirikshan" style="height: 52px; width: auto; object-fit: contain;">
+            <img src="/logo.png" alt="ICICI Nirikshan" style="height: 46px; width: auto; object-fit: contain;">
             <div>
                 <h1>📋 ICICI Nirikshan AML Framework Execution Logs</h1>
                 <div class="meta" style="margin-top: 4px;">Viewing active log file: <strong>{log_filename}</strong></div>
             </div>
         </div>
         <div class="actions">
-            <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: #94a3b8; font-weight: 600; cursor: pointer; margin-right: 12px; user-select: none;">
+            <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: #64748b; font-weight: 600; cursor: pointer; margin-right: 12px; user-select: none;">
                 <input type="checkbox" id="auto-refresh-toggle" onchange="toggleAutoRefresh(this)" checked style="cursor: pointer; width: 14px; height: 14px;">
                 <span>Auto-Refresh (3s)</span>
             </label>
@@ -413,7 +469,7 @@ class UserStoreHandler(BaseHTTPRequestHandler):
             <button class="btn" onclick="scrollToBottom()">⬇ Scroll to Bottom</button>
         </div>
     </header>
-    <pre id="log-box">{html.escape(log_content)}</pre>
+    <pre id="log-box">{colorize_log(log_content)}</pre>
 </body>
 </html>"""
                 self.send_response(200)
@@ -468,7 +524,64 @@ class UserStoreHandler(BaseHTTPRequestHandler):
                     with open(file_path, "rb") as f:
                         self.wfile.write(f.read())
                 else:
-                    self._send_json(404, {"error": f"File not found: {relative_file_path}"})
+                    if relative_file_path.endswith(".html"):
+                        self._send_message_page(404, "No Allure report yet", "The Allure report has not been generated. Run a test or suite, then use the Allure option in the Reports menu.")
+                    else:
+                        self._send_json(404, {"error": f"File not found: {relative_file_path}"})
+            except Exception as error:
+                self._send_json(500, {"error": str(error)})
+            return
+
+        elif self.path == "/pages":
+            try:
+                from core.pages import page_registry
+                self._send_json(200, {"pages": page_registry.list_pages()})
+            except Exception as error:
+                self._send_json(500, {"error": str(error)})
+            return
+
+        elif self.path.split("?")[0] == "/visual":
+            try:
+                from core import visual_review
+                body = visual_review.render_page().encode("utf-8")
+                self.send_response(200)
+                self.send_header("Content-Type", "text/html; charset=utf-8")
+                self.send_header("Content-Length", str(len(body)))
+                self.send_header("Cache-Control", "no-store")
+                self.end_headers()
+                self.wfile.write(body)
+            except Exception as error:
+                self._send_json(500, {"error": str(error)})
+            return
+
+        elif self.path.startswith("/visual-image/"):
+            try:
+                from urllib.parse import unquote
+                from core import visual_compare
+                parts = unquote(self.path.split("?")[0]).split("/")      # ['', 'visual-image', profile, name, 'kind.png']
+                if len(parts) != 5 or not parts[4].endswith(".png"):
+                    raise ValueError("Bad image path")
+                image_path = visual_compare.result_file(parts[2], parts[3], parts[4][:-4])
+                if not os.path.isfile(image_path):
+                    raise FileNotFoundError("Image not found")
+                with open(image_path, "rb") as image:
+                    data = image.read()
+                self.send_response(200)
+                self.send_header("Content-Type", "image/png")
+                self.send_header("Content-Length", str(len(data)))
+                self.send_header("Cache-Control", "no-store")
+                self.end_headers()
+                self.wfile.write(data)
+            except FileNotFoundError as error:
+                self._send_json(404, {"error": str(error)})
+            except Exception as error:
+                self._send_json(400, {"error": str(error)})
+            return
+
+        elif self.path == "/visual-results":
+            try:
+                from core import visual_compare
+                self._send_json(200, {"results": visual_compare.list_results()})
             except Exception as error:
                 self._send_json(500, {"error": str(error)})
             return
@@ -513,6 +626,37 @@ class UserStoreHandler(BaseHTTPRequestHandler):
                 self._send_json(400, {"error": str(error)})
             return
             
+        elif self.path == "/pages":
+            try:
+                from core.pages import page_registry
+                length = int(self.headers.get("Content-Length", "0"))
+                payload = json.loads(self.rfile.read(length).decode("utf-8"))
+                if payload.get("remove"):
+                    locators = page_registry.remove_locator(payload.get("page"), payload["remove"])
+                else:
+                    locators = page_registry.save_locator(payload.get("page"), payload.get("locator"), payload.get("selector"))
+                self._send_json(200, {"saved": True, "page": payload.get("page"), "locators": locators})
+            except Exception as error:
+                self._send_json(400, {"error": str(error)})
+            return
+
+        elif self.path == "/visual/approve":
+            try:
+                from core import visual_compare
+                length = int(self.headers.get("Content-Length", "0"))
+                payload = json.loads(self.rfile.read(length).decode("utf-8"))
+                items = payload.get("items") or []
+                if not items:
+                    raise ValueError("Nothing to approve")
+                approved = 0
+                for item in items:
+                    visual_compare.approve(item.get("profile"), item.get("name"))
+                    approved += 1
+                self._send_json(200, {"approved": approved})
+            except Exception as error:
+                self._send_json(400, {"error": str(error)})
+            return
+
         elif self.path == "/live-debug":
             try:
                 debug_file = os.path.join(BASE_DIR, "runtime", "live-debug.txt")

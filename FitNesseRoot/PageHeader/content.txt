@@ -1,6 +1,8 @@
 !-<link rel="icon" type="image/x-icon" href="/files/fitnesse/icici/img/icici-favicon.ico">
 <link rel="shortcut icon" type="image/x-icon" href="/files/fitnesse/icici/img/icici-favicon.ico">
 <link rel="apple-touch-icon" href="/files/fitnesse/icici/img/icici-favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mulish:wght@400;500;600;700;800&display=swap">
 <link rel="stylesheet" type="text/css" href="/files/fitnesse/css/icici-prudential.css">
 
 <!-- FitNesse default nav is suppressed at template level (skeleton.vm).
@@ -13,43 +15,26 @@ body { padding-top: 64px !important; margin-top: 0 !important; }
      LOGIN OVERLAY
      ═══════════════════════════════════════════════════ -->
 <div id="icici-login-overlay">
-  <!-- Left Side: AML Branding & Background -->
-  <div id="icici-login-left">
-    <div id="icici-login-left-content">
-      <div id="icici-aml-badge">AML APPLICATION</div>
-      <h1 id="icici-aml-title">Anti-Money Laundering</h1>
-      <p id="icici-aml-desc">A focused workspace for validating AML controls, customer journeys, and compliance evidence across APIs and user interfaces.</p>
-      
-      <div id="icici-aml-features">
-        <div class="aml-feature-item">🛡️ Transaction monitoring & alert workflows</div>
-        <div class="aml-feature-item">👤 KYC, due diligence & customer risk checks</div>
-        <div class="aml-feature-item">📊 Sanctions screening & audit-ready evidence</div>
-      </div>
-    </div>
-  </div>
-  
-  <!-- Right Side: Clean Login Form -->
+  <!-- Left Side: hero image -->
+  <div id="icici-login-left"></div>
+
+  <!-- Right Side: Nirikshan login form -->
   <div id="icici-login-right">
     <div id="icici-login-box">
-      <div id="icici-login-logo" style="background: #ffffff; padding: 28px 32px 22px; display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; text-align: center !important; border-bottom: 4px solid #A6192E;">
-        <img src="/files/fitnesse/icici/img/icici-favicon.ico" alt="ICICI Nirikshan" style="height: 68px; width: auto; object-fit: contain; display: block !important; margin: 0 auto 12px !important;">
-        <div id="icici-login-title" style="color:#A6192E; font-size:18px; font-weight:700; letter-spacing:.5px; text-align: center !important; width: 100% !important; display: block !important;">ICICI Nirikshan AML Application</div>
-        <div id="icici-login-subtitle" style="margin-top: 4px; color:#58595B; font-size:12px; font-weight:600; text-align: center !important; width: 100% !important; display: block !important;">API &amp; UI Automation Framework</div>
+      <div id="icici-login-logo">
+        <img src="/files/fitnesse/icici/img/nirikshan-logo.png" alt="ICICI Nirikshan">
       </div>
       <div id="icici-login-form">
-        <div id="icici-login-error"></div>
         <div class="icici-field">
           <label for="icici-username">Username</label>
-          <input type="text" id="icici-username" placeholder="Enter username" autocomplete="username" autofocus>
+          <input type="text" id="icici-username" placeholder="Enter Username" autocomplete="username" autofocus>
         </div>
         <div class="icici-field">
           <label for="icici-password">Password</label>
-          <input type="password" id="icici-password" placeholder="Enter password" autocomplete="current-password">
+          <input type="password" id="icici-password" placeholder="Enter Password" autocomplete="current-password">
         </div>
-        <button id="icici-login-btn" onclick="iciLogin()">Login</button>
-        <div id="icici-login-hint">
-          Authorised users only &nbsp;|&nbsp; Contact QA Admin for access
-        </div>
+        <div id="icici-login-error"></div>
+        <button id="icici-login-btn" onclick="iciLogin()">Log In</button>
       </div>
     </div>
   </div>
@@ -97,7 +82,8 @@ body { padding-top: 64px !important; margin-top: 0 !important; }
     <!-- Collapsible Profile Dropdown menu -->
     <div id="icici-profile-dropdown" class="icici-profile-dropdown" style="display: none;">
       <button class="ici-dropdown-item" onclick="iciLiveDebug()"><span class="ici-dropdown-icon">👁️</span><span>Live Debug</span></button>
-      <button class="ici-dropdown-item" onclick="iciToggleDictDrawer()"><span class="ici-dropdown-icon">📖</span><span>Dictionary</span></button>
+      <button class="ici-dropdown-item" onclick="iciToggleDictDrawer()"><span class="ici-dropdown-icon">✍️</span><span>Step Builder</span></button>
+      <button class="ici-dropdown-item" onclick="iciOpenVisualReview()"><span class="ici-dropdown-icon">🖼️</span><span>Visual Review</span></button>
       <button id="ici-logs-menu" class="ici-dropdown-item" onclick="iciOpenLogs()"><span class="ici-dropdown-icon">📋</span><span>Logs</span></button>
       <button id="ici-user-management-menu" class="ici-dropdown-item ici-user-management-hidden" onclick="iciOpenUserManagement()"><span class="ici-dropdown-icon">👥</span><span>Users</span></button>
       <button class="ici-dropdown-item" onclick="iciLogout()"><span class="ici-dropdown-icon">🚪</span><span>Sign Out</span></button>
@@ -117,7 +103,7 @@ body { padding-top: 64px !important; margin-top: 0 !important; }
     
     <!-- Tab Selector -->
     <div class="ici-modal-tabs" style="display: flex; gap: 8px; margin-bottom: 16px; border-bottom: 2px solid #eee; padding-bottom: 8px;">
-      <button class="ici-tab-btn" id="ici-tab-env" onclick="iciSwitchModalTab('env')" style="background: transparent; border: none; border-bottom: 2px solid #A6192E; font-weight: bold; cursor: pointer; padding: 4px 12px; color: #A6192E;">Environments</button>
+      <button class="ici-tab-btn" id="ici-tab-env" onclick="iciSwitchModalTab('env')" style="background: transparent; border: none; border-bottom: 2px solid #C23029; font-weight: bold; cursor: pointer; padding: 4px 12px; color: #C23029;">Environments</button>
       <button class="ici-tab-btn" id="ici-tab-config" onclick="iciSwitchModalTab('config')" style="background: transparent; border: none; font-weight: bold; cursor: pointer; padding: 4px 12px; color: #64748b;">Config</button>
     </div>
 
@@ -228,379 +214,264 @@ body { padding-top: 64px !important; margin-top: 0 !important; }
 </div>
 
 <!-- ═══════════════════════════════════════════════════
-     LOCATOR DICTIONARY & STEP BUILDER DRAWER
+     STEP BUILDER DRAWER
      ═══════════════════════════════════════════════════ -->
 <div id="ici-dict-drawer" class="ici-drawer">
   <div class="ici-drawer-header">
-    <div style="display: flex; align-items: center; gap: 8px;">
-      <span style="font-size: 20px;">📖</span>
-      <h2 class="ici-drawer-title" style="color: #fff; font-size: 14px;">Dictionary &amp; Step Builder</h2>
-    </div>
-    <button class="ici-drawer-close-btn" onclick="iciToggleDictDrawer()">&times;</button>
-  </div>
-  
-  <div class="ici-drawer-tabs">
-    <button class="ici-drawer-tab-btn active" id="ici-dict-tab-dict" onclick="iciSwitchDrawerTab('dict')">📖 Locators</button>
-    <button class="ici-drawer-tab-btn" id="ici-dict-tab-builder" onclick="iciSwitchDrawerTab('builder')">✍️ Step Builder</button>
-  </div>
-
-  <!-- Tab 1: Locator Dictionary Pane -->
-  <div id="ici-drawer-pane-dict" class="ici-drawer-pane">
-    <p class="ici-drawer-hint">Copy predefined SwagLabs locators in 1 click:</p>
-    
-    <div class="ici-dict-group">
-      <div class="ici-dict-group-title">👤 Input Fields</div>
-      <div class="ici-dict-item" onclick="iciCopyToClipboard('username')">
-        <span class="ici-dict-key">username</span>
-        <span class="ici-dict-desc">User ID input textbox</span>
-        <span class="ici-dict-copy-icon">📋</span>
-      </div>
-      <div class="ici-dict-item" onclick="iciCopyToClipboard('password')">
-        <span class="ici-dict-key">password</span>
-        <span class="ici-dict-desc">Password input textbox</span>
-        <span class="ici-dict-copy-icon">📋</span>
+    <div class="ici-drawer-heading">
+      <span class="ici-drawer-badge">✍️</span>
+      <div>
+        <h2 class="ici-drawer-title">Step Builder</h2>
+        <div class="ici-drawer-subtitle">Build UI test steps without writing code</div>
       </div>
     </div>
-
-    <div class="ici-dict-group">
-      <div class="ici-dict-group-title">🎯 Buttons &amp; Badges</div>
-      <div class="ici-dict-item" onclick="iciCopyToClipboard('login button')">
-        <span class="ici-dict-key">login button</span>
-        <span class="ici-dict-desc">Submit Login button</span>
-        <span class="ici-dict-copy-icon">📋</span>
-      </div>
-      <div class="ici-dict-item" onclick="iciCopyToClipboard('cart badge')">
-        <span class="ici-dict-key">cart badge</span>
-        <span class="ici-dict-desc">Shopping cart badge count selector</span>
-        <span class="ici-dict-copy-icon">📋</span>
-      </div>
-    </div>
-    
-    <div class="ici-dict-group-title" style="margin-top: 20px;">💡 Pro Tip:</div>
-    <p class="ici-drawer-hint" style="font-style: italic;">You can also pass standard CSS selectors (e.g. #login-button) directly into your steps!</p>
+    <button class="ici-drawer-close-btn" onclick="iciToggleDictDrawer()" title="Close">&times;</button>
   </div>
 
-  <!-- Tab 2: Interactive Step Builder Pane -->
-  <div id="ici-drawer-pane-builder" class="ici-drawer-pane" style="display: none;">
-    <p class="ici-drawer-hint">Select an action and locator to visually compile full test scripts with zero code!</p>
-    
-    <div style="margin-bottom: 12px;">
-      <label class="ici-builder-label">1. Select Action</label>
-      <select id="ici-builder-action" class="ici-env-input" onchange="iciOnBuilderActionChange()">
-        <option value="navigate">Navigate to URL</option>
-        <option value="fill">Fill Field / Type Text</option>
-        <option value="click">Click Button / Link</option>
-        <option value="wait">Wait for Text / Timeout</option>
-        <option value="verify">Verify Text Present</option>
-        <option value="close">Close Browser</option>
-      </select>
+  <div id="ici-drawer-pane-builder" class="ici-drawer-pane">
+    <div class="ici-builder-card">
+      <div class="ici-builder-field">
+        <label class="ici-builder-label">Page</label>
+        <select id="ici-builder-page" class="ici-env-input" onchange="iciOnBuilderPageChange()"></select>
+      </div>
+      <div class="ici-builder-row">
+        <div class="ici-builder-col">
+          <label class="ici-builder-label">Category</label>
+          <select id="ici-builder-category" class="ici-env-input" onchange="iciOnBuilderCategoryChange()"></select>
+        </div>
+        <div class="ici-builder-col">
+          <label class="ici-builder-label">Action</label>
+          <select id="ici-builder-action" class="ici-env-input" onchange="iciOnBuilderActionChange()"></select>
+        </div>
+      </div>
+      <div id="ici-builder-params"></div>
+      <div class="ici-builder-preview-box">
+        <label class="ici-builder-label">Step preview</label>
+        <div id="ici-builder-step-preview" class="ici-builder-preview"></div>
+        <div id="ici-builder-doc" class="ici-builder-doc"></div>
+      </div>
+      <button class="ici-builder-add-btn" id="ici-builder-add" onclick="iciAppendStepToScript()">➕ Add step</button>
     </div>
 
-    <!-- Locator selection: Dropdown (username, password, login button, cart badge) or custom text input -->
-    <div id="ici-builder-locator-container" style="margin-bottom: 12px; display: none;">
-      <label class="ici-builder-label">2. Target Locator</label>
-      <select id="ici-builder-locator-select" class="ici-env-input" onchange="iciOnBuilderLocatorChange()">
-        <option value="username">username (Input)</option>
-        <option value="password">password (Password)</option>
-        <option value="login button">login button (Button)</option>
-        <option value="cart badge">cart badge (Badge)</option>
-        <option value="custom">Custom Selector / CSS...</option>
-      </select>
-      <input type="text" id="ici-builder-locator-custom" class="ici-env-input" style="margin-top: 6px; display: none;" placeholder="Type custom selector (e.g. #login-button)" oninput="iciGenerateBuilderOutput()" />
-    </div>
+    <details class="ici-builder-manage">
+      <summary>📄 Manage page locators</summary>
+      <div class="ici-builder-manage-body">
+        <div class="ici-builder-field">
+          <label class="ici-builder-label">Page</label>
+          <input type="text" id="ici-manage-page" class="ici-env-input" list="ici-manage-pages" oninput="iciRenderManageList()" placeholder="e.g. DashboardPage" />
+          <datalist id="ici-manage-pages"></datalist>
+        </div>
+        <div class="ici-builder-row">
+          <div class="ici-builder-col">
+            <label class="ici-builder-label">Locator name</label>
+            <input type="text" id="ici-manage-name" class="ici-env-input" placeholder="e.g. login button" />
+          </div>
+          <div class="ici-builder-col">
+            <label class="ici-builder-label">Selector</label>
+            <input type="text" id="ici-manage-selector" class="ici-env-input" placeholder="css=#login, //div, text=Sign in" />
+          </div>
+        </div>
+        <button class="ici-builder-copy-btn" style="margin-top: 0;" onclick="iciSaveLocator()">💾 Save locator</button>
+        <div id="ici-manage-list" class="ici-manage-list"></div>
+      </div>
+    </details>
 
-    <!-- Parameter 1 (for Navigate, Wait, Verify) -->
-    <div id="ici-builder-param-1-container" style="margin-bottom: 12px;">
-      <label id="ici-builder-param-1-label" class="ici-builder-label">Target URL</label>
-      <input type="text" id="ici-builder-param-1" class="ici-env-input" placeholder="e.g. https://www.saucedemo.com/" oninput="iciGenerateBuilderOutput()" />
+    <div class="ici-builder-steps-head">
+      <span class="ici-builder-label" style="margin: 0;">Test script <span id="ici-builder-count" class="ici-builder-count">0</span></span>
+      <span class="ici-builder-link" onclick="iciClearBuilderScript()">Clear all</span>
     </div>
-
-    <!-- Parameter 2 (for values or timeouts) -->
-    <div id="ici-builder-param-2-container" style="margin-bottom: 12px; display: none;">
-      <label id="ici-builder-param-2-label" class="ici-builder-label">Value to Type</label>
-      <input type="text" id="ici-builder-param-2" class="ici-env-input" placeholder="" oninput="iciGenerateBuilderOutput()" />
-    </div>
-
-    <!-- Single step preview and Append button -->
-    <div style="margin-top: 14px; margin-bottom: 14px; background: #fff5f5; border: 1px dashed #feb2b2; padding: 10px; border-radius: 6px;">
-      <label class="ici-builder-label" style="color: #c53030; font-weight: bold; margin-bottom: 2px;">Step Preview</label>
-      <div id="ici-builder-step-preview" style="font-family: monospace; font-size: 11px; font-weight: bold; color: #9b2c2c; word-break: break-all;">|navigate to|https://www.saucedemo.com/|</div>
-      <button class="ici-modal-btn save" style="width: 100%; margin-top: 8px; padding: 6px 10px; font-size: 12px; background: #c53030;" onclick="iciAppendStepToScript()">➕ Append Step to Script</button>
-    </div>
-
-    <!-- Compiled FitNesse Wiki Table syntax output -->
-    <div style="margin-top: 14px;">
-      <label class="ici-builder-label" style="color: #003060; font-weight: bold; display: flex; justify-content: space-between;">
-        <span>Current Test Script Table</span>
-        <span style="color: #64748b; font-weight: normal; cursor: pointer; text-decoration: underline;" onclick="iciClearBuilderScript()">Clear</span>
-      </label>
-      <textarea id="ici-builder-script" class="ici-env-input" style="font-family: monospace; font-size: 11px; height: 110px; resize: none; background: #faf9f5; line-height: 1.4; border-color: #003060;" readonly onclick="this.select()"></textarea>
-    </div>
-
-    <button class="ici-modal-btn save" style="width: 100%; margin-top: 10px; background: #003060;" onclick="iciCopyBuilderScript()">📋 Copy Entire Script Table</button>
+    <div id="ici-builder-steps" class="ici-builder-steps"></div>
+    <textarea id="ici-builder-script" class="ici-builder-script" readonly onclick="this.select()" placeholder="Your FitNesse script table appears here..."></textarea>
+    <button class="ici-builder-copy-btn" onclick="iciCopyBuilderScript()">📋 Copy entire script table</button>
   </div>
+  <div id="ici-drawer-toast" class="ici-drawer-toast"></div>
 </div>
 
 <!-- ═══════════════════════════════════════════════════
      STYLES
      ═══════════════════════════════════════════════════ -->
 <style>
-/* ── Locator Dictionary Drawer Styling ────────────────── */
+/* ── Step Builder Drawer ─────────── */
 .ici-drawer {
   position: fixed;
   top: 0;
-  right: -380px; /* Hidden initially, slides out smoothly! */
-  width: 380px;
+  right: -480px; /* Hidden initially, slides out smoothly! */
+  width: 460px;
+  max-width: 100vw;
   height: 100vh;
-  background: #ffffff;
-  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.1);
+  background: #f5f7fa;
+  box-shadow: -8px 0 32px rgba(0, 20, 50, 0.18);
   z-index: 99998;
   transition: right 0.3s ease;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
   text-align: left;
-  border-left: 1px solid #cbd5e1;
+  font-family: Arial, sans-serif;
 }
-.ici-drawer.open {
-  right: 0; /* Slide out! */
-}
+.ici-drawer.open { right: 0; }
 .ici-drawer-header {
   padding: 16px 20px;
-  background: #003060;
+  background: linear-gradient(90deg, #C23029 0%, #EA761B 100%);
   color: #fff;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid #1e293b;
+  border-bottom: 3px solid #F6CCA8;
 }
-.ici-drawer-title {
-  font-size: 14px;
-  font-weight: 700;
-  color: #ffffff;
-  margin: 0 !important;
-  font-family: Arial, sans-serif;
+.ici-drawer-heading { display: flex; align-items: center; gap: 12px; }
+.ici-drawer-badge {
+  width: 36px; height: 36px; border-radius: 10px; background: rgba(255,255,255,0.14);
+  display: flex; align-items: center; justify-content: center; font-size: 18px;
 }
+.ici-drawer-title { font-size: 15px; font-weight: 700; color: #ffffff !important; margin: 0 !important; padding: 0 !important; border: none !important; }
+.ici-drawer-subtitle { font-size: 11px; color: rgba(255,255,255,0.72); margin-top: 2px; }
 .ici-drawer-close-btn {
-  background: transparent;
-  border: none;
-  color: #ffffff;
-  font-size: 24px;
-  cursor: pointer;
-  line-height: 1;
+  background: rgba(255,255,255,0.12); border: none; color: #ffffff; font-size: 22px; cursor: pointer;
+  line-height: 1; width: 30px; height: 30px; border-radius: 8px; transition: background 0.15s;
 }
-.ici-drawer-tabs {
-  display: flex;
-  background: #f8fafc;
-  border-bottom: 1px solid #e2e8f0;
+.ici-drawer-close-btn:hover { background: rgba(255,255,255,0.28); }
+.ici-drawer-pane { padding: 16px 18px 24px; flex: 1; overflow-y: auto; box-sizing: border-box; }
+.ici-builder-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px; box-shadow: 0 1px 3px rgba(15,23,42,0.05); }
+.ici-builder-row { display: flex; gap: 10px; margin-bottom: 12px; }
+.ici-builder-col { flex: 1; min-width: 0; }
+.ici-drawer label, .ici-builder-manage summary { text-align: left !important; }
+.ici-builder-add-btn, .ici-builder-copy-btn { outline: none !important; }
+.ici-builder-label { display: block; text-align: left !important; font-size: 10px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 4px; }
+.ici-builder-field { margin-bottom: 10px; }
+.ici-builder-field .opt { color: #94a3b8; font-weight: 400; text-transform: none; }
+.ici-builder-preview-box { background: #FCEEE2; border: 1px dashed #E77817; border-radius: 8px; padding: 10px 12px; margin: 4px 0 12px; }
+.ici-builder-preview-box .ici-builder-label { color: #97291E; }
+.ici-builder-preview { font-family: Consolas, monospace; font-size: 12px; font-weight: 700; color: #97291E; word-break: break-all; min-height: 16px; }
+.ici-builder-doc { font-size: 10px; color: #5C6E89; margin-top: 6px; line-height: 1.5; }
+.ici-builder-add-btn, .ici-builder-copy-btn {
+  width: 100%; border: none; border-radius: 8px; padding: 10px; font-size: 12px; font-weight: 700; cursor: pointer;
+  color: #fff; transition: all 0.15s; font-family: Arial, sans-serif;
 }
-.ici-drawer-tab-btn {
-  flex: 1;
-  padding: 12px;
-  border: none;
-  background: transparent;
-  font-size: 12px;
-  font-weight: 700;
-  color: #64748b;
-  cursor: pointer;
-  border-bottom: 2px solid transparent;
-  transition: all 0.15s;
+.ici-builder-add-btn { background: linear-gradient(90deg, #C23029 0%, #EA761B 100%); }
+.ici-builder-add-btn:hover:not([disabled]) { filter: brightness(0.92); }
+.ici-builder-add-btn[disabled] { background: #F6CCA8 !important; color: #ffffff !important; cursor: not-allowed; filter: none !important; }
+.ici-builder-copy-btn { background: linear-gradient(90deg, #C23029 0%, #EA761B 100%); margin-top: 10px; }
+.ici-builder-copy-btn:hover { filter: brightness(0.92); }
+.ici-builder-steps-head { display: flex; justify-content: space-between; align-items: center; margin: 16px 0 8px; }
+.ici-builder-count { background: #E77817; color: #fff; border-radius: 10px; padding: 1px 7px; font-size: 10px; margin-left: 4px; }
+.ici-builder-link { font-size: 11px; color: #C23029; cursor: pointer; text-decoration: underline; }
+.ici-builder-steps { max-height: 240px; overflow-y: auto; }
+.ici-builder-step {
+  display: flex; align-items: center; gap: 6px; background: #fff; border: 1px solid #e2e8f0; border-radius: 6px;
+  padding: 5px 6px 5px 8px; margin-bottom: 4px; font-family: Consolas, monospace; font-size: 11px; color: #1e293b;
 }
-.ici-drawer-tab-btn.active {
-  color: #003060;
-  border-bottom-color: #003060;
-  background: #ffffff;
+.ici-builder-step .num { color: #94a3b8; min-width: 18px; }
+.ici-builder-step .txt { flex: 1; word-break: break-all; }
+.ici-builder-step .ctl { background: transparent; border: none; cursor: pointer; color: #64748b; font-size: 12px; padding: 2px 4px; border-radius: 4px; }
+.ici-builder-step .ctl:hover { background: #f1f5f9; color: #C23029; }
+.ici-builder-empty { text-align: center; color: #94a3b8; font-size: 11px; padding: 14px 0; border: 1px dashed #cbd5e1; border-radius: 8px; }
+.ici-builder-script {
+  width: 100%; box-sizing: border-box; margin-top: 10px; height: 96px; resize: vertical; font-family: Consolas, monospace;
+  font-size: 11px; line-height: 1.5; background: #faf9f5; border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px;
 }
-.ici-drawer-pane {
-  padding: 20px;
-  flex: 1;
-  overflow-y: auto;
-  box-sizing: border-box;
+.ici-drawer-toast {
+  position: absolute; left: 50%; bottom: 20px; transform: translate(-50%, 20px); background: #97291E; color: #fff;
+  padding: 8px 16px; border-radius: 20px; font-size: 12px; opacity: 0; pointer-events: none; transition: all 0.25s;
+  max-width: 85%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.ici-drawer-hint {
-  font-size: 12px;
-  color: #64748b;
-  line-height: 1.5;
-  margin: 0 0 16px;
-  font-family: Arial, sans-serif;
-}
-.ici-dict-group {
-  margin-bottom: 16px;
-}
-.ici-dict-group-title {
-  font-size: 11px;
-  font-weight: 700;
-  color: #475569;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 8px;
-}
-.ici-dict-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  padding: 8px 12px;
-  margin-bottom: 8px;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-.ici-dict-item:hover {
-  border-color: #003060;
-  background: #f0f7ff;
-}
-.ici-dict-key {
-  font-family: monospace;
-  font-size: 12px;
-  font-weight: 700;
-  color: #003060;
-}
-.ici-dict-desc {
-  font-size: 11px;
-  color: #64748b;
-  margin-left: 8px;
-  flex: 1;
-}
-.ici-dict-copy-icon {
-  font-size: 14px;
-  color: #94a3b8;
-  margin-left: 8px;
-}
-.ici-builder-label {
-  display: block;
-  font-size: 11px;
-  font-weight: 700;
-  color: #475569;
-  text-transform: uppercase;
-  margin-bottom: 4px;
-}
+.ici-drawer-toast.show { opacity: 1; transform: translate(-50%, 0); }
 
-/* ── Login Overlay ──────────────────────────────────── */
+.ici-builder-manage { margin-top: 14px; background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; }
+.ici-builder-manage summary { cursor: pointer; padding: 10px 14px; font-size: 12px; font-weight: 700; color: #C23029; list-style: none; }
+.ici-builder-manage summary::-webkit-details-marker { display: none; }
+.ici-builder-manage[open] summary { border-bottom: 1px solid #e2e8f0; }
+.ici-builder-manage-body { padding: 14px; }
+.ici-manage-list { margin-top: 10px; }
+.ici-manage-row { display: flex; align-items: center; gap: 8px; padding: 5px 6px; border-bottom: 1px dashed #e2e8f0; font-size: 11px; }
+.ici-manage-row .n { font-weight: 700; color: #97291E; min-width: 90px; }
+.ici-manage-row .s { flex: 1; font-family: Consolas, monospace; color: #475569; word-break: break-all; }
+.ici-manage-row .ctl { background: transparent; border: none; cursor: pointer; color: #64748b; }
+.ici-manage-row .ctl:hover { color: #C23029; }
+.ici-builder-preview { white-space: pre-wrap; }
+
+
+.ici-builder-manage .ici-builder-copy-btn { background: #fff; color: #C23029; border: 1.5px solid #E77817; }
+.ici-builder-manage .ici-builder-copy-btn:hover { background: #FCEEE2; filter: none; }
+.ici-drawer .ici-env-input:focus { border-color: #E77817; box-shadow: 0 0 0 3px rgba(231,120,23,0.16); }
+
+/* ── Login Overlay (Nirikshan design) ────────────────── */
+/* --u maps the 2000px-wide design to the viewport, so the page looks like the reference at any screen size */
 #icici-login-overlay {
+  --u: clamp(0.6px, 0.05vw, 0.95px);
   position: fixed; inset: 0;
   display: flex;
   flex-direction: row !important;
   height: 100vh !important;
   width: 100vw !important;
   z-index: 99999;
+  font-family: 'Mulish', Arial, sans-serif;
+  background: #E8ECF8;
 }
 #icici-login-left {
-  flex: 1.25 !important;
-  background: linear-gradient(135deg, rgba(0, 48, 96, 0.9) 0%, rgba(126, 19, 34, 0.95) 100%), 
-              url('https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=1200&q=80') no-repeat center center / cover !important;
-  display: flex !important;
-  flex-direction: column !important;
-  justify-content: center !important;
-  align-items: flex-start !important;
-  padding: 8% 6% !important;
-  color: #fff !important;
-  text-align: left !important;
-  box-sizing: border-box !important;
-}
-#icici-login-left-content {
-  max-width: 520px !important;
-  text-align: left !important;
-}
-#icici-aml-badge {
-  display: inline-block !important;
-  background: #E06336 !important;
-  color: #fff !important;
-  font-size: 11px !important;
-  font-weight: 800 !important;
-  padding: 4px 10px !important;
-  border-radius: 4px !important;
-  letter-spacing: 1px !important;
-  margin-bottom: 20px !important;
-  text-transform: uppercase !important;
-}
-#icici-aml-title {
-  font-size: 38px !important;
-  font-weight: 800 !important;
-  color: #fff !important;
-  margin: 0 0 16px 0 !important;
-  line-height: 1.2 !important;
-  font-family: Arial, sans-serif !important;
-  letter-spacing: -0.5px !important;
-}
-#icici-aml-desc {
-  font-size: 15px !important;
-  line-height: 1.6 !important;
-  color: rgba(255,255,255,0.9) !important;
-  margin-bottom: 30px !important;
-  font-family: Arial, sans-serif !important;
-}
-#icici-aml-features {
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 12px !important;
-}
-.aml-feature-item {
-  display: flex !important;
-  align-items: center !important;
-  gap: 8px !important;
-  font-size: 14px !important;
-  font-weight: 600 !important;
-  color: rgba(255,255,255,0.95) !important;
-  font-family: Arial, sans-serif !important;
+  flex: 1 1 50% !important;
+  background: #0A192F url('/files/fitnesse/icici/img/login-hero.jpg') no-repeat center top / cover !important;
 }
 #icici-login-right {
-  flex: 0.75 !important;
-  background: #f8fafc !important;
+  flex: 1 1 50% !important;
+  background: linear-gradient(135deg, #E8ECF8 0%, #EEF0F6 50%, #E8EAF4 100%) !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  padding: 40px !important;
+  padding: 24px !important;
   box-sizing: border-box !important;
   overflow-y: auto !important;
 }
 #icici-login-box {
-  background: #ffffff;
-  border-radius: 10px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.06);
   width: 100%;
-  max-width: 420px; /* Increased from 380px for a more robust split-screen look and to support wider logos */
-  overflow: hidden;
-  border: 1px solid #e2e8f0;
+  max-width: calc(500 * var(--u));
+  min-width: 300px;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  overflow: visible;
 }
 #icici-login-logo {
-  background: #ffffff;
-  padding: 28px 32px 22px;
   display: flex !important;
-  flex-direction: column !important;
-  align-items: center !important;
   justify-content: center !important;
-  text-align: center !important;
-  border-bottom: 4px solid #A6192E;
+  margin-bottom: calc(150 * var(--u)) !important;
+  padding: 0 !important;
+  border: none !important;
+  background: transparent !important;
 }
 #icici-login-logo img {
-  width: auto !important;
+  width: calc(370 * var(--u)) !important;
+  min-width: 190px !important;
+  height: auto !important;
   max-width: 100% !important;
-  height: 68px !important;
   display: block !important;
-  margin: 0 auto 12px !important;
+  margin: 0 !important;
 }
-#icici-login-title    { color:#A6192E; font-size:18px; font-weight:700; letter-spacing:.5px; text-align: center !important; width: 100% !important; }
-#icici-login-subtitle { color:#58595B; font-size:12px; margin-top:3px; font-weight:600; text-align: center !important; width: 100% !important; }
-#icici-login-form     { padding: 28px 32px 24px; text-align: left !important; }
-.icici-field          { margin-bottom: 16px; text-align: left !important; }
-.icici-field label    { display:block !important; text-align: left !important; font-size:12px; font-weight:600; color:#555; margin-bottom:5px; text-transform:uppercase; letter-spacing:.4px; }
-.icici-field input    { width:100% !important; display:block !important; text-align: left !important; box-sizing:border-box; padding:10px 12px; border:1.5px solid #ddd; border-radius:5px; font-size:14px; outline:none; transition:border-color .2s; }
-.icici-field input:focus { border-color:#A6192E; }
-#icici-login-btn {
-  width:100%; padding:12px; background:#A6192E; color:#fff;
-  border:none; border-radius:5px; font-size:15px; font-weight:600;
-  cursor:pointer; letter-spacing:.3px; transition:background .2s;
+#icici-login-form  { padding: 0; text-align: left !important; }
+#icici-login-form .icici-field { margin-bottom: calc(44 * var(--u)); text-align: left !important; }
+#icici-login-form .icici-field label {
+  display: block !important; text-align: left !important; font-size: max(12px, calc(17 * var(--u))); font-weight: 500;
+  color: #0A192F; margin-bottom: calc(14 * var(--u)); text-transform: none; letter-spacing: 0;
 }
-#icici-login-btn:hover { background:#7E1322; }
+#icici-login-form .icici-field input {
+  width: 100% !important; display: block !important; box-sizing: border-box; height: max(40px, calc(62 * var(--u))); padding: 0 calc(20 * var(--u));
+  background: #FFFFFF; border: 1px solid #E5E8EB; border-radius: calc(12 * var(--u)); font-family: inherit;
+  font-size: max(13px, calc(19 * var(--u))); font-weight: 700; color: #0A192F;
+  box-shadow: 0 2px 6px rgba(10, 25, 47, 0.04); outline: none; transition: border-color .15s, box-shadow .15s;
+}
+#icici-login-form .icici-field input::placeholder { color: #5C6E89; font-weight: 600; }
+#icici-login-form .icici-field input:focus { border-color: #E77817; box-shadow: 0 0 0 3px rgba(231, 120, 23, 0.16); }
 #icici-login-error {
-  color:#EF4444; font-size:13px; margin-bottom:12px; min-height:18px;
-  font-weight:600; text-align:center;
+  color: #B3261E; font-size: 13px; min-height: 18px; margin: calc(-20 * var(--u)) 0 calc(14 * var(--u)); font-weight: 700; text-align: center;
 }
-#icici-login-hint {
-  text-align:center; font-size:11px; color:#999; margin-top:14px;
+#icici-login-btn {
+  width: 100%; height: max(42px, calc(62 * var(--u))); margin-top: calc(40 * var(--u)); border: none; border-radius: calc(12 * var(--u)); cursor: pointer;
+  background: linear-gradient(90deg, #C23029 0%, #EA761B 100%); color: #fff; font-family: inherit;
+  font-size: max(14px, calc(21 * var(--u))); font-weight: 800; letter-spacing: .2px; box-shadow: 0 6px 16px rgba(194, 48, 41, 0.28);
+  transition: filter .15s, transform .1s, box-shadow .15s;
 }
+#icici-login-btn:hover  { filter: brightness(0.92); box-shadow: 0 8px 20px rgba(194, 48, 41, 0.34); }
+#icici-login-btn:active { transform: translateY(1px); }
 
 @media (max-width: 900px) {
   #icici-login-overlay { flex-direction: column !important; }
@@ -612,8 +483,8 @@ body { padding-top: 64px !important; margin-top: 0 !important; }
 .icici-header-banner {
   display: flex !important;
   align-items: center;
-  background: linear-gradient(90deg, #7E1322 0%, #A6192E 40%, #E06336 100%);
-  border-bottom: 3px solid #E06336;
+  background: linear-gradient(90deg, #C23029 0%, #EA761B 100%);
+  border-bottom: 3px solid #E77817;
   padding: 0 12px !important;
   min-height: 60px;
   gap: 6px;
@@ -654,7 +525,7 @@ body { padding-top: 64px !important; margin-top: 0 !important; }
   flex-shrink: 0 !important;
 }
 .icici-nav-btn:hover { background:rgba(255,255,255,.22); color:#fff; text-decoration:none; }
-.icici-nav-btn.admin-only { border-color:#E06336; }
+.icici-nav-btn.admin-only { border-color:#E77817; }
 
 /* Right side - absolutely NO shrinking! */
 .icici-header-right  { display:flex; align-items:center; gap:5px; flex-shrink:0 !important; min-width: fit-content !important; }
@@ -743,15 +614,15 @@ body { padding-top: 64px !important; margin-top: 0 !important; }
 
 .icici-user-chip     { display:flex; align-items:center; gap:6px; background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.25); border-radius:4px; padding:5px 10px; cursor: pointer; user-select: none; transition: background 0.15s; }
 .icici-user-chip:hover { background: rgba(255,255,255,0.2); }
-.icici-user-icon     { font-size:9px; color:#E06336; }
+.icici-user-icon     { font-size:9px; color:#E77817; }
 #icici-user-display  { color:#fff; font-size:11px; font-weight:600; }
 .icici-role-badge    { font-size:10px; font-weight:700; padding:2px 7px; border-radius:4px; text-transform:uppercase; letter-spacing:.4px; }
-.role-admin { background:#E06336; color:#fff; }
+.role-admin { background:#E77817; color:#fff; }
 .role-editor { background:#155724; color:#fff; }
 .role-user  { background:rgba(255,255,255,.2); color:#fff; }
 .ici-modal-hint { margin: -8px 0 14px; color:#64748b; font-size:12px; }
 .ici-user-form { display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-bottom:8px; }
-.ici-user-management-error { min-height:18px; color:#A6192E; font-size:12px; font-weight:600; }
+.ici-user-management-error { min-height:18px; color:#C23029; font-size:12px; font-weight:600; }
 @media (max-width: 700px) { .ici-user-form { grid-template-columns: 1fr; } }
 
 /* Collapsible Profile Dropdown styles */
@@ -800,7 +671,7 @@ body { padding-top: 64px !important; margin-top: 0 !important; }
 }
 .ici-dropdown-item:hover {
   background: #f1f5f9 !important;
-  color: #A6192E !important;
+  color: #C23029 !important;
 }
 .ici-dropdown-icon {
   display: inline-block !important;
@@ -857,7 +728,7 @@ body { padding-top: 64px !important; margin-top: 0 !important; }
   padding: 0 4px !important;
 }
 .ici-nav-env-select option {
-  background: #7E1322 !important;
+  background: #97291E !important;
   color: #fff !important;
 }
 .ici-nav-env-btn {
@@ -883,7 +754,7 @@ body { padding-top: 64px !important; margin-top: 0 !important; }
 .ici-modal-box {
   background: #fff; border-radius: 8px; width: 550px; padding: 28px 32px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.25);
-  border-top: 4px solid #A6192E;
+  border-top: 4px solid #C23029;
   text-align: left !important;
 }
 .ici-modal-title { font-size: 18px; font-weight: 700; color: #2c2c2c; margin-bottom: 16px; font-family: Arial, sans-serif; }
@@ -891,15 +762,15 @@ body { padding-top: 64px !important; margin-top: 0 !important; }
 .ici-env-table th, .ici-env-table td { text-align: left; padding: 8px 10px; font-size: 13px; border-bottom: 1px solid #eee; font-family: Arial, sans-serif; }
 .ici-env-table th { font-weight: 700; color: #555; text-transform: uppercase; font-size: 11px; }
 .ici-env-input { width: 100%; padding: 6px 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; font-size: 12px; font-family: Arial, sans-serif; }
-.ici-env-input:focus { border-color: #A6192E; outline: none; }
+.ici-env-input:focus { border-color: #C23029; outline: none; }
 .ici-row-btn { background: transparent; border: none; font-size: 15px; cursor: pointer; padding: 4px; }
 .ici-row-btn:hover { transform: scale(1.15); }
 .ici-modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; border-top: 1px solid #eee; padding-top: 16px; }
 .ici-modal-btn { padding: 8px 16px; border-radius: 4px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; font-family: Arial, sans-serif; }
 .ici-modal-btn.cancel { background: #eee; color: #333; }
 .ici-modal-btn.cancel:hover { background: #ddd; }
-.ici-modal-btn.save { background: #A6192E; color: #fff; }
-.ici-modal-btn.save:hover { background: #7E1322; }
+.ici-modal-btn.save { background: linear-gradient(90deg, #C23029 0%, #EA761B 100%); color: #fff; }
+.ici-modal-btn.save:hover { background: linear-gradient(90deg, #97291E 0%, #DC6009 100%); }
 
 /* ── Dynamic Test Output Styling ────────────────────── */
 .ici-master-summary-banner {
@@ -920,8 +791,8 @@ body { padding-top: 64px !important; margin-top: 0 !important; }
   border: 1px solid #16A34A !important;
 }
 .ici-banner-fail {
-  background: linear-gradient(135deg, #7E1322 0%, #A6192E 100%) !important;
-  border: 1px solid #A6192E !important;
+  background: linear-gradient(135deg, #97291E 0%, #C23029 100%) !important;
+  border: 1px solid #C23029 !important;
 }
 .ici-banner-title {
   font-size: 16px !important;
@@ -946,7 +817,7 @@ body { padding-top: 64px !important; margin-top: 0 !important; }
 .ici-pill-right { background: rgba(255,255,255,0.12) !important; }
 .ici-pill-wrong { background: rgba(0,0,0,0.25) !important; }
 .ici-pill-ignored { background: rgba(255,255,255,0.08) !important; }
-.ici-pill-exception { background: #E06336 !important; }
+.ici-pill-exception { background: #E77817 !important; }
 
 /* Test Summaries list */
 .ici-summary-li {
@@ -975,12 +846,12 @@ body { padding-top: 64px !important; margin-top: 0 !important; }
   color: #fff !important;
 }
 .ici-row-status.pass { background: #16A34A !important; }
-.ici-row-status.fail { background: #A6192E !important; }
+.ici-row-status.fail { background: #C23029 !important; }
 .ici-row-name { font-weight: 700 !important; color: #1E293B !important; flex: 1 !important; }
 .ici-row-duration { color: #64748B !important; font-size: 12px !important; font-weight: 600 !important; }
 .ici-row-counts { font-size: 11px !important; font-weight: 700 !important; color: #475569 !important; }
 .c-right { color: #16A34A !important; }
-.c-wrong { color: #A6192E !important; }
+.c-wrong { color: #C23029 !important; }
 .c-ignored { color: #475569 !important; }
 
 /* Inline Response Cell Wrapper */
@@ -991,7 +862,7 @@ body { padding-top: 64px !important; margin-top: 0 !important; }
 }
 .ici-inspect-btn-inline {
   background: transparent !important; /* Matches dynamic UI background perfectly! */
-  color: #A6192E !important; /* Premium corporate Maroon icon! */
+  color: #C23029 !important; /* Premium corporate Maroon icon! */
   border: 1px solid #cbd5e1 !important; /* Subtle, clean border matching the table grid! */
   border-radius: 4px !important;
   font-size: 12px !important;
@@ -1006,10 +877,10 @@ body { padding-top: 64px !important; margin-top: 0 !important; }
 }
 .ici-inspect-btn-inline:hover {
   background: #f1f5f9 !important; /* Soft gray highlight on hover! */
-  color: #7E1322 !important;
+  color: #97291E !important;
 }
 .ici-stop-btn {
-  background: #A6192E !important;
+  background: linear-gradient(90deg, #C23029 0%, #EA761B 100%) !important;
   color: #ffffff !important;
   border: none !important;
   border-radius: 4px !important;
@@ -1023,7 +894,7 @@ body { padding-top: 64px !important; margin-top: 0 !important; }
   line-height: 1.2 !important;
 }
 .ici-stop-btn:hover {
-  background: #7E1322 !important;
+  background: linear-gradient(90deg, #97291E 0%, #DC6009 100%) !important;
 }
 .ici-simple-pre {
   background: transparent !important; /* No background! */
@@ -1050,7 +921,7 @@ table, .fit_table, .instructions, .collapsible {
   border: 1px solid #e2e8f0 !important;
 }
 table tr th, .fit_table tr th, .instructions tr th {
-  background: linear-gradient(135deg, #7E1322 0%, #A6192E 100%) !important;
+  background: linear-gradient(135deg, #97291E 0%, #C23029 100%) !important;
   color: #ffffff !important;
   text-transform: uppercase !important;
   font-size: 11px !important;
@@ -1136,6 +1007,24 @@ body article {
      ═══════════════════════════════════════════════════ -->
 <script>
 (function() {
+  /* Friendly address bar: login shows "/", the front page "/home", other pages drop the "FrontPage." prefix.
+     The real wiki path is kept in window.__iciRealPath so every feature keeps working. */
+  window.__iciRealPath = window.__iciRealPath || location.pathname;
+  window.iciRealPath = function() { return window.__iciRealPath || location.pathname; };
+  window.iciPrettyUrl = function(loggedIn) {
+    try {
+      if (location.search || location.hash) { return; }
+      var real = window.iciRealPath(), pretty = real;
+      if (!loggedIn) { pretty = "/"; }
+      else if (real === "/" || real === "/FrontPage" || real === "/index.html") { pretty = "/home"; }
+      else if (real.indexOf("/FrontPage.") === 0) { pretty = "/" + real.substring(11); }
+      if (pretty !== location.pathname) { history.replaceState(null, "", pretty); }
+    } catch (e) {}
+  };
+})();
+</script>
+<script>
+(function() {
 
   /* ── UI user store ─────────────────────────────────────────────────
      This store is browser-local for the demo application.
@@ -1181,7 +1070,7 @@ body article {
 
   /* ── Nav links per role ────────────────────────────────────────── */
   /* p() = current page path so admin links work on every wiki page */
-  function p() { return location.pathname; }
+  function p() { return window.iciRealPath(); }
 
   function getRunUrl() {
     if (p() === "/" || p() === "/FrontPage" || p() === "" || p() === "/index.html") {
@@ -1490,6 +1379,7 @@ body article {
       var overlay = document.getElementById("icici-login-overlay");
       if (overlay) overlay.style.display = "none";
       document.body.style.overflow = ""; // Restore body scrolling!
+      window.iciPrettyUrl(true);
 
       var banner = document.getElementById("icici-header-banner");
       if (banner) banner.style.display = "flex";
@@ -1538,9 +1428,9 @@ body article {
       if (/[?&](edit|addChild|saveData|save|delete|properties)/.test(location.search)) {
         document.body.innerHTML =
           '<div style="margin:80px auto;max-width:500px;text-align:center;font-family:Arial">' +
-          '<h2 style="color:#A6192E">Access Denied</h2>' +
+          '<h2 style="color:#C23029">Access Denied</h2>' +
           '<p>Your role (<strong>Viewer</strong>) does not have permission to perform this action.</p>' +
-          '<a href="/" style="color:#004A80">← Back to Home</a></div>';
+          '<a href="/" style="color:#053C6D">← Back to Home</a></div>';
       }
     }
     if (document.readyState === "loading") {
@@ -1604,7 +1494,7 @@ body article {
     active: "Dev",
     environments: {
       "Dev": { api: "http://192.168.4.187/trubi25v2rel", ui: "https://dev-retailnetbanking.icici.bank.in/login-page" },
-      "QA": { api: "https://dummyjson.com", ui: "https://retailnetbanking.icici.bank.in/login-page" },
+      "QA": { api: "", ui: "https://retailnetbanking.icici.bank.in/login-page" },
       "UAT": { api: "http://uat-api.icicipru.com/api", ui: "https://retailnetbanking.icici.bank.in/login-page" },
       "Prod": { api: "https://api.icicipru.com/api", ui: "https://retailnetbanking.icici.bank.in/login-page" }
     }
@@ -1693,7 +1583,7 @@ body article {
     return fetch("http://127.0.0.1:8090/active-page", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ page: location.pathname })
+      body: JSON.stringify({ page: window.iciRealPath() })
     }).catch(function(err) {
       console.warn("User store offline; active page not set:", err);
     });
@@ -1732,15 +1622,15 @@ body article {
     var paneConfig = document.getElementById("ici-pane-config");
     
     if (tabName === "env") {
-      tabEnv.style.borderBottom = "2px solid #A6192E";
-      tabEnv.style.color = "#A6192E";
+      tabEnv.style.borderBottom = "2px solid #C23029";
+      tabEnv.style.color = "#C23029";
       tabConfig.style.borderBottom = "none";
       tabConfig.style.color = "#64748b";
       paneEnv.style.display = "block";
       paneConfig.style.display = "none";
     } else {
-      tabConfig.style.borderBottom = "2px solid #A6192E";
-      tabConfig.style.color = "#A6192E";
+      tabConfig.style.borderBottom = "2px solid #C23029";
+      tabConfig.style.color = "#C23029";
       tabEnv.style.borderBottom = "none";
       tabEnv.style.color = "#64748b";
       paneEnv.style.display = "none";
@@ -1892,7 +1782,7 @@ body article {
           var pageName = pageNameInput ? pageNameInput.value : "";
           
           // If they are saving an empty page, and it's a Suite page:
-          if (text === "" && (isSuiteChecked || /suite|regression|smoke|sanity|demo/i.test(location.pathname) || /suite|regression|smoke|sanity|demo/i.test(pageName))) {
+          if (text === "" && (isSuiteChecked || /suite|regression|smoke|sanity|demo/i.test(window.iciRealPath()) || /suite|regression|smoke|sanity|demo/i.test(pageName))) {
             textarea.value = "!contents -R2 -g -p -h\n";
           }
         }
@@ -1924,7 +1814,7 @@ body article {
 
   /* ── Force corporate browser tab title overrides beautifully! ── */
   function updateBrowserTabTitle() {
-    var baseTitle = "ICICI Nirikshan AML Application";
+    var baseTitle = "ICICI Nirikshan";
     if (p() === "/" || p() === "/FrontPage" || p() === "" || p() === "/index.html") {
       document.title = baseTitle;
     } else {
@@ -1941,7 +1831,7 @@ body article {
   // Fetch true suite test total on load dynamically from the static wiki contents list!
   window._iciTotalSuiteTests = 0;
   if (/[?&]suite/i.test(location.search)) {
-    fetch(location.pathname)
+    fetch(window.iciRealPath())
       .then(function(res) { return res.text(); })
       .then(function(html) {
         var parser = new DOMParser();
@@ -2012,8 +1902,8 @@ body article {
         // B. Update Navigation Button to "⏳ Running..." with pulsing state
         if (runBtn) {
           runBtn.innerHTML = "⏳ Running...";
-          runBtn.style.background = "#E06336";
-          runBtn.style.borderColor = "#E06336";
+          runBtn.style.background = "#E77817";
+          runBtn.style.borderColor = "#E77817";
           runBtn.classList.add("ici-pulse");
         }
       } else {
@@ -2162,7 +2052,7 @@ body article {
     modalDiv.style.display = "none";
     modalDiv.onclick = function() { iciCloseJSONInspector(); };
     
-    modalDiv.innerHTML = '<div class="ici-modal-box" style="width: 80% !important; max-width: 900px !important; border-top: 4px solid #A6192E;" onclick="event.stopPropagation()">' +
+    modalDiv.innerHTML = '<div class="ici-modal-box" style="width: 80% !important; max-width: 900px !important; border-top: 4px solid #C23029;" onclick="event.stopPropagation()">' +
       '<div class="ici-modal-title" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 12px; margin-bottom: 16px;">' +
         '<span style="font-weight: 800; color: #1E293B;">🔍 Response Body Inspector</span>' +
         '<button onclick="iciCloseJSONInspector()" style="background: transparent; border: none; font-size: 20px; cursor: pointer;">❌</button>' +
@@ -2239,7 +2129,7 @@ body article {
 
   /* ── Bulletproof Favicon Override with MutationObserver ── */
   function overrideFavicon() {
-    var faviconUrl = "/favicon.ico";
+    var faviconUrl = "/files/fitnesse/icici/img/icici-favicon.ico";
     
     // Resolve faviconUrl to its absolute form once to prevent relative-to-absolute infinite loop triggers!
     var tempA = document.createElement("a");
@@ -2378,6 +2268,7 @@ body article {
         if (document.body) document.body.style.overflow = "hidden";
       });
     }
+    window.iciPrettyUrl(false);
     // Focus the username field on load
     document.addEventListener("DOMContentLoaded", function() {
       var uField = document.getElementById("icici-username");
@@ -2401,7 +2292,7 @@ body article {
       }
     });
 
-    console.log('%c═══ ICICI UX ENHANCEMENTS LOADED ═══', 'background: #A6192E; color: #fff; padding: 5px; font-weight: bold;');
+    console.log('%c═══ ICICI UX ENHANCEMENTS LOADED ═══', 'background: #C23029; color: #fff; padding: 5px; font-weight: bold;');
     console.log('Page URL:', window.location.href);
     
     /* ────────────────────────────────────────────────────────────
@@ -2475,10 +2366,10 @@ body article {
     var pageTypeRadios = document.getElementsByName('PageType');
     
     if (pageTypeRadios && pageTypeRadios.length > 0) {
-      var currentPath = window.location.pathname;
+      var currentPath = window.iciRealPath();
       var currentSearch = window.location.search;
       
-      console.log('%cRadio Buttons Found!', 'color: #004A80; font-weight: bold;');
+      console.log('%cRadio Buttons Found!', 'color: #053C6D; font-weight: bold;');
       console.log('  Path:', currentPath);
       console.log('  Search:', currentSearch);
       console.log('  Radio count:', pageTypeRadios.length);
@@ -2491,7 +2382,7 @@ body article {
       // Detect context
       var isAddingChild = currentSearch.indexOf('responder=addChild') !== -1 || currentSearch.indexOf('addChild') !== -1;
       var isProperties = currentSearch.indexOf('properties') !== -1;
-      var isInSuite = currentPath.match(/\/(Sanity|Smoke|DummyAPI|FrontPage)/i);
+      var isInSuite = currentPath.match(/\/(Sanity|Smoke|FrontPage)/i);
       
       // Skip auto-selection on properties page (shows current page type)
       if (isProperties) {
@@ -2620,6 +2511,10 @@ body article {
       if (repDropdown) repDropdown.style.display = "none";
     };
 
+    window.iciOpenVisualReview = function() {
+      window.open("http://localhost:8090/visual", "_blank");
+    };
+
     window.iciOpenLogs = function() {
       window.open("http://localhost:8090/framework-logs", "_blank");
       var profDropdown = document.getElementById("icici-profile-dropdown");
@@ -2699,7 +2594,7 @@ body article {
       fetch("http://127.0.0.1:8090/register-run", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ page: location.pathname })
+        body: JSON.stringify({ page: window.iciRealPath() })
       }).catch(function(err) {});
 
       // 2. Silently clear older allure results to keep the history logs fresh and clean!
@@ -2715,34 +2610,413 @@ body article {
       var drawer = document.getElementById("ici-dict-drawer");
       if (drawer) {
         drawer.classList.toggle("open");
+        if (drawer.classList.contains("open")) {
+          iciInitBuilder();
+          iciLoadPages();
+        }
       }
     };
 
-    window.iciSwitchDrawerTab = function(tabName) {
-      var tabDict = document.getElementById("ici-dict-tab-dict");
-      var tabBuilder = document.getElementById("ici-dict-tab-builder");
-      var paneDict = document.getElementById("ici-drawer-pane-dict");
-      var paneBuilder = document.getElementById("ici-drawer-pane-builder");
+    /* ── Step Builder catalog: c=category, l=label, s=Slim row tokens ({key} = parameter), p=parameters ──
+       p entries: [key, label, type (locator|text|number|select), flag ("opt" = optional), options]            */
+    var ICI_ACTIONS = [
+      {c:"Browser", l:"Open Browser", s:["open browser","{browser}"], p:[["browser","Browser","select","opt",["chromium","firefox","webkit"]]], d:"Starts the browser. Navigate to URL also starts it automatically."},
+      {c:"Browser", l:"Navigate to URL", s:["navigate to","{url}"], p:[["url","URL","text","","https://your-app-url"]], d:"Opens the address in the current browser."},
+      {c:"Browser", l:"Refresh Page", s:["refresh page"], p:[], d:"Reloads the current page."},
+      {c:"Browser", l:"Go Back", s:["go back"], p:[], d:"Browser back button."},
+      {c:"Browser", l:"Go Forward", s:["go forward"], p:[], d:"Browser forward button."},
+      {c:"Browser", l:"Close Browser", s:["close browser"], p:[], d:"Closes the browser and frees resources."},
 
-      if (tabName === 'dict') {
-        tabDict.classList.add("active");
-        tabBuilder.classList.remove("active");
-        paneDict.style.display = "block";
-        paneBuilder.style.display = "none";
+      {c:"Input", l:"Enter Text", s:["enter text","{locator}","with value","{value}"], p:[["locator","Locator","locator"],["value","Text to enter","text"]], d:"Types into an input field. Supports ${variables}."},
+      {c:"Input", l:"Clear Field", s:["clear field","{locator}"], p:[["locator","Locator","locator"]], d:"Empties an input field."},
+      {c:"Input", l:"Press Key", s:["press key","{key}","on","{locator}"], p:[["key","Key","text","","Enter, Tab, Escape, Control+A"],["locator","On element","locator","opt"]], d:"Presses a keyboard key, optionally focused on an element."},
+
+      {c:"Mouse", l:"Click Element", s:["click element","{locator}"], p:[["locator","Locator","locator"]], d:"Clicks a button, link or any element."},
+      {c:"Mouse", l:"Double Click", s:["double click","{locator}"], p:[["locator","Locator","locator"]], d:"Double clicks an element."},
+      {c:"Mouse", l:"Right Click", s:["right click","{locator}"], p:[["locator","Locator","locator"]], d:"Opens the context menu on an element."},
+      {c:"Mouse", l:"Hover", s:["hover over","{locator}"], p:[["locator","Locator","locator"]], d:"Moves the mouse over an element."},
+      {c:"Mouse", l:"Scroll to Element", s:["scroll to element","{locator}"], p:[["locator","Locator","locator"]], d:"Scrolls until the element is in view."},
+
+      {c:"Selection", l:"Select Dropdown", s:["select dropdown","{locator}","option","{option}"], p:[["locator","Dropdown locator","locator"],["option","Option (label or value)","text"]], d:"Picks an option by its visible label, then by value."},
+      {c:"Selection", l:"Check Checkbox", s:["check checkbox","{locator}"], p:[["locator","Locator","locator"]], d:"Ticks a checkbox."},
+      {c:"Selection", l:"Uncheck Checkbox", s:["uncheck checkbox","{locator}"], p:[["locator","Locator","locator"]], d:"Clears a checkbox."},
+      {c:"Selection", l:"Select Radio Button", s:["select radio button","{locator}"], p:[["locator","Locator","locator"]], d:"Selects a radio button."},
+      {c:"Selection", l:"Set Toggle", s:["set toggle","{locator}","to","{state}"], p:[["locator","Locator","locator"],["state","State","select","",["on","off"]]], d:"Switches a toggle/switch on or off."},
+
+      {c:"Wait", l:"Wait for Element Visible", s:["wait for element visible","{locator}","timeout","{timeout}"], p:[["locator","Locator","locator"],["timeout","Timeout (ms)","number","opt","5000"]], d:"Waits until the element is visible."},
+      {c:"Wait", l:"Wait for Element Invisible", s:["wait for element invisible","{locator}","timeout","{timeout}"], p:[["locator","Locator","locator"],["timeout","Timeout (ms)","number","opt","5000"]], d:"Waits until the element disappears (e.g. a spinner)."},
+      {c:"Wait", l:"Wait for Element Clickable", s:["wait for element clickable","{locator}","timeout","{timeout}"], p:[["locator","Locator","locator"],["timeout","Timeout (ms)","number","opt","5000"]], d:"Waits until the element is visible and enabled."},
+      {c:"Wait", l:"Wait for Text", s:["wait for text","{text}","timeout","{timeout}"], p:[["text","Text","text"],["timeout","Timeout (ms)","number","opt","5000"]], d:"Waits until the text appears on the page."},
+      {c:"Wait", l:"Wait for Page Load", s:["wait for page load"], p:[], d:"Waits for the page load event."},
+      {c:"Wait", l:"Wait for Timeout", s:["wait for timeout","{ms}"], p:[["ms","Pause (ms)","number","","2000"]], d:"Fixed pause. Prefer the element waits when possible."},
+
+      {c:"Verification", l:"Verify Text Present", s:["ensure","verify text present","{text}"], p:[["text","Text","text"]], d:"Passes when the text is visible."},
+      {c:"Verification", l:"Verify Text Not Present", s:["ensure","verify text not present","{text}"], p:[["text","Text","text"]], d:"Passes when the text is not visible."},
+      {c:"Verification", l:"Verify Element Present", s:["ensure","verify element present","{locator}"], p:[["locator","Locator","locator"]], d:"Passes when the element exists in the page."},
+      {c:"Verification", l:"Verify Element Not Present", s:["ensure","verify element not present","{locator}"], p:[["locator","Locator","locator"]], d:"Passes when the element does not exist."},
+      {c:"Verification", l:"Verify Element Visible", s:["ensure","verify element visible","{locator}"], p:[["locator","Locator","locator"]], d:"Passes when the element is visible."},
+      {c:"Verification", l:"Verify Element Enabled", s:["ensure","verify element enabled","{locator}"], p:[["locator","Locator","locator"]], d:"Passes when the element is enabled."},
+      {c:"Verification", l:"Verify Field Value", s:["ensure","verify field value","{locator}","equals","{expected}"], p:[["locator","Locator","locator"],["expected","Expected value","text"]], d:"Compares an input field's value."},
+      {c:"Verification", l:"Verify Dropdown Value", s:["ensure","verify dropdown value","{locator}","equals","{expected}"], p:[["locator","Dropdown locator","locator"],["expected","Expected option","text"]], d:"Compares the selected option (label or value)."},
+      {c:"Verification", l:"Verify URL", s:["ensure","verify url","{expected}"], p:[["expected","Expected URL","text","","/dashboard (prefix = for exact)"]], d:"Current URL contains the text; start with = for an exact match."},
+      {c:"Verification", l:"Verify Page Title", s:["ensure","verify page title","{expected}"], p:[["expected","Expected title","text","","Dashboard (prefix = for exact)"]], d:"Page title contains the text; start with = for an exact match."},
+
+      {c:"Browser Handling", l:"Handle Alert - Accept", s:["accept alert"], p:[], d:"Place BEFORE the step that opens the alert."},
+      {c:"Browser Handling", l:"Handle Alert - Dismiss", s:["dismiss alert"], p:[], d:"Place BEFORE the step that opens the alert."},
+      {c:"Browser Handling", l:"Verify Alert Text", s:["ensure","verify alert text","{text}"], p:[["text","Alert text","text"]], d:"Checks the message of the last alert shown."},
+      {c:"Browser Handling", l:"Switch to Frame", s:["switch to frame","{locator}"], p:[["locator","Frame locator","locator"]], d:"Following steps run inside the iframe."},
+      {c:"Browser Handling", l:"Switch to Default Frame", s:["switch to default frame"], p:[], d:"Back to the main page."},
+      {c:"Browser Handling", l:"Switch Window/Tab", s:["switch window","{target}"], p:[["target","Tab number or title/URL text","text","","2"]], d:"1-based tab number, or part of the title/URL."},
+      {c:"Browser Handling", l:"Close Current Tab", s:["close current tab"], p:[], d:"Closes the active tab and returns to the last open one."},
+
+      {c:"File", l:"Upload File", s:["upload file","{locator}","path","{path}"], p:[["locator","File input locator","locator"],["path","File path","text","","C:/files/sample.pdf"]], d:"Attaches a local file to a file input."},
+      {c:"File", l:"Verify File Downloaded", s:["ensure","verify file downloaded","{name}"], p:[["name","File name (or part)","text"]], d:"Waits up to 10s for a download whose name contains the text."},
+
+      {c:"Variables", l:"Set Variable", s:["set variable","{name}","to","{value}"], p:[["name","Variable name","text"],["value","Value","text"]], d:"Stores a value; use it later as ${name}."},
+      {c:"Variables", l:"Get Variable", s:["check","get variable","{name}","{expected}"], p:[["name","Variable name","text"],["expected","Expected value","text"]], d:"Asserts the stored variable equals the expected value."},
+      {c:"Variables", l:"Capture Text to Variable", s:["capture text to variable","{locator}","as","{name}"], p:[["locator","Locator","locator"],["name","Variable name","text"]], d:"Reads an element's text into a variable."},
+      {c:"Variables", l:"Generate Test Data", s:["generate test data","{type}","into","{name}"], p:[["type","Data type","select","",["first_name","last_name","full_name","email","phone","username","password","uuid","number","date","text","address","company","city"]],["name","Variable name","text"]], d:"Creates random data and stores it in a variable."},
+
+      {c:"Control Flow", l:"IF", s:["if condition","{condition}"], p:[["condition","Condition","text","","${role} == admin   |   element visible: #banner"]], d:"Steps until ELSE / END IF run only when true. Operators: == != > < >= <= contains."},
+      {c:"Control Flow", l:"ELSE", s:["else branch"], p:[], d:"Runs when the IF condition was false."},
+      {c:"Control Flow", l:"END IF", s:["end if"], p:[], d:"Closes an IF block."},
+      {c:"Control Flow", l:"FOR EACH", s:["for each","{variable}","in","{items}"], p:[["variable","Loop variable","text","","item"],["items","Items (comma list or 1..5)","text","","a,b,c"]], d:"Repeats the steps up to END LOOP for every item; use ${variable} inside."},
+      {c:"Control Flow", l:"END LOOP", s:["end loop"], p:[], d:"Closes a FOR EACH block."},
+      {c:"Control Flow", l:"Break", s:["break loop"], p:[], d:"Leaves the current FOR EACH loop (usually inside an IF)."},
+
+      {c:"Error Handling", l:"Retry Action", s:["retry action","{times}"], p:[["times","Retries","number","","2"]], d:"The NEXT step is retried this many times if it fails."},
+      {c:"Error Handling", l:"Continue on Failure", s:["continue on failure"], p:[], d:"Default: later steps still run after a failure."},
+      {c:"Error Handling", l:"Stop on Failure", s:["stop on failure"], p:[], d:"After the first failure the remaining steps are skipped."},
+      {c:"Error Handling", l:"Take Screenshot", s:["take screenshot","{name}"], p:[["name","Name","text","opt"]], d:"Saves a screenshot and attaches it to the report."},
+
+      {c:"Visual Testing", l:"Verify Visual Match", s:["ensure","verify visual match","{name}","threshold","{threshold}"], p:[["name","Screenshot name","text","","home page"],["threshold","Allowed difference (%)","number","opt","0.1"]], d:"Compares the page with its baseline screenshot. The first run creates the baseline."},
+      {c:"Visual Testing", l:"Verify Element Visual Match", s:["ensure","verify element visual match","{locator}","as","{name}"], p:[["locator","Locator","locator"],["name","Screenshot name","text","","login box"]], d:"Compares one element with its baseline."},
+      {c:"Visual Testing", l:"Ignore Visual Region", s:["ignore visual region","{locator}"], p:[["locator","Locator","locator"]], d:"Masks dynamic content (clock, ads) in every later visual comparison."},
+      {c:"Visual Testing", l:"Clear Visual Ignores", s:["clear visual ignores"], p:[], d:"Stops masking the regions added earlier."},
+      {c:"Visual Testing", l:"Set Visual Threshold", s:["set visual threshold","{threshold}"], p:[["threshold","Allowed difference (%)","number","","0.1"]], d:"Default tolerance for the following comparisons."},
+      {c:"Visual Testing", l:"Update Visual Baseline", s:["update visual baseline","{name}"], p:[["name","Screenshot name","text"]], d:"Accepts the current screen as the new baseline."},
+      {c:"Reusable Flow", l:"Execute Reusable Component", s:["execute reusable component","{name}","with","{parameters}"], p:[["name","Component name","text","","Login"],["parameters","Parameters","text","opt","user=qa,pass=secret"]], d:"Runs data/components/<name>.flow. Parameters become ${user}, ${pass}."}
+    ];
+    var iciBuilderSteps = [];
+
+    function iciEl(id) { return document.getElementById(id); }
+
+    function iciBuildRow(action, values) {
+      var tokens = action.s.slice();
+      var optional = {};
+      action.p.forEach(function(param) { if (param[3] === "opt") { optional[param[0]] = true; } });
+      var cells = [];
+      for (var i = 0; i < tokens.length; i++) {
+        var match = /^\{(\w+)\}$/.exec(tokens[i]);
+        if (match) {
+          var value = (values[match[1]] || "").trim();
+          if (value === "" && optional[match[1]]) {
+            if (cells.length > 1) { cells.pop(); }   // drop the joining keyword (timeout / on / with)
+            continue;
+          }
+          cells.push(value);
+        } else {
+          cells.push(tokens[i]);
+        }
+      }
+      return "| " + cells.join(" | ") + " |";
+    }
+
+
+    var ICI_PAGES_URL = "http://127.0.0.1:8090/pages";
+    var iciPages = {};
+
+    function iciCurrentAction() {
+      var category = iciEl("ici-builder-category").value;
+      var label = iciEl("ici-builder-action").value;
+      for (var i = 0; i < ICI_ACTIONS.length; i++) {
+        if (ICI_ACTIONS[i].c === category && ICI_ACTIONS[i].l === label) { return ICI_ACTIONS[i]; }
+      }
+      return null;
+    }
+
+    function iciSelectedPage() {
+      var select = iciEl("ici-builder-page");
+      return select ? select.value : "";
+    }
+
+    function iciPageLocators() {
+      return iciPages[iciSelectedPage()] || {};
+    }
+
+    function iciCurrentValues(action) {
+      var values = {};
+      action.p.forEach(function(param) {
+        var select = iciEl("ici-builder-param-" + param[0] + "-sel");
+        var input = iciEl("ici-builder-param-" + param[0]);
+        if (select && select.style.display !== "none" && select.value !== "__custom__") {
+          values[param[0]] = iciSelectedPage() + "." + select.value;   // page-qualified: PageName.locator
+        } else {
+          values[param[0]] = input ? input.value : "";
+        }
+      });
+      return values;
+    }
+
+    function iciInitBuilder() {
+      var categorySelect = iciEl("ici-builder-category");
+      if (!categorySelect || categorySelect.options.length) { return; }
+      var seen = {};
+      ICI_ACTIONS.forEach(function(action) {
+        if (!seen[action.c]) {
+          seen[action.c] = true;
+          categorySelect.appendChild(new Option(action.c, action.c));
+        }
+      });
+      iciRenderPageOptions();
+      iciOnBuilderCategoryChange();
+      iciRenderBuilderSteps();
+    }
+
+    function iciRenderPageOptions() {
+      var select = iciEl("ici-builder-page");
+      if (!select) { return; }
+      var previous = select.value;
+      select.innerHTML = "";
+      select.appendChild(new Option("(none - type selectors)", ""));
+      Object.keys(iciPages).sort().forEach(function(name) { select.appendChild(new Option(name, name)); });
+      if (previous && iciPages[previous]) { select.value = previous; }
+      else if (!previous && Object.keys(iciPages).length === 1) { select.value = Object.keys(iciPages)[0]; }
+      var list = iciEl("ici-manage-pages");
+      if (list) {
+        list.innerHTML = "";
+        Object.keys(iciPages).sort().forEach(function(name) { list.appendChild(new Option(name, name)); });
+      }
+      iciRenderManageList();
+    }
+
+    window.iciLoadPages = function() {
+      return fetch(ICI_PAGES_URL).then(function(response) { return response.json(); }).then(function(data) {
+        iciPages = (data && data.pages) || {};
+      }).catch(function() {
+        iciPages = {};
+      }).then(function() {
+        iciRenderPageOptions();
+        if (iciEl("ici-builder-action") && iciEl("ici-builder-action").options.length) { iciOnBuilderActionChange(); }
+      });
+    };
+
+    window.iciOnBuilderPageChange = function() {
+      iciOnBuilderActionChange();
+      var manage = iciEl("ici-manage-page");
+      if (manage && iciSelectedPage()) { manage.value = iciSelectedPage(); }
+      iciRenderManageList();
+    };
+
+    window.iciOnBuilderCategoryChange = function() {
+      var category = iciEl("ici-builder-category").value;
+      var actionSelect = iciEl("ici-builder-action");
+      actionSelect.innerHTML = "";
+      ICI_ACTIONS.forEach(function(action) {
+        if (action.c === category) { actionSelect.appendChild(new Option(action.l, action.l)); }
+      });
+      iciOnBuilderActionChange();
+    };
+
+    window.iciOnBuilderActionChange = function() {
+      var action = iciCurrentAction();
+      var holder = iciEl("ici-builder-params");
+      var kept = {};
+      if (action) { kept = iciCurrentValues(action); }
+      holder.innerHTML = "";
+      if (!action) { return; }
+      var pageLocators = iciPageLocators();
+      var locatorNames = Object.keys(pageLocators);
+      action.p.forEach(function(param) {
+        var field = document.createElement("div");
+        field.className = "ici-builder-field";
+        var label = document.createElement("label");
+        label.className = "ici-builder-label";
+        label.innerHTML = param[1] + (param[3] === "opt" ? ' <span class="opt">(optional)</span>' : "");
+        field.appendChild(label);
+
+        var input;
+        if (param[2] === "select") {
+          input = document.createElement("select");
+          if (param[3] === "opt") { input.appendChild(new Option("(default)", "")); }
+          param[4].forEach(function(choice) { input.appendChild(new Option(choice, choice)); });
+        } else {
+          input = document.createElement("input");
+          input.type = param[2] === "number" ? "number" : "text";
+          if (param[2] === "number") { input.min = "0"; input.step = "any"; }
+          if (param[2] === "locator") {
+            input.placeholder = "selector, e.g. #id, css=..., xpath=..., text=...";
+          } else if (typeof param[4] === "string") {
+            input.placeholder = param[4];
+          }
+        }
+        input.id = "ici-builder-param-" + param[0];
+        input.className = "ici-env-input";
+        input.addEventListener("input", iciGenerateBuilderOutput);
+        input.addEventListener("change", iciGenerateBuilderOutput);
+        input.addEventListener("keydown", function(event) {
+          if (event.key === "Enter") { event.preventDefault(); window.iciAppendStepToScript(); }
+        });
+
+        if (param[2] === "locator" && locatorNames.length) {
+          var picker = document.createElement("select");
+          picker.id = "ici-builder-param-" + param[0] + "-sel";
+          picker.className = "ici-env-input";
+          locatorNames.forEach(function(name) { picker.appendChild(new Option(name + "   →   " + pageLocators[name], name)); });
+          picker.appendChild(new Option("Custom selector...", "__custom__"));
+          picker.addEventListener("change", function() {
+            input.style.display = picker.value === "__custom__" ? "block" : "none";
+            input.style.marginTop = "6px";
+            iciGenerateBuilderOutput();
+          });
+          input.style.display = "none";
+          field.appendChild(picker);
+        }
+        field.appendChild(input);
+        holder.appendChild(field);
+      });
+      iciEl("ici-builder-doc").textContent = action.d || "";
+      iciGenerateBuilderOutput();
+    };
+
+    window.iciGenerateBuilderOutput = function() {
+      var action = iciCurrentAction();
+      if (!action) { return; }
+      var values = iciCurrentValues(action);
+      iciEl("ici-builder-step-preview").textContent = iciBuildRow(action, values);
+      var missing = action.p.some(function(param) { return param[3] !== "opt" && !(values[param[0]] || "").trim(); });
+      iciEl("ici-builder-add").disabled = missing;
+    };
+
+    window.iciAppendStepToScript = function() {
+      var action = iciCurrentAction();
+      if (!action || iciEl("ici-builder-add").disabled) { return; }
+      iciBuilderSteps.push({ row: iciBuildRow(action, iciCurrentValues(action)), kind: action.s[0] });
+      action.p.forEach(function(param) {
+        var input = iciEl("ici-builder-param-" + param[0]);
+        if (input && input.tagName === "INPUT") { input.value = ""; }
+      });
+      iciGenerateBuilderOutput();
+      iciRenderBuilderSteps();
+      iciDrawerToast("Step added");
+    };
+
+    function iciRenderBuilderSteps() {
+      var list = iciEl("ici-builder-steps");
+      if (!list) { return; }
+      list.innerHTML = "";
+      var depth = 0;
+      iciBuilderSteps.forEach(function(item, index) {
+        if (item.kind === "end if" || item.kind === "end loop" || item.kind === "else branch") { depth = Math.max(0, depth - 1); }
+        var line = document.createElement("div");
+        line.className = "ici-builder-step";
+        line.innerHTML = '<span class="num"></span><span class="txt"></span>' +
+          '<button class="ctl" title="Move up">▲</button><button class="ctl" title="Move down">▼</button><button class="ctl" title="Remove">✕</button>';
+        line.querySelector(".num").textContent = (index + 1);
+        var text = line.querySelector(".txt");
+        text.style.paddingLeft = (depth * 14) + "px";
+        text.textContent = item.row;
+        var buttons = line.querySelectorAll(".ctl");
+        buttons[0].onclick = function() { iciMoveStep(index, -1); };
+        buttons[1].onclick = function() { iciMoveStep(index, 1); };
+        buttons[2].onclick = function() { iciBuilderSteps.splice(index, 1); iciRenderBuilderSteps(); iciGenerateBuilderOutput(); };
+        list.appendChild(line);
+        if (item.kind === "if condition" || item.kind === "for each" || item.kind === "else branch") { depth += 1; }
+      });
+      if (!iciBuilderSteps.length) {
+        list.innerHTML = '<div class="ici-builder-empty">No steps yet. Pick an action above and press Add step.</div>';
+      }
+      iciEl("ici-builder-count").textContent = iciBuilderSteps.length;
+      var script = "";
+      if (iciBuilderSteps.length) {
+        script = "| script | fixtures.UiFixture |\n" + iciBuilderSteps.map(function(item) { return item.row; }).join("\n");
+      }
+      iciEl("ici-builder-script").value = script;
+    }
+
+    function iciMoveStep(index, direction) {
+      var target = index + direction;
+      if (target < 0 || target >= iciBuilderSteps.length) { return; }
+      var moved = iciBuilderSteps.splice(index, 1)[0];
+      iciBuilderSteps.splice(target, 0, moved);
+      iciRenderBuilderSteps();
+      iciGenerateBuilderOutput();
+    }
+
+    window.iciClearBuilderScript = function() {
+      iciBuilderSteps = [];
+      iciRenderBuilderSteps();
+      iciGenerateBuilderOutput();
+    };
+
+    window.iciCopyBuilderScript = function() {
+      var text = iciEl("ici-builder-script").value;
+      if (text) {
+        iciCopyToClipboard(text);
       } else {
-        tabBuilder.classList.add("active");
-        tabDict.classList.remove("active");
-        paneBuilder.style.display = "block";
-        paneDict.style.display = "none";
-        iciOnBuilderActionChange(); // Auto-render first step
+        iciDrawerToast("Add some steps first");
       }
     };
+
+    /* ── Page locator management ── */
+    function iciRenderManageList() {
+      var holder = iciEl("ici-manage-list");
+      var pageInput = iciEl("ici-manage-page");
+      if (!holder || !pageInput) { return; }
+      var page = pageInput.value.trim();
+      var locators = iciPages[page] || {};
+      holder.innerHTML = "";
+      Object.keys(locators).forEach(function(name) {
+        var row = document.createElement("div");
+        row.className = "ici-manage-row";
+        row.innerHTML = '<span class="n"></span><span class="s"></span><button class="ctl" title="Remove">✕</button>';
+        row.querySelector(".n").textContent = name;
+        row.querySelector(".s").textContent = locators[name];
+        row.querySelector(".ctl").onclick = function() { iciPostPage({ page: page, remove: name }, "Locator removed"); };
+        holder.appendChild(row);
+      });
+    }
+
+    function iciPostPage(payload, doneMessage) {
+      return fetch(ICI_PAGES_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      }).then(function(response) { return response.json(); }).then(function(data) {
+        if (data.error) { iciDrawerToast("⚠️ " + data.error); return; }
+        iciDrawerToast(doneMessage);
+        return iciLoadPages();
+      }).catch(function() { iciDrawerToast("⚠️ User store server is not reachable"); });
+    }
+
+    window.iciSaveLocator = function() {
+      var page = iciEl("ici-manage-page").value.trim();
+      var name = iciEl("ici-manage-name").value.trim();
+      var selector = iciEl("ici-manage-selector").value.trim();
+      if (!page || !name || !selector) { iciDrawerToast("Page, locator name and selector are required"); return; }
+      iciPostPage({ page: page, locator: name, selector: selector }, "Locator saved").then(function() {
+        iciEl("ici-manage-name").value = "";
+        iciEl("ici-manage-selector").value = "";
+        iciEl("ici-builder-page").value = iciPages[page] ? page : iciEl("ici-builder-page").value;
+        iciOnBuilderActionChange();
+      });
+    };
+
+    window.iciRenderManageList = iciRenderManageList;
+
+    function iciDrawerToast(message) {
+      var toast = iciEl("ici-drawer-toast");
+      if (!toast) { return; }
+      toast.textContent = message;
+      toast.classList.add("show");
+      clearTimeout(toast._timer);
+      toast._timer = setTimeout(function() { toast.classList.remove("show"); }, 1800);
+    }
 
     window.iciCopyToClipboard = function(text) {
+      var done = function() { iciDrawerToast("📋 Copied: " + (text.length > 40 ? text.substring(0, 40) + "..." : text).replace(/\n/g, " ")); };
       if (navigator.clipboard) {
-        navigator.clipboard.writeText(text).then(function() {
-          alert("📋 Copied to clipboard: " + text);
-        });
+        navigator.clipboard.writeText(text).then(done);
       } else {
         var textarea = document.createElement("textarea");
         textarea.value = text;
@@ -2750,129 +3024,7 @@ body article {
         textarea.select();
         document.execCommand("copy");
         document.body.removeChild(textarea);
-        alert("📋 Copied to clipboard: " + text);
-      }
-    };
-
-    window.iciOnBuilderActionChange = function() {
-      var action = document.getElementById("ici-builder-action").value;
-      var locatorContainer = document.getElementById("ici-builder-locator-container");
-      var param1Container = document.getElementById("ici-builder-param-1-container");
-      var param2Container = document.getElementById("ici-builder-param-2-container");
-      var param1Label = document.getElementById("ici-builder-param-1-label");
-      var param2Label = document.getElementById("ici-builder-param-2-label");
-      var param1Input = document.getElementById("ici-builder-param-1");
-      var param2Input = document.getElementById("ici-builder-param-2");
-
-      if (action === "navigate") {
-        locatorContainer.style.display = "none";
-        param1Container.style.display = "block";
-        param2Container.style.display = "none";
-        param1Label.textContent = "Target URL";
-        param1Input.placeholder = "e.g. https://www.saucedemo.com/";
-      } else if (action === "fill") {
-        locatorContainer.style.display = "block";
-        param1Container.style.display = "none"; // Handled by locator container
-        param2Container.style.display = "block";
-        param2Label.textContent = "Value to Type";
-        param2Input.placeholder = "e.g. standard_user";
-        iciOnBuilderLocatorChange(); // Update locator parameters
-      } else if (action === "click") {
-        locatorContainer.style.display = "block";
-        param1Container.style.display = "none";
-        param2Container.style.display = "none";
-        iciOnBuilderLocatorChange();
-      } else if (action === "wait") {
-        locatorContainer.style.display = "none";
-        param1Container.style.display = "block";
-        param2Container.style.display = "block";
-        param1Label.textContent = "Text Content to wait for";
-        param1Input.placeholder = "e.g. Products";
-        param2Label.textContent = "Timeout (ms)";
-        param2Input.placeholder = "e.g. 5000";
-      } else if (action === "verify") {
-        locatorContainer.style.display = "none";
-        param1Container.style.display = "block";
-        param2Container.style.display = "none";
-        param1Label.textContent = "Expected Text";
-        param1Input.placeholder = "e.g. Products";
-      }
-      iciGenerateBuilderOutput();
-    };
-
-    window.iciOnBuilderLocatorChange = function() {
-      var selectVal = document.getElementById("ici-builder-locator-select").value;
-      var customInput = document.getElementById("ici-builder-locator-custom");
-      if (selectVal === "custom") {
-        customInput.style.display = "block";
-      } else {
-        customInput.style.display = "none";
-      }
-      iciGenerateBuilderOutput();
-    };
-
-    window.iciGenerateBuilderOutput = function() {
-      var action = document.getElementById("ici-builder-action").value;
-      var param1 = document.getElementById("ici-builder-param-1").value || "";
-      var param2 = document.getElementById("ici-builder-param-2").value || "";
-      
-      // Determine the locator string (either selected from dropdown or custom typed)
-      var locatorStr = "";
-      if (action === "fill" || action === "click") {
-        var selectVal = document.getElementById("ici-builder-locator-select").value;
-        if (selectVal === "custom") {
-          locatorStr = document.getElementById("ici-builder-locator-custom").value || "";
-        } else {
-          locatorStr = selectVal;
-        }
-      }
-
-      var output = "";
-      if (action === "navigate") {
-        output = "| navigate to | " + param1 + " |";
-      } else if (action === "fill") {
-        output = "| fill field | " + locatorStr + " | with value | " + param2 + " |";
-      } else if (action === "click") {
-        output = "| click button | " + locatorStr + " |";
-      } else if (action === "wait") {
-        output = "| wait for text | " + param1 + " | timeout | " + (param2 || "5000") + " |";
-      } else if (action === "verify") {
-        output = "| check | verify text present | " + param1 + " | true |";
-      } else if (action === "close") {
-        output = "| close browser |";
-      }
-      
-      // Update single step preview
-      document.getElementById("ici-builder-step-preview").textContent = output;
-    };
-
-    window.iciAppendStepToScript = function() {
-      var step = document.getElementById("ici-builder-step-preview").textContent;
-      if (!step) return;
-      
-      var scriptBox = document.getElementById("ici-builder-script");
-      var currentVal = scriptBox.value.trim();
-      
-      // If script is completely empty, initialize it with a proper SLiM script fixture header block!
-      if (currentVal === "") {
-        currentVal = "| script | fixtures.UiFixture |\n| start browser |";
-      }
-      
-      // Append the new step as a clean line
-      currentVal += "\n" + step;
-      scriptBox.value = currentVal;
-    };
-
-    window.iciClearBuilderScript = function() {
-      document.getElementById("ici-builder-script").value = "";
-    };
-
-    window.iciCopyBuilderScript = function() {
-      var text = document.getElementById("ici-builder-script").value;
-      if (text) {
-        iciCopyToClipboard(text);
-      } else {
-        alert("Your test script table is currently empty. Append some steps first!");
+        done();
       }
     };
 

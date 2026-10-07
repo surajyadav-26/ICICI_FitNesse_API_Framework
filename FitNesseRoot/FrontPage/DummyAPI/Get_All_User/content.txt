@@ -1,5 +1,0 @@
-!define TEST_SYSTEM {slim}
-
-!|fixtures.GetRequestFixture|
-|url|key|statusCodes?|jsonValue?|responseBody?|
-|${API_BASE_URL}/users|total|200|208||

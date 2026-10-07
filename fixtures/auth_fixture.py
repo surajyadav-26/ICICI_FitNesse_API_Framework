@@ -238,10 +238,10 @@ class AuthFixture:
                 if env_page_path:
                     parts = [p.strip() for p in env_page_path.split(".") if p.strip()]
                     if len(parts) >= 3:
-                        # E.g. "FrontPage.DummyAPI.AuthenticateUser" -> suite is "DummyAPI"
+                        # E.g. "FrontPage.Suite.TestPage" -> suite is "Suite"
                         suite_name = parts[-2]
                     elif len(parts) == 2:
-                        # E.g. "FrontPage.DummyAPI" -> suite is "DummyAPI"
+                        # E.g. "FrontPage.Suite" -> suite is "Suite"
                         suite_name = parts[-1]
                         
                 # Only write results if this is NOT a parent suite page itself to prevent duplicate empty cards!

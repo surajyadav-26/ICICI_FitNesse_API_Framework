@@ -1,5 +1,0 @@
-!define TEST_SYSTEM {slim}
-
-!|fixtures.PutRequestFixture|
-|url|bodyJson|statusCodes?|responseBody?|
-|${API_BASE_URL}/users/1|{"lastName":"Updated"}|200||

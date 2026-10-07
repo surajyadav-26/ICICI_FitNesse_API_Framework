@@ -1,0 +1,8 @@
+{
+  "page": "LoginPage",
+  "locators": {
+    "username": "role=textbox:User ID",
+    "password": "label=Password",
+    "login button": "css=button.login-btn"
+  }
+}

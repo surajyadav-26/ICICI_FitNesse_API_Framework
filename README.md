@@ -47,7 +47,7 @@ Enterprise-grade REST API testing framework for ICICI Prudential AML & Complianc
 - ✅ **Daily Log Rotation**: 7-day retention with structured logging
 
 ### **UI/UX Enhancements** 🎨
-- ✅ **Custom ICICI Branding**: Official logos, colors (#A6192E red, #004A80 blue)
+- ✅ **Custom ICICI Branding**: Official logos, colors (#C23029 red, #053C6D blue)
 - ✅ **Role-Based Access**: Admin, Editor, and Viewer roles
 - ✅ **Fixed Header Navigation**: Stays at top while scrolling
 - ✅ **Loading Indicators**: Visual feedback during test execution
@@ -803,6 +803,69 @@ Enterprise Internal Use Only - ICICI Prudential Life Insurance
 **Built By:** ICICI Prudential QA Engineering Team  
 **Framework Version:** 2.1.0  
 **Last Updated:** 2026-07-16  
+## UI Step Library
+
+Open **Step Builder** (profile menu) in the FitNesse header to compose steps visually and copy the script table.
+Every row is `| keyword | arg | keyword | arg |` against `fixtures.UiFixture`.
+
+| Category | Steps |
+|---|---|
+| Browser | `open browser`, `navigate to`, `refresh page`, `go back`, `go forward`, `close browser` |
+| Input | `enter text \| loc \| with value \| v`, `clear field`, `press key [\| on \| loc]` |
+| Mouse | `click element`, `double click`, `right click`, `hover over`, `scroll to element` |
+| Selection | `select dropdown \| loc \| option \| v`, `check checkbox`, `uncheck checkbox`, `select radio button`, `set toggle \| loc \| to \| on` |
+| Wait | `wait for element visible/invisible/clickable [\| timeout \| ms]`, `wait for text`, `wait for page load`, `wait for timeout \| ms` |
+| Verification | `ensure \| verify text present / text not present / element present / element not present / element visible / element enabled / field value \| loc \| equals \| v / dropdown value / url / page title` |
+| Browser handling | `accept alert`, `dismiss alert` (place before the step that opens it), `verify alert text`, `switch to frame`, `switch to default frame`, `switch window`, `close current tab` |
+| File | `upload file \| loc \| path \| p`, `verify file downloaded` |
+| Variables | `set variable \| n \| to \| v`, `get variable`, `capture text to variable \| loc \| as \| n`, `generate test data \| type \| into \| n`; use `${n}` in any argument |
+| Control flow | `if condition`, `else branch`, `end if`, `for each \| x \| in \| a,b,c` (or `1..5`), `end loop`, `break loop` |
+| Error handling | `retry action \| n` (next step), `continue on failure` (default), `stop on failure`, `take screenshot` |
+| Reusable flow | `execute reusable component \| Name [\| with \| k=v,k2=v2]` runs `data/components/Name.flow` |
+
+### Pages and locators
+
+Locators are grouped per page in `data/pages/<PageName>.json` (for example `LoginPage.json`, `DashboardPage.json`):
+
+```json
+{"page": "LoginPage", "locators": {"username": "role=textbox:User ID", "login button": "css=button.login-btn"}}
+```
+
+Pick the page in **Step Builder**; the locator drop-down then lists only that page's locators and the builder writes them
+page-qualified (`LoginPage.username`), so no extra rows are added to your table. Use **Manage page locators** in the drawer to add or remove locators and pages.
+In a table, `LoginPage.username` resolves from that page; `| use page | LoginPage |` (optional) lets later steps use the short
+name `username`; anything not found on a page is treated as a normal selector.
+
+### Visual testing
+
+Compare the screen with an approved baseline on every build:
+
+```
+| ensure | verify visual match | home page |
+| ensure | verify visual match | home page | threshold | 0.5 |
+| ensure | verify element visual match | LoginPage.login box | as | login-box |
+| ignore visual region | css=.clock |
+| set visual threshold | 0.2 |
+| update visual baseline | home page |
+```
+
+- Baselines are PNGs in `data/visual/baselines/<browser>-<width>x<height>/<name>.png`. **Commit them**; you can also drop
+  your own reference screenshots there. A browser/viewport pair never compares against another one.
+- The first run for a name creates its baseline (reported as *new*). Set `VISUAL_FAIL_ON_NEW=true` in CI to fail instead.
+- A comparison fails when more than the allowed % of pixels differ (`VISUAL_THRESHOLD`, default 0.1) or the image size
+  changes. `VISUAL_PIXEL_TOLERANCE` (default 10 of 255) ignores faint anti-aliasing noise.
+- Animations and the caret are frozen and fonts are awaited before every shot. `ignore visual region` paints a mask over
+  dynamic content; set it before the baseline is created and keep it for later runs.
+- Baseline, actual and diff images are attached to Allure and the simple report. Open **Visual Review** (profile menu,
+  `http://localhost:8090/visual`) to see side-by-side / slider / diff views and approve intended changes in one click.
+- `VISUAL_UPDATE_BASELINE=true` re-baselines every comparison of a run; `VISUAL_FULL_PAGE=false` captures only the viewport.
+
+Locators accept page locator names, plain CSS, XPath (`//div`) or prefixes `css= xpath= id= name= text= label= placeholder= testid= role=`.
+IF conditions: `${a} == b` (`!= > < >= <= contains`) or `element visible: loc` / `element present:` / `element enabled:` / `text present:`.
+A `.flow` file holds one step per line in the same pipe format (`#` starts a comment).
+
+---
+
 **Status:** Production Ready ✅
 
 ---

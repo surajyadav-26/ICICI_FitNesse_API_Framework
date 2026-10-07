@@ -2,18 +2,18 @@
    ICICI Prudential Theme for FitNesse
    Drop-in override loaded after the default bootstrap theme.
    Brand colors:
-     Maroon (primary)  #A6192E
-     Orange (accent)   #E06336
-     Navy (secondary)  #004A80
+     Maroon (primary)  #C23029
+     Orange (accent)   #E77817
+     Navy (secondary)  #053C6D
      Linen (bg accent) #EEEFE2
    ========================================================= */
 
 :root {
-  --icici-maroon:      #A6192E;
-  --icici-maroon-dark: #7E1322;
-  --icici-orange:      #E06336;
-  --icici-navy:        #004A80;
-  --icici-navy-dark:   #003060;
+  --icici-maroon:      #C23029;
+  --icici-maroon-dark: #97291E;
+  --icici-orange:      #E77817;
+  --icici-navy:        #053C6D;
+  --icici-navy-dark:   #053C6D;
   --icici-linen:       #EEEFE2;
   --icici-gray:        #58595B;
   --icici-light-gray:  #F5F5F5;
@@ -704,18 +704,18 @@ nav.navbar-expand-md[role="navigation"] {
 }
 .history td a, 
 .test-history td a {
-  color: #004A80 !important;
+  color: #053C6D !important;
   font-weight: 700 !important;
   text-decoration: none !important;
 }
 .history td a:hover, 
 .test-history td a:hover {
-  color: #E06336 !important;
+  color: #E77817 !important;
   text-decoration: underline !important;
 }
 .history input[type="submit"], 
 .test-history input[type="submit"] {
-  background-color: #A6192E !important;
+  background-color: #C23029 !important;
   color: #fff !important;
   border: none !important;
   border-radius: 4px !important;
@@ -727,7 +727,7 @@ nav.navbar-expand-md[role="navigation"] {
 }
 .history input[type="submit"]:hover, 
 .test-history input[type="submit"]:hover {
-  background-color: #E06336 !important;
+  background-color: #E77817 !important;
 }
 
 /* bootstrap breadcrumb row */

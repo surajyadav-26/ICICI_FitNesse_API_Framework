@@ -11,38 +11,27 @@ from core.config import Config
 class TestConfig:
     """Test suite for Config class"""
     
-    def test_get_base_url_dev(self):
-        """Test getting dev environment base URL"""
-        url = Config.get_base_url("dev")
-        assert "dev" in url.lower() or "example.com" in url
-    
-    def test_get_base_url_staging(self):
-        """Test getting staging environment base URL"""
-        url = Config.get_base_url("staging")
-        assert "staging" in url.lower() or "example.com" in url
-    
-    def test_get_base_url_uat(self):
-        """Test getting UAT environment base URL"""
-        url = Config.get_base_url("uat")
-        assert "uat" in url.lower() or "example.com" in url
-    
-    def test_get_base_url_prod(self):
-        """Test getting prod environment base URL"""
-        url = Config.get_base_url("prod")
-        assert "example.com" in url or "api" in url.lower()
-    
+    def test_get_base_url_returns_configured_value(self):
+        """URLs come from configuration (set by the UI), never from code"""
+        with patch.object(Config, "DEV_API_URL", "https://configured.invalid"):
+            assert Config.get_base_url("dev") == "https://configured.invalid"
+
+    def test_get_base_url_unconfigured_raises_error(self):
+        """An environment with no URL set from the UI fails clearly"""
+        with patch.object(Config, "UAT_API_URL", ""):
+            with pytest.raises(ValueError, match="not configured"):
+                Config.get_base_url("uat")
+
     def test_get_base_url_production_alias(self):
         """Test 'production' is an alias for 'prod'"""
-        url1 = Config.get_base_url("prod")
-        url2 = Config.get_base_url("production")
-        assert url1 == url2
-    
+        with patch.object(Config, "PROD_API_URL", "https://configured.invalid"):
+            assert Config.get_base_url("prod") == Config.get_base_url("production")
+
     def test_get_base_url_case_insensitive(self):
         """Test environment name is case-insensitive"""
-        url1 = Config.get_base_url("DEV")
-        url2 = Config.get_base_url("dev")
-        assert url1 == url2
-    
+        with patch.object(Config, "DEV_API_URL", "https://configured.invalid"):
+            assert Config.get_base_url("DEV") == Config.get_base_url("dev")
+
     def test_get_base_url_invalid_raises_error(self):
         """Test invalid environment raises ValueError"""
         with pytest.raises(ValueError, match="Invalid environment"):

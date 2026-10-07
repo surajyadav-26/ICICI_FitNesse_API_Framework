@@ -21,17 +21,15 @@ if not exist ".env" (
     copy ".env.example" ".env" >nul
 )
 
-rem ── Check if Python Virtual Environment is active ──
-if not exist ".venv" (
-    echo [ERROR] Python Virtual Environment .venv is missing!
-    echo [INFO] Creating virtual environment...
-    python -m venv .venv
+rem ── Check for Python and install project requirements (no virtual environment) ──
+python --version >nul 2>&1
+if errorlevel 1 goto no_python
+python -c "import waferslim, requests, dotenv, playwright" >nul 2>&1
+if errorlevel 1 (
+    echo [INFO] Installing required libraries from requirements.txt...
+    python -m pip install -r requirements.txt --quiet
     if errorlevel 1 goto no_python
 )
-
-rem ── Activate Python Virtual Environment in the current session ──
-echo [INFO] Activating Python Virtual Environment...
-call .venv\Scripts\activate.bat
 
 rem ── Check for Java runtime ──
 java -version >nul 2>&1
@@ -62,7 +60,7 @@ for /d %%p in ("%~dp0FitNesseRoot\files\testResults\*") do (
 
 rem ── Start Nirikshan User Store Server on port 8090 in the background ──
 echo [INFO] Starting JSON-backed Local User Store Server on port 8090...
-start "Nirikshan User Store" /b .venv\Scripts\python "%~dp0core\user_store_server.py"
+start "Nirikshan User Store" /b python "%~dp0core\user_store_server.py"
 if errorlevel 1 (
     echo [WARNING] Failed to start User Store Server. UI account edits may be disabled.
 )

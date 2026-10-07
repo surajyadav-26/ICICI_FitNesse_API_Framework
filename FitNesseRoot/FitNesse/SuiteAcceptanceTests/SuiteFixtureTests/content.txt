@@ -1,5 +1,0 @@
-^SuiteColumnFixtureSpec
-^SuiteGeneralFixtureSpec
-^SuiteRowFixtureSpec
-
-!contents -R2 -g -p -h

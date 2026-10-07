@@ -11,9 +11,9 @@ on:
   workflow_dispatch:
     inputs:
       test_suite:
-        description: 'Test suite to run (e.g., FrontPage.DummyAPI, FrontPage.Sanity, FrontPage.Smoke)'
+        description: 'Test suite to run (e.g., FrontPage.Regression, FrontPage.Sanity, FrontPage.Smoke)'
         required: false
-        default: 'FrontPage.DummyAPI'
+        default: 'FrontPage.Regression'
       environment:
         description: 'Test environment'
         required: true
@@ -302,7 +302,7 @@ jobs:
           $ErrorActionPreference = "Continue"
           
           # Use actual test suite
-          $testSuite = "${{ github.event.inputs.test_suite || 'FrontPage.DummyAPI' }}"
+          $testSuite = "${{ github.event.inputs.test_suite || 'FrontPage.Regression' }}"
           
           # Try simple format - FitNesse might need Accept header for JSON
           $testUrl = "http://localhost:8080/${testSuite}?suite&format=json"

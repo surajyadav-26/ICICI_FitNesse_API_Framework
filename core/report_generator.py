@@ -50,7 +50,7 @@ def scan_test_results() -> List[dict]:
     zip_files = glob.glob(os.path.join(fitnesse_root_dir, "**", "*.zip"), recursive=True)
     for zip_path in zip_files:
         try:
-            # The directory name under FitNesseRoot represents the test page path (e.g. FrontPage/SwagLabs/LoginPage)
+            # The directory name under FitNesseRoot represents the test page path (e.g. FrontPage/Suite/TestPage)
             rel_dir = os.path.dirname(os.path.relpath(zip_path, fitnesse_root_dir))
             clean_name = rel_dir.replace(os.sep, ".").replace("FrontPage.", "")
             
@@ -418,7 +418,7 @@ def generate_html_report() -> None:
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ICICI Nirikshan AML Application API & UI Report - Latest Test Run</title>
+    <title>ICICI Nirikshan - Test Report</title>
     <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -428,8 +428,8 @@ def generate_html_report() -> None:
             --bg-card: #ffffff;
             --text-main: #0f172a;
             --text-sub: #475569;
-            --primary: #A6192E;
-            --primary-hover: #7E1322;
+            --primary: #C23029;
+            --primary-hover: #97291E;
             --success: #16a34a;
             --fail: #ef4444;
             --border: #e2e8f0;
@@ -461,7 +461,7 @@ def generate_html_report() -> None:
         .header-title h1 {{
             font-size: 28px;
             font-weight: 800;
-            background: linear-gradient(135deg, #7E1322 0%, #A6192E 100%);
+            background: linear-gradient(135deg, #97291E 0%, #C23029 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }}
@@ -1021,7 +1021,7 @@ def generate_html_report() -> None:
     <div class="container">
         <header>
             <div style="display: flex; align-items: center; gap: 16px;">
-                <img src="/logo.png" alt="ICICI Nirikshan" style="height: 52px; width: auto; object-fit: contain;">
+                <img src="/logo.png" alt="ICICI Nirikshan" style="height: 46px; width: auto; object-fit: contain;">
                 <div class="header-title">
                     <h1>ICICI Nirikshan AML Application API & UI Report</h1>
                     <p>Latest Test Run - Showing Most Recent Results</p>

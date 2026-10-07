@@ -1,5 +1,0 @@
-!define TEST_SYSTEM {slim}
-
-!|fixtures.PostRequestFixture|
-|url|bodyJson|statusCodes?|responseBody?|
-|${API_BASE_URL}/users/add|{"firstName":"John","lastName":"Doe","age":30}|201||

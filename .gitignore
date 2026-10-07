@@ -7,6 +7,7 @@ config.json.*
 *.pem
 *.cert
 .env
+.env.*
 .env.local
 .env.*.local
 
@@ -15,16 +16,23 @@ config.json.*
 venv/
 ENV/
 env/
+.conda/
 
 # Python bytecode, caches, and test states
 __pycache__/
-*.pyc
+*.py[cod]
 *.pyo
 *.pyd
 .pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.hypothesis/
 .cache/
 .coverage
+.coverage.*
 htmlcov/
+allure-results/
+allure-report/
 
 # Local framework run logs
 logs/
@@ -52,7 +60,31 @@ temp_*.txt
 temp_check.html
 FitNesseRoot/RerunLastFailures_*.wiki
 RerunLastFailures_*.wiki
+*.tmp
+*.bak
+*.orig
+*.rej
+
+# IDE/editor files
+.vscode/
+.idea/
+*.swp
+*.swo
 
 # OS-specific temp files
 .DS_Store
 Thumbs.db
+
+# Local databases / generated runtime artifacts
+*.sqlite3
+*.db
+*.sqlite
+
+# QA automation artifacts
+playwright-report/
+trace.zip
+
+# Package manager lockfiles that may be regenerated locally
+# keep only if you intentionally want to track them:
+# Pipfile.lock
+# poetry.lock

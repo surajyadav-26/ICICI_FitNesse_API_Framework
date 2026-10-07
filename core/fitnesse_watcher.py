@@ -14,7 +14,7 @@ def heal_workspace():
             name_lower = name.lower()
             
             # Skip actual test pages, only heal high-level suites!
-            is_suite = "suite" in name_lower or "regression" in name_lower or "smoke" in name_lower or "sanity" in name_lower or "demo" in name_lower or "dummy" in name_lower
+            is_suite = "suite" in name_lower or "regression" in name_lower or "smoke" in name_lower or "sanity" in name_lower or "demo" in name_lower
             
             if is_suite:
                 wiki_file_path = os.path.join(frontpage_dir, file)
