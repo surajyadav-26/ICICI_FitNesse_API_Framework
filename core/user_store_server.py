@@ -1,4 +1,5 @@
 """Small local file-backed user store for the FitNesse UI demo."""
+import glob
 import html
 import json
 import os
@@ -314,20 +315,48 @@ class UserStoreHandler(BaseHTTPRequestHandler):
                 self._send_json(500, {"error": str(error)})
             return
 
-        elif self.path == "/framework-logs":
+        elif self.path.split("?")[0] == "/framework-logs/download":
             try:
-                import glob
+                from urllib.parse import parse_qs, urlparse
+                requested = (parse_qs(urlparse(self.path).query).get("file") or [""])[0]
+                log_dir = os.path.join(BASE_DIR, "logs")
+                known = {os.path.basename(f): f for f in glob.glob(os.path.join(log_dir, "framework-*.log"))}
+                if requested not in known:
+                    self._send_json(404, {"error": "Log file not found"})
+                    return
+                with open(known[requested], "rb") as log_file:
+                    data = log_file.read()
+                self.send_response(200)
+                self.send_header("Content-Type", "text/plain; charset=utf-8")
+                self.send_header("Content-Disposition", f'attachment; filename="{requested}"')
+                self.send_header("Content-Length", str(len(data)))
+                self.end_headers()
+                self.wfile.write(data)
+            except Exception as error:
+                self._send_json(500, {"error": str(error)})
+            return
+
+        elif self.path.split("?")[0] == "/framework-logs":
+            try:
+                from urllib.parse import parse_qs, quote, urlparse
                 log_dir = os.path.join(BASE_DIR, "logs")
                 log_files = sorted(glob.glob(os.path.join(log_dir, "framework-*.log")), reverse=True)
-                
+                names = [os.path.basename(f) for f in log_files]
+
                 log_content = "No log files found in logs/ directory."
                 log_filename = "N/A"
+                options_html = '<option value="">No log files</option>'
                 if log_files:
-                    latest_log = log_files[0]
-                    log_filename = os.path.basename(latest_log)
-                    with open(latest_log, "r", encoding="utf-8", errors="ignore") as lf:
+                    requested = (parse_qs(urlparse(self.path).query).get("file") or [""])[0]
+                    selected_log = log_files[names.index(requested)] if requested in names else log_files[0]
+                    log_filename = os.path.basename(selected_log)
+                    with open(selected_log, "r", encoding="utf-8", errors="ignore") as lf:
                         log_content = lf.read()
-                        
+                    options_html = "".join(
+                        f'<option value="{html.escape(name, quote=True)}"{" selected" if name == log_filename else ""}>'
+                        f'{html.escape(name)} ({os.path.getsize(path) // 1024} KB){" - latest" if index == 0 else ""}</option>'
+                        for index, (name, path) in enumerate(zip(names, log_files)))
+                download_url = f"/framework-logs/download?file={quote(log_filename)}"
                 # Wrap in a clean, readable corporate-grade light log viewer with Auto-Refresh!
                 html_logs = f"""<!DOCTYPE html>
 <html lang="en">
@@ -403,6 +432,12 @@ class UserStoreHandler(BaseHTTPRequestHandler):
             white-space: pre-wrap;
             box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
         }}
+        a.btn {{ text-decoration: none; display: inline-block; }}
+        .file-select {{
+            font-family: inherit; font-size: 12px; font-weight: 600; color: #1e293b; background: #fff;
+            border: 1px solid #cbd5e1; border-radius: 6px; padding: 5px 8px; cursor: pointer;
+        }}
+        .file-select:focus {{ outline: none; border-color: #E77817; }}
         .log-error {{ color: #b91c1c; font-weight: 600; }}
         .log-warn {{ color: #b45309; }}
     </style>
@@ -416,6 +451,8 @@ class UserStoreHandler(BaseHTTPRequestHandler):
         }}
         
         function toggleAutoRefresh(chk) {{
+            // The manual refresh button is only needed while auto-refresh is off.
+            document.getElementById("refresh-btn").style.display = chk.checked ? "none" : "inline-block";
             if (chk.checked) {{
                 startAutoRefresh();
                 localStorage.setItem("ici_logs_auto_refresh", "true");
@@ -423,6 +460,10 @@ class UserStoreHandler(BaseHTTPRequestHandler):
                 clearInterval(refreshInterval);
                 localStorage.setItem("ici_logs_auto_refresh", "false");
             }}
+        }}
+
+        function openLogFile(name) {{
+            if (name) {{ window.location.href = "/framework-logs?file=" + encodeURIComponent(name); }}
         }}
 
         function refreshLogs() {{
@@ -444,6 +485,7 @@ class UserStoreHandler(BaseHTTPRequestHandler):
             var chk = document.getElementById("auto-refresh-toggle");
             if (chk) {{
                 chk.checked = autoPref;
+                document.getElementById("refresh-btn").style.display = autoPref ? "none" : "inline-block";
                 if (autoPref) {{
                     startAutoRefresh();
                 }}
@@ -457,7 +499,10 @@ class UserStoreHandler(BaseHTTPRequestHandler):
             <img src="/logo.png" alt="ICICI Nirikshan" style="height: 46px; width: auto; object-fit: contain;">
             <div>
                 <h1>📋 ICICI Nirikshan AML Framework Execution Logs</h1>
-                <div class="meta" style="margin-top: 4px;">Viewing active log file: <strong>{log_filename}</strong></div>
+                <div class="meta" style="margin-top: 6px; display: flex; align-items: center; gap: 8px;">
+                    <span>Log file:</span>
+                    <select id="log-file-select" class="file-select" onchange="openLogFile(this.value)">{options_html}</select>
+                </div>
             </div>
         </div>
         <div class="actions">
@@ -465,7 +510,8 @@ class UserStoreHandler(BaseHTTPRequestHandler):
                 <input type="checkbox" id="auto-refresh-toggle" onchange="toggleAutoRefresh(this)" checked style="cursor: pointer; width: 14px; height: 14px;">
                 <span>Auto-Refresh (3s)</span>
             </label>
-            <button class="btn" onclick="refreshLogs()">🔄 Refresh Logs</button>
+            <button class="btn" id="refresh-btn" onclick="refreshLogs()" style="display: none;">🔄 Refresh Logs</button>
+            <a class="btn" href="{download_url}" download title="Download this log file">⬇ Download</a>
             <button class="btn" onclick="scrollToBottom()">⬇ Scroll to Bottom</button>
         </div>
     </header>

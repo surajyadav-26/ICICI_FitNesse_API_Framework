@@ -177,7 +177,7 @@ class UiFixture(FlowMixin, BrowserActionsMixin, VisualTestingMixin):
             
             # Lazy initialize the Allure UI Results helper, skipping parent suite pages to avoid empty cards!
             if self._test_name != self._suite_name:
-                self._allure = AllureHelper(test_name=self._test_name, suite_name=self._suite_name)
+                self._allure = AllureHelper.for_test(self._test_name, self._suite_name)
             
             logger.info(f"[UiFixture] Starting Playwright engine (browser: {b_type}, headless: {headless_mode})")
             self._playwright = sync_playwright().start()
@@ -262,6 +262,11 @@ class UiFixture(FlowMixin, BrowserActionsMixin, VisualTestingMixin):
         target_url = clean_html_url(raw_url) if raw_url else self._default_url
         
         logger.info(f"[UiFixture] Navigating to URL: '{target_url}'")
+        if "${" in target_url:
+            logger.error(f"[UiFixture] URL variable is not defined: {target_url}")
+            self._capture_failure_state("navigation_failed", f"The URL still contains an undefined variable: {target_url}. "
+                                        "Pick an environment (ENV selector) so UI_BASE_URL is defined.", f"Navigate to '{target_url}'")
+            return self._last_error_html
         try:
             self._page.goto(target_url, timeout=20000, wait_until="commit")
             self._last_error_html = ""
@@ -274,7 +279,7 @@ class UiFixture(FlowMixin, BrowserActionsMixin, VisualTestingMixin):
             return True
         except Exception as e:
             logger.error(f"[UiFixture] Navigation failed: {e}")
-            self._capture_failure_state("navigation_failed")
+            self._capture_failure_state("navigation_failed", str(e), f"Navigate to '{target_url}'")
             # Return inline error link directly inside the cell!
             return self._last_error_html
 
@@ -305,7 +310,7 @@ class UiFixture(FlowMixin, BrowserActionsMixin, VisualTestingMixin):
             return True
         except Exception as e:
             logger.error(f"[UiFixture] Failed to fill field '{element_name}': {e}")
-            self._capture_failure_state(f"fill_failed_{element_name}")
+            self._capture_failure_state(f"fill_failed_{element_name}", str(e))
             return self._last_error_html
 
     def fillField(self, element_name: str, value: str) -> bool:
@@ -341,7 +346,7 @@ class UiFixture(FlowMixin, BrowserActionsMixin, VisualTestingMixin):
             return True
         except Exception as e:
             logger.error(f"[UiFixture] Failed to click selector '{element_name}': {e}")
-            self._capture_failure_state(f"click_failed_{element_name}")
+            self._capture_failure_state(f"click_failed_{element_name}", str(e))
             return self._last_error_html
 
     def clickButton(self, element_name: str) -> bool:
@@ -368,7 +373,7 @@ class UiFixture(FlowMixin, BrowserActionsMixin, VisualTestingMixin):
             return True
         except Exception as e:
             logger.error(f"[UiFixture] Timeout waiting for text '{text}': {e}")
-            self._capture_failure_state(f"wait_for_text_failed_{text}")
+            self._capture_failure_state(f"wait_for_text_failed_{text}", str(e))
             return self._last_error_html
 
     def waitForTextTimeout(self, text: str, timeout: str) -> bool:
@@ -467,8 +472,8 @@ class UiFixture(FlowMixin, BrowserActionsMixin, VisualTestingMixin):
         raise AttributeError(f"'UiFixture' object has no attribute '{name}'")
 
     # Private Helpers
-    def _capture_failure_state(self, reason_prefix: str) -> None:
-        """Captures a screenshot automatically only on failure states."""
+    def _capture_failure_state(self, reason_prefix: str, detail: str = "", description: str = "") -> None:
+        """Captures a screenshot on failure and records the failed step in Allure and the simple report."""
         if not self._page or self._suppress_failure_capture:
             return
 
@@ -508,22 +513,25 @@ class UiFixture(FlowMixin, BrowserActionsMixin, VisualTestingMixin):
                 attachment_label = f"Failure Screenshot - Wait for text failed '{txt}'"
                 error_message = f"Timeout failed: Wait for text '{txt}' timed out."
 
-            # Symmetrical Allure UI Reporting Sourcing!
+            # What the step was trying to do (when known) is the clearest title for QA.
+            step_title = description or error_message
+            reason_line = str(detail).strip().splitlines()[0][:300] if str(detail).strip() else ""
+            full_message = f"{step_title} - {reason_line}" if reason_line and description else (
+                f"{error_message} - {reason_line}" if reason_line else step_title)
+
+            # Symmetrical Allure UI Reporting Sourcing: a failed step that carries its own screenshot.
             if self._allure:
                 try:
-                    # Read the screenshot bytes and attach to Allure
                     with open(screenshot_path, "rb") as sf:
                         screenshot_bytes = sf.read()
-                    self._allure.add_attachment(attachment_label, screenshot_bytes, "image/png", "png")
-                    self._allure.set_failed(error_message)
-                    # Write the final failed result immediately so it is captured on crash
-                    self._allure.write_result()
-                    self._allure = None
+                    link = self._allure.add_attachment(attachment_label, screenshot_bytes, "image/png", "png", step=True)
+                    self._allure.set_failed(full_message)
+                    self._allure.add_step(f"FAILED: {step_title}", "failed", 1, [link] if link else None, full_message)
                 except Exception as allure_err:
                     logger.debug(f"[UiFixture] Failed to attach screenshot to Allure: {allure_err}")
 
-            # Symmetrical Simple Report UI Sourcing!
-            # Registers the failure screenshot directly into report.html's audit trail!
+            # Symmetrical Simple Report UI Sourcing: the failed step, then its screenshot.
+            self._log_simple_step(f"FAILED: {step_title}", "FAILED", full_message)
             try:
                 from core.report_generator import add_record
                 import datetime
@@ -534,7 +542,7 @@ class UiFixture(FlowMixin, BrowserActionsMixin, VisualTestingMixin):
                     "status_code": 500, # Pass integer to prevent TypeError crashes in report generator!
                     "response_time_ms": 0,
                     "request_body": f"UI Assertion failed on step: {raw_key.replace('_', ' ').title()}",
-                    "response_body": f'<div style="text-align: center; padding: 10px;"><img src="/{self._screenshot_dir_path}/{screenshot_name}" style="max-width: 100%; max-height: 450px; border: 2px solid var(--fail); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" alt="Failure Screenshot" /></div>',
+                    "response_body": f'<div style="text-align: center; padding: 10px;"><img src="http://localhost:8080/{self._screenshot_dir_path}/{screenshot_name}" style="max-width: 100%; max-height: 450px; border: 2px solid var(--fail); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" alt="Failure Screenshot" /></div>',
                     "curl": f"http://localhost:8080/{self._screenshot_dir_path}/{screenshot_name}",
                     "json_file": "" # No JSON file for UI failures!
                 })

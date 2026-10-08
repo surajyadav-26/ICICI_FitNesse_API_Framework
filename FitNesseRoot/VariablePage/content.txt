@@ -1,4 +1,4 @@
 !define API_BASE_URL {https://dummyjson.com}
-!define UI_BASE_URL {https://www.saucedemo.com/}
+!define UI_BASE_URL {http://localhost:8080/}
 !define runInParallel {false}
 !define fitnesse.runner.parallel {1}

@@ -64,6 +64,16 @@ ACTIONS = load_actions()
 def test_catalog_covers_every_requested_action():
     labels = {label for _, label, _, _ in ACTIONS}
     assert [label for label in REQUIRED_ACTIONS if label not in labels] == []
+    assert "Authentication" not in {category for category, _, _, _ in ACTIONS}
+
+
+def test_step_builder_uses_short_login_page_locator_names():
+    with open(HEADER, encoding="utf-8") as header:
+        content = header.read()
+
+    assert 'selectedPage === "LoginPage"' in content
+    assert '? select.value' in content
+    assert ': selectedPage + "." + select.value' in content
 
 
 @pytest.mark.parametrize("category,label,tokens,optional", ACTIONS, ids=[a[1] for a in ACTIONS])

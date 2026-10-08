@@ -51,10 +51,15 @@ def test_corrupt_page_file_is_ignored(pages_dir):
 def test_ui_fixture_resolves_locators_from_active_page(pages_dir):
     from fixtures.ui_fixture import UiFixture
 
-    page_registry.save_locator("LoginPage", "username", "css=#login-user")
     page_registry.save_locator("DashboardPage", "username", "css=#dash-user")
     fixture = UiFixture("pages-test")
     assert fixture._page_selector("username") == "username"            # no page selected: untouched
+    page_registry.save_locator("LoginPage", "username", "css=#login-user")
+    page_registry.save_locator("LoginPage", "password", "css=#login-password")
+    page_registry.save_locator("LoginPage", "login button", "css=#login-submit")
+    assert fixture._page_selector("username") == "css=#login-user"     # LoginPage is the default
+    assert fixture._page_selector("password") == "css=#login-password"
+    assert fixture._page_selector("login button") == "css=#login-submit"
     assert fixture.use_page("LoginPage") is True
     assert fixture._page_selector("username") == "css=#login-user"
     assert fixture._page_selector("DashboardPage.username") == "css=#dash-user"  # explicit Page.name

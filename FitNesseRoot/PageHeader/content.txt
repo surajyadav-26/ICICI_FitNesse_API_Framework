@@ -984,6 +984,14 @@ body article {
   box-sizing: border-box !important;
 }
 
+body:not(.ici-authenticated) footer {
+  display: none !important;
+}
+
+body:not(.ici-authenticated) .ici-dash {
+  display: none !important;
+}
+
 /* ── Processing State Animations ── */
 .ici-spin {
   display: inline-block !important;
@@ -1007,7 +1015,7 @@ body article {
      ═══════════════════════════════════════════════════ -->
 <script>
 (function() {
-  /* Friendly address bar: login shows "/", the front page "/home", other pages drop the "FrontPage." prefix.
+  /* Friendly address bar: the front page is "/Home"; other pages drop the "FrontPage." prefix.
      The real wiki path is kept in window.__iciRealPath so every feature keeps working. */
   window.__iciRealPath = window.__iciRealPath || location.pathname;
   window.iciRealPath = function() { return window.__iciRealPath || location.pathname; };
@@ -1016,7 +1024,7 @@ body article {
       if (location.search || location.hash) { return; }
       var real = window.iciRealPath(), pretty = real;
       if (!loggedIn) { pretty = "/"; }
-      else if (real === "/" || real === "/FrontPage" || real === "/index.html") { pretty = "/home"; }
+      else if (real === "/" || real === "/FrontPage" || real === "/index.html") { pretty = "/Home"; }
       else if (real.indexOf("/FrontPage.") === 0) { pretty = "/" + real.substring(11); }
       if (pretty !== location.pathname) { history.replaceState(null, "", pretty); }
     } catch (e) {}
@@ -1092,7 +1100,7 @@ body article {
 
   var NAV = {
     admin: [
-      { label: "Home",          href: function(){ return "/"; } },
+      { label: "Home",          href: function(){ return "/Home"; } },
       { label: "▶ Run",         href: "#", action: function(e){ 
           var btn = e.target;
           btn.innerHTML = '<span class="ici-spin">⏳</span> Running...';
@@ -1112,7 +1120,7 @@ body article {
       { label: "📋 Page History", href: function(){ return p() + "?pageHistory"; } }
     ],
     editor: [
-      { label: "Home",          href: function(){ return "/"; } },
+      { label: "Home",          href: function(){ return "/Home"; } },
       { label: "▶ Run",         href: "#", action: function(e){
           var btn = e.target;
           btn.innerHTML = '<span class="ici-spin">⏳</span> Running...';
@@ -1132,7 +1140,7 @@ body article {
       { label: "📋 Page History", href: function(){ return p() + "?pageHistory"; } }
     ],
     viewer: [
-      { label: "Home",          href: function(){ return "/"; } },
+      { label: "Home",          href: function(){ return "/Home"; } },
       { label: "▶ Run",         href: "#", action: function(e){ 
           var btn = e.target;
           btn.innerHTML = '<span class="ici-spin">⏳</span> Running...';
@@ -1376,10 +1384,12 @@ body article {
         throw new Error("Invalid session data");
       }
 
+      document.body.classList.add("ici-authenticated");
       var overlay = document.getElementById("icici-login-overlay");
       if (overlay) overlay.style.display = "none";
       document.body.style.overflow = ""; // Restore body scrolling!
       window.iciPrettyUrl(true);
+      updateBrowserTabTitle();
 
       var banner = document.getElementById("icici-header-banner");
       if (banner) banner.style.display = "flex";
@@ -1462,6 +1472,7 @@ body article {
 
   window.iciLogout = function() {
     clearSession();
+    document.body.classList.remove("ici-authenticated");
     location.href = "/";
   };
 
@@ -1815,8 +1826,13 @@ body article {
   /* ── Force corporate browser tab title overrides beautifully! ── */
   function updateBrowserTabTitle() {
     var baseTitle = "ICICI Nirikshan";
-    if (p() === "/" || p() === "/FrontPage" || p() === "" || p() === "/index.html") {
+    var session = loadSession();
+    if (!session || !session.role) {
       document.title = baseTitle;
+      return;
+    }
+    if (p() === "/" || p() === "/FrontPage" || p() === "" || p() === "/index.html") {
+      document.title = baseTitle + "-Home";
     } else {
       var subPageName = p().replace(/^\//, "").split(".").pop();
       if (subPageName) {
@@ -2621,7 +2637,7 @@ body article {
        p entries: [key, label, type (locator|text|number|select), flag ("opt" = optional), options]            */
     var ICI_ACTIONS = [
       {c:"Browser", l:"Open Browser", s:["open browser","{browser}"], p:[["browser","Browser","select","opt",["chromium","firefox","webkit"]]], d:"Starts the browser. Navigate to URL also starts it automatically."},
-      {c:"Browser", l:"Navigate to URL", s:["navigate to","{url}"], p:[["url","URL","text","","https://your-app-url"]], d:"Opens the address in the current browser."},
+      {c:"Browser", l:"Navigate to URL", s:["navigate to","{url}"], p:[["url","URL (defaults to the selected environment)","text","","https://your-app-url","${UI_BASE_URL}"]], d:"Opens the address. ${UI_BASE_URL} is the UI URL of the environment chosen in the ENV selector (API steps will use ${API_BASE_URL}); append a path, e.g. ${UI_BASE_URL}/home."},
       {c:"Browser", l:"Refresh Page", s:["refresh page"], p:[], d:"Reloads the current page."},
       {c:"Browser", l:"Go Back", s:["go back"], p:[], d:"Browser back button."},
       {c:"Browser", l:"Go Forward", s:["go forward"], p:[], d:"Browser forward button."},
@@ -2750,7 +2766,10 @@ body article {
         var select = iciEl("ici-builder-param-" + param[0] + "-sel");
         var input = iciEl("ici-builder-param-" + param[0]);
         if (select && select.style.display !== "none" && select.value !== "__custom__") {
-          values[param[0]] = iciSelectedPage() + "." + select.value;   // page-qualified: PageName.locator
+          var selectedPage = iciSelectedPage();
+          values[param[0]] = selectedPage === "LoginPage"
+            ? select.value
+            : selectedPage + "." + select.value;
         } else {
           values[param[0]] = input ? input.value : "";
         }
@@ -2849,6 +2868,7 @@ body article {
           } else if (typeof param[4] === "string") {
             input.placeholder = param[4];
           }
+          if (typeof param[5] === "string") { input.value = (kept[param[0]] !== undefined && kept[param[0]] !== "") ? kept[param[0]] : param[5]; }
         }
         input.id = "ici-builder-param-" + param[0];
         input.className = "ici-env-input";
@@ -2894,7 +2914,7 @@ body article {
       iciBuilderSteps.push({ row: iciBuildRow(action, iciCurrentValues(action)), kind: action.s[0] });
       action.p.forEach(function(param) {
         var input = iciEl("ici-builder-param-" + param[0]);
-        if (input && input.tagName === "INPUT") { input.value = ""; }
+        if (input && input.tagName === "INPUT") { input.value = (typeof param[5] === "string") ? param[5] : ""; }
       });
       iciGenerateBuilderOutput();
       iciRenderBuilderSteps();

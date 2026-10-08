@@ -4,12 +4,14 @@
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
 
-  <title>ICICI Nirikshan - $title</title>
+  <title>ICICI Nirikshan-$title</title>
   <script>
    (function() {
-    /* Friendly URLs: /home is the front page; /Name is shorthand for /FrontPage.Name (see PageHeader). */
     var path = location.pathname;
-    if (path === "/home") { location.replace("/FrontPage" + location.search + location.hash); return; }
+    if (path === "/Home" || path === "/home") {
+      location.replace("/FrontPage" + location.search + location.hash);
+      return;
+    }
     document.addEventListener("DOMContentLoaded", function() {
       if (!/Page doesn't exist/i.test(document.title)) { return; }
       var name = path.replace(/^\//, "");

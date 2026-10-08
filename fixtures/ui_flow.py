@@ -17,6 +17,7 @@ import time
 from core.logger import logger
 
 _VAR_PATTERN = re.compile(r"\$\{([A-Za-z_][\w.\-]*)\}")
+_UNDEFINED_PATTERN = re.compile(r"(?:<[^>]*>)*undefined variable:\s*([A-Za-z_][\w.\-]*)(?:<[^>]*>)*")
 _ANCHOR_PATTERN = re.compile(r"<a[^>]*>([\s\S]*?)</a>")
 _COMPARISON_PATTERN = re.compile(r"^(.*?)\s*(==|!=|>=|<=|~=|>|<|\bnot contains\b|\bcontains\b)\s*(.*)$", re.IGNORECASE)
 _FALSY = {"", "false", "0", "no", "none", "null", "off"}
@@ -25,11 +26,45 @@ _WORKSPACE_DIR = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 COMPONENTS_DIR = os.path.join(_WORKSPACE_DIR, "data", "components")
 
 
+def wiki_variable(name: str):
+    """
+    Value of a !define variable written to FitNesseRoot/VariablePage by the ENV selector (UI_BASE_URL, API_BASE_URL),
+    matched case-insensitively so ${UI_Base_URL} works like ${UI_BASE_URL}. Returns None when it is not defined.
+    """
+    try:
+        path = os.path.join(_WORKSPACE_DIR, "FitNesseRoot", "VariablePage", "content.txt")
+        with open(path, "r", encoding="utf-8") as variable_file:
+            for found in re.finditer(r"!define\s+(\w+)\s+\{([^}]*)\}", variable_file.read()):
+                if found.group(1).lower() == name.lower():
+                    return found.group(2).strip()
+    except OSError:
+        pass
+    return None
+
+
 def substitute_variables(value, variables: dict):
-    """Replaces ${name} with the stored variable value; unknown names are left untouched."""
-    if not isinstance(value, str) or "${" not in value:
+    """Replaces ${name} with the stored variable value (then the ENV selector's variables); unknown names stay."""
+    if not isinstance(value, str):
         return value
-    return _VAR_PATTERN.sub(lambda m: str(variables[m.group(1)]) if m.group(1) in variables else m.group(0), value)
+    if "undefined variable" in value:
+        # FitNesse itself rewrites a ${Name} it does not know (e.g. wrong capitalisation) into this text; undo that.
+        value = _UNDEFINED_PATTERN.sub(lambda m: "${" + m.group(1) + "}", value)
+    if "${" not in value:
+        return value
+
+    def lookup(match):
+        name = match.group(1)
+        if name in variables:
+            return str(variables[name])
+        if name.lower() in ("ui_base_url", "api_base_url"):
+            resolved = wiki_variable(name)
+            if resolved:
+                if match.string[match.end():].startswith("/"):
+                    resolved = resolved.rstrip("/")    # ${UI_BASE_URL}/home must not become ...//home
+                return resolved
+        return match.group(0)
+
+    return _VAR_PATTERN.sub(lookup, value)
 
 
 def clean_cell(value):

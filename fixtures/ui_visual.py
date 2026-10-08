@@ -14,6 +14,7 @@ differences on the Visual Review page. Baselines are stored per browser and view
 """
 import os
 import uuid
+from urllib.parse import quote
 
 from core import visual_compare
 from core.config import Config
@@ -174,7 +175,7 @@ class VisualTestingMixin:
         try:
             from core.report_generator import add_record
             import time
-            base = f"/files/testResults/visual/{result.profile}/{result.name}"
+            base = f"http://localhost:8080/files/testResults/visual/{quote(result.profile)}/{quote(result.name)}"
             cell = ('<div style="flex:1;text-align:center;font-size:11px;color:#5C6E89">{}<br>'
                     '<img src="{}/{}.png" style="max-width:100%;border:1px solid #E5E8EB;border-radius:6px"></div>')
             images = "".join(cell.format(kind.title(), base, kind) for kind in ("baseline", "actual", "diff")

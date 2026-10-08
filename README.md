@@ -831,10 +831,16 @@ Locators are grouped per page in `data/pages/<PageName>.json` (for example `Logi
 {"page": "LoginPage", "locators": {"username": "role=textbox:User ID", "login button": "css=button.login-btn"}}
 ```
 
-Pick the page in **Step Builder**; the locator drop-down then lists only that page's locators and the builder writes them
-page-qualified (`LoginPage.username`), so no extra rows are added to your table. Use **Manage page locators** in the drawer to add or remove locators and pages.
-In a table, `LoginPage.username` resolves from that page; `| use page | LoginPage |` (optional) lets later steps use the short
-name `username`; anything not found on a page is treated as a normal selector.
+Pick the page in **Step Builder**; the locator drop-down then lists only that page's locators. When `LoginPage` is
+selected, the builder emits short names such as `username`; for other pages it emits page-qualified names such as
+`DashboardPage.username` to avoid collisions. **Manage page locators** in the drawer lets you add or remove locators
+and pages. In a table, `Page.locator` always resolves explicitly. If a page has been selected with `use page`, its
+short locator names take precedence; with no page selected, short names from `LoginPage` are resolved by default.
+Anything not found on the applicable page is treated as a normal selector.
+
+The [`LoginAuthenticationTest` FitNesse page](./FitNesseRoot/FrontPage/LoginAuthenticationTest/content.txt) shows
+login steps in a plain script table using `username`, `password`, and `login button` directly, without a `use page` row
+or a `LoginPage.` prefix.
 
 ### Visual testing
 

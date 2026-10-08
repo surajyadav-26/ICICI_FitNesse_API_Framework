@@ -1,0 +1,17 @@
+---
+Test
+---
+|script|fixtures.UiFixture|
+|navigate to|http://localhost:8080/|
+|enter text|username|with value|admin|
+|enter text|password|with value|admin13|
+|click element|login button|
+|if condition|text present: Invalid username or password.|
+|ensure|verify text present|Invalid username or password.|
+|else branch|
+|if condition|text present: Please enter username and password.|
+|ensure|verify text present|Please enter username and password.|
+|else branch|
+|ensure|verify url|http://localhost:8080/Home|
+|end if|
+|end if|

@@ -1,0 +1,7 @@
+| script | fixtures.UiFixture |
+| navigate to | ${UI_BASE_URL} |
+| enter text | username | with value | admin |
+| enter text | password | with value | admin123 |
+| click element | login button |
+| ensure | verify url | http://localhost:8080/Home |
+ 

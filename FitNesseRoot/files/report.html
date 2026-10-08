@@ -613,22 +613,22 @@
                 </div>
             </div>
             <div class="header-meta">
-                <strong>Active Suite:</strong> VariablePage<br>
+                <strong>Active Suite:</strong> Login<br>
                 <strong>Environment:</strong> UAT Testing Portal<br>
-                <strong>Report Generated:</strong> 2026-10-07 16:31:30<br>
+                <strong>Report Generated:</strong> 2026-10-08 11:14:04<br>
                 <strong>Execution Duration:</strong> 0.00s
             </div>
         </header>
 
         <!-- Master Status Banner -->
-        <div class="status-banner banner-empty">
-            ⚪ NO TEST RESULTS CAPTURED
+        <div class="status-banner banner-fail">
+            🚨 TEST RUN FAILED — 1 / 1 Test Cases Failed (Action Required)
         </div>
 
         <div class="fitnesse-assertions-bar">
             <span class="assert-label">Suite Assertions Summary:</span>
             <span class="assert-badge assert-right">0 right</span>
-            <span class="assert-badge assert-wrong">0 wrong</span>
+            <span class="assert-badge assert-wrong">1 wrong</span>
             <span class="assert-badge assert-ignored">0 ignored</span>
             <span class="assert-badge assert-exceptions">0 exceptions</span>
         </div>
@@ -637,7 +637,7 @@
         <section class="dashboard-grid">
             <div class="kpi-card kpi-total">
                 <span class="kpi-label">Total Test Cases</span>
-                <span class="kpi-value">0</span>
+                <span class="kpi-value">1</span>
             </div>
             <div class="kpi-card kpi-success">
                 <span class="kpi-label">Succeeded Cases</span>
@@ -651,7 +651,7 @@
             </div>
             <div class="kpi-card kpi-failed">
                 <span class="kpi-label">Failed Cases</span>
-                <span class="kpi-value">0</span>
+                <span class="kpi-value">1</span>
             </div>
             <div class="kpi-card kpi-passrate">
                 <span class="kpi-label">Pass Rate</span>
@@ -666,9 +666,9 @@
                 <div class="table-controls">
                     <input type="text" id="search-input" class="search-box" placeholder="🔍 Search Test Cases..." onkeyup="filterAndSearch()">
                     <div class="filter-controls">
-                        <button id="filter-all" class="filter-btn active" data-filter="all" onclick="setFilter('all', this)">All (0)</button>
+                        <button id="filter-all" class="filter-btn active" data-filter="all" onclick="setFilter('all', this)">All (1)</button>
                         <button id="filter-pass" class="filter-btn" onclick="setFilter('passed', this)">Passed (0)</button>
-                        <button id="filter-fail" class="filter-btn" onclick="setFilter('failed', this)">Failed (0)</button>
+                        <button id="filter-fail" class="filter-btn" onclick="setFilter('failed', this)">Failed (1)</button>
                     </div>
                 </div>
             </div>
@@ -682,7 +682,96 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr><td colspan='3' style='text-align:center; color:var(--text-sub);'>No active test session execution history found. Executing a test will populate this.</td></tr>
+                    
+        <tr class="summary-row" onclick="togglePage(0)" data-name="Login" data-status="failed" title="Click to view requests audit trail">
+            <td>
+                <div class="test-title">
+                    <span class="suite-badge">Suite</span>
+                    <strong>Login</strong>
+                    <span class="assertion-summary" style="margin-left: 10px;">0 right • <span style='color:var(--fail); font-weight:700;'>1 wrong</span></span>
+                </div>
+            </td>
+            <td>2026-10-08 11:13:36</td>
+            <td>
+                <span class="status-indicator status-fail">✗ FAILED</span>
+                <div class='defect-msg'>❌ Failed 1 verification checks</div>
+            </td>
+        </tr>
+        <tr id="page-details-0" class="details-row" style="display: table-row;">
+            <td colspan="3">
+                <div class="nested-requests-container">
+                    <div class="audit-header">
+                        <h3>🔍 Execution Steps &amp; Requests</h3>
+                        
+                    </div>
+                    
+                    <div class="nested-request-row" style="border-color: #e2e8f0; background: #ffffff; margin-bottom: 8px; border-radius: 8px; overflow: hidden;">
+                        <div class="nested-request-header" style="display: flex; align-items: center; gap: 16px; padding: 12px 20px; cursor: default; user-select: none;">
+                            <span class="badge badge-step" style="background: rgba(231, 120, 23, 0.12); color: #C23029; border: 1px solid rgba(231, 120, 23, 0.3); display: inline-block; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; width: 110px; text-align: center;">STEP 1</span>
+                            <span class="nested-url" style="color: var(--text-main); font-weight: 600; font-size: 13px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="Start Browser (browser: chromium, headless: False)">Start Browser (browser: chromium, headless: False)</span>
+                            <span class="nested-time" style="color: var(--success); font-weight: 700; font-size: 12px;">PASS</span>
+                        </div>
+                        
+                    </div>
+                    
+                    <div class="nested-request-row" style="border-color: #e2e8f0; background: #ffffff; margin-bottom: 8px; border-radius: 8px; overflow: hidden;">
+                        <div class="nested-request-header" style="display: flex; align-items: center; gap: 16px; padding: 12px 20px; cursor: default; user-select: none;">
+                            <span class="badge badge-step" style="background: rgba(231, 120, 23, 0.12); color: #C23029; border: 1px solid rgba(231, 120, 23, 0.3); display: inline-block; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; width: 110px; text-align: center;">STEP 2</span>
+                            <span class="nested-url" style="color: var(--text-main); font-weight: 600; font-size: 13px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="Navigate to &#x27;http://localhost:8080/&#x27;">Navigate to &#x27;http://localhost:8080/&#x27;</span>
+                            <span class="nested-time" style="color: var(--success); font-weight: 700; font-size: 12px;">PASS</span>
+                        </div>
+                        
+                    </div>
+                    
+                    <div class="nested-request-row" style="border-color: #e2e8f0; background: #ffffff; margin-bottom: 8px; border-radius: 8px; overflow: hidden;">
+                        <div class="nested-request-header" style="display: flex; align-items: center; gap: 16px; padding: 12px 20px; cursor: default; user-select: none;">
+                            <span class="badge badge-step" style="background: rgba(231, 120, 23, 0.12); color: #C23029; border: 1px solid rgba(231, 120, 23, 0.3); display: inline-block; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; width: 110px; text-align: center;">STEP 3</span>
+                            <span class="nested-url" style="color: var(--text-main); font-weight: 600; font-size: 13px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="Enter text &#x27;admin&#x27; into &#x27;username&#x27;">Enter text &#x27;admin&#x27; into &#x27;username&#x27;</span>
+                            <span class="nested-time" style="color: var(--success); font-weight: 700; font-size: 12px;">PASS</span>
+                        </div>
+                        
+                    </div>
+                    
+                    <div class="nested-request-row" style="border-color: #e2e8f0; background: #ffffff; margin-bottom: 8px; border-radius: 8px; overflow: hidden;">
+                        <div class="nested-request-header" style="display: flex; align-items: center; gap: 16px; padding: 12px 20px; cursor: default; user-select: none;">
+                            <span class="badge badge-step" style="background: rgba(231, 120, 23, 0.12); color: #C23029; border: 1px solid rgba(231, 120, 23, 0.3); display: inline-block; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; width: 110px; text-align: center;">STEP 4</span>
+                            <span class="nested-url" style="color: var(--text-main); font-weight: 600; font-size: 13px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="Enter text &#x27;admin13&#x27; into &#x27;password&#x27;">Enter text &#x27;admin13&#x27; into &#x27;password&#x27;</span>
+                            <span class="nested-time" style="color: var(--success); font-weight: 700; font-size: 12px;">PASS</span>
+                        </div>
+                        
+                    </div>
+                    
+                    <div class="nested-request-row" style="border-color: #e2e8f0; background: #ffffff; margin-bottom: 8px; border-radius: 8px; overflow: hidden;">
+                        <div class="nested-request-header" style="display: flex; align-items: center; gap: 16px; padding: 12px 20px; cursor: default; user-select: none;">
+                            <span class="badge badge-step" style="background: rgba(231, 120, 23, 0.12); color: #C23029; border: 1px solid rgba(231, 120, 23, 0.3); display: inline-block; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; width: 110px; text-align: center;">STEP 5</span>
+                            <span class="nested-url" style="color: var(--text-main); font-weight: 600; font-size: 13px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="Click &#x27;login button&#x27;">Click &#x27;login button&#x27;</span>
+                            <span class="nested-time" style="color: var(--success); font-weight: 700; font-size: 12px;">PASS</span>
+                        </div>
+                        
+                    </div>
+                    
+                    <div class="nested-request-row" style="border-color: #e2e8f0; background: #ffffff; margin-bottom: 8px; border-radius: 8px; overflow: hidden;">
+                        <div class="nested-request-header" style="display: flex; align-items: center; gap: 16px; padding: 12px 20px; cursor: default; user-select: none;">
+                            <span class="badge badge-step" style="background: rgba(231, 120, 23, 0.12); color: #C23029; border: 1px solid rgba(231, 120, 23, 0.3); display: inline-block; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; width: 110px; text-align: center;">STEP 6</span>
+                            <span class="nested-url" style="color: var(--text-main); font-weight: 600; font-size: 13px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="IF text present: Invalid username or password. -&gt; True">IF text present: Invalid username or password. -&gt; True</span>
+                            <span class="nested-time" style="color: var(--success); font-weight: 700; font-size: 12px;">PASS</span>
+                        </div>
+                        
+                    </div>
+                    
+                    <div class="nested-request-row" style="border-color: #e2e8f0; background: #ffffff; margin-bottom: 8px; border-radius: 8px; overflow: hidden;">
+                        <div class="nested-request-header" style="display: flex; align-items: center; gap: 16px; padding: 12px 20px; cursor: default; user-select: none;">
+                            <span class="badge badge-step" style="background: rgba(231, 120, 23, 0.12); color: #C23029; border: 1px solid rgba(231, 120, 23, 0.3); display: inline-block; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; width: 110px; text-align: center;">STEP 7</span>
+                            <span class="nested-url" style="color: var(--text-main); font-weight: 600; font-size: 13px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="Verify text present &#x27;Invalid username or password.&#x27;">Verify text present &#x27;Invalid username or password.&#x27;</span>
+                            <span class="nested-time" style="color: var(--success); font-weight: 700; font-size: 12px;">PASS</span>
+                        </div>
+                        
+                    </div>
+                    
+                </div>
+            </td>
+        </tr>
+        
                 </tbody>
             </table>
         </section>

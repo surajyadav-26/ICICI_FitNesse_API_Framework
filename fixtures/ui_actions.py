@@ -71,13 +71,15 @@ class BrowserActionsMixin:
         return LoginPage.get_locator(scope, text)
 
     def _page_selector(self, name: str) -> str:
-        """Maps a locator name to its selector on the active page (or Page.name); other text passes through."""
+        """Maps names from the active page, or LoginPage by default, to their selectors."""
         pages = page_registry.list_pages()
         if self._current_page in pages and name in pages[self._current_page]:
             return pages[self._current_page][name]
         page_part, _, locator_part = name.partition(".")
         if locator_part and locator_part in pages.get(page_part, {}):
             return pages[page_part][locator_part]
+        if not self._current_page and name in pages.get("LoginPage", {}):
+            return pages["LoginPage"][name]
         return name
 
     def _ok(self, description: str) -> bool:
@@ -86,10 +88,10 @@ class BrowserActionsMixin:
         self._log_simple_step(description)
         return True
 
-    def _fail(self, key: str, error) -> str:
+    def _fail(self, key: str, error, description: str = "") -> str:
         logger.error(f"[UiFixture] {key}: {error}")
         self._last_error_html = ""
-        self._capture_failure_state(key)
+        self._capture_failure_state(key, str(error), description)
         return self._last_error_html or False
 
     def _timeout_ms(self, timeout) -> int:
@@ -107,7 +109,7 @@ class BrowserActionsMixin:
             action()
             return self._ok(description)
         except Exception as error:
-            return self._fail(key, error)
+            return self._fail(key, error, description)
 
     def _verify(self, description: str, key: str, check) -> bool:
         """Runs check() -> bool; a failed or erroring check captures a screenshot and returns False."""
@@ -121,7 +123,7 @@ class BrowserActionsMixin:
         if passed:
             self._ok(description)
         else:
-            self._capture_failure_state(key)
+            self._capture_failure_state(key, "Verification did not pass", description)
         return passed
 
     def _peek(self, kind: str, argument: str) -> bool:
@@ -244,6 +246,43 @@ class BrowserActionsMixin:
             else:
                 locator.scroll_into_view_if_needed()
         return self._perform(f"{label} '{element_name}'", f"{method}_failed_{element_name}", action)
+
+    @step(raw=True)
+    def attempt_login_with_password(self, username: str, password: str) -> bool:
+        """| attempt login | admin | with password | admin123 |"""
+        def action():
+            username_field = self._locator("framework username")
+            password_field = self._locator("framework password")
+            username_field.wait_for(state="visible", timeout=DEFAULT_TIMEOUT_MS)
+            password_field.wait_for(state="visible", timeout=DEFAULT_TIMEOUT_MS)
+            username_field.fill(username)
+            password_field.fill(password)
+            self._locator("framework login button").click()
+
+        return self._perform("Attempt application login", "login_attempt_failed", action)
+
+    @step(raw=True)
+    def verify_login_error(self, expected_message: str) -> bool:
+        """| ensure | verify login error | Invalid username or password. |"""
+        return self._verify(
+            f"Verify login error '{expected_message}'",
+            "login_error_mismatch",
+            lambda: self._locator("login error message").inner_text(timeout=DEFAULT_TIMEOUT_MS).strip()
+            == expected_message.strip(),
+        )
+
+    @step(raw=True)
+    def logout(self) -> bool:
+        """| logout |"""
+        def action():
+            profile_menu = self._locator("profile menu")
+            profile_menu.wait_for(state="visible", timeout=DEFAULT_TIMEOUT_MS)
+            profile_menu.click()
+            sign_out = self._locator("sign out button")
+            sign_out.wait_for(state="visible", timeout=DEFAULT_TIMEOUT_MS)
+            sign_out.click()
+
+        return self._perform("Sign out of the application", "logout_failed", action)
 
     @step
     def click_element(self, element_name: str) -> bool:

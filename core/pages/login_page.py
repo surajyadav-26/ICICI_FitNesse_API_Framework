@@ -32,6 +32,24 @@ class LoginPage:
         if norm_name in ["login_button", "loginbutton"]:
             # page.locator('button.login-btn')
             return page.locator("button.login-btn")
+
+        if norm_name in ["framework_username", "nirikshan_username"]:
+            return page.get_by_role("textbox", name="Username")
+
+        if norm_name in ["framework_password", "nirikshan_password"]:
+            return page.get_by_role("textbox", name="Password")
+
+        if norm_name in ["framework_login_button", "nirikshan_login_button"]:
+            return page.get_by_role("button", name="Log In")
+
+        if norm_name in ["login_error_message", "login_error"]:
+            return page.locator("#icici-login-error")
+
+        if norm_name in ["profile_menu", "user_profile"]:
+            return page.locator("#icici-user-chip")
+
+        if norm_name in ["sign_out_button", "sign_out"]:
+            return page.get_by_role("button", name="🚪 Sign Out")
             
         # Fallback to standard selector if not predefined
         return page.locator(element_name)

@@ -5,7 +5,11 @@ import json
 import xml.etree.ElementTree as ET
 from typing import List, Optional
 
+import re
+import time
+
 report_history = []
+_RESULT_FILE_PATTERN = re.compile(r"^(\d{14})_(\d+)_(\d+)_(\d+)_(\d+)\.xml$")
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 HISTORY_FILE = os.path.join(BASE_DIR, "FitNesseRoot", "files", "report_history.json")
 REPORT_FILE = os.path.join(BASE_DIR, "FitNesseRoot", "files", "report.html")
@@ -59,9 +63,10 @@ def scan_test_results() -> List[dict]:
 
             with zipfile.ZipFile(zip_path, 'r') as z:
                 for member in z.namelist():
-                    if member.endswith(".xml"):
+                    # Page-history zips also hold properties.xml; only real test results look like 20261008101509*.xml
+                    if member.endswith(".xml") and re.match(r"^\d{14}", os.path.basename(member)):
                         filename = os.path.basename(member)
-                        timestamp_str = filename.replace(".xml", "")
+                        timestamp_str = filename.replace(".xml", "")[:14]
                         
                         xml_bytes = z.read(member)
                         root = ET.fromstring(xml_bytes)
@@ -102,48 +107,33 @@ def scan_test_results() -> List[dict]:
                 continue
             try:
                 filename = os.path.basename(path)
-                # Check for standard FitNesse XML suffix: YYYYMMDDHHMMSS_R_W_I_E.xml
-                if "_" in filename and filename.endswith(".xml"):
-                    parts = filename.split("_")
-                    timestamp_str = parts[0]
-                    counts = parts[1].replace(".xml", "").split(" ")
-                    
-                    # Check for standard results naming
-                    if len(counts) >= 4:
-                        right = int(counts[0])
-                        wrong = int(counts[1])
-                        ignored = int(counts[2])
-                        exceptions = int(counts[3])
-                    else:
-                        parts_dash = parts[1].replace(".xml", "").split("-")
-                        if len(parts_dash) >= 4:
-                            right = int(parts_dash[0])
-                            wrong = int(parts_dash[1])
-                            ignored = int(parts_dash[2])
-                            exceptions = int(parts_dash[3])
-                        else:
-                            continue
+                # FitNesse names every result YYYYMMDDHHMMSS_<right>_<wrong>_<ignored>_<exceptions>.xml
+                name_match = _RESULT_FILE_PATTERN.match(filename)
+                if not name_match:
+                    continue
+                timestamp_str = name_match.group(1)
+                right, wrong, ignored, exceptions = (int(name_match.group(i)) for i in range(2, 6))
 
-                    # Get clean path relative to testResults folder
-                    rel_path = os.path.relpath(path, test_results_dir)
-                    d = os.path.dirname(rel_path).replace(os.sep, ".")
-                    
-                    try:
-                        formatted_time = f"{timestamp_str[0:4]}-{timestamp_str[4:6]}-{timestamp_str[6:8]} {timestamp_str[8:10]}:{timestamp_str[10:12]}:{timestamp_str[12:14]}"
-                    except Exception:
-                        formatted_time = timestamp_str
+                # Get clean path relative to testResults folder
+                rel_path = os.path.relpath(path, test_results_dir)
+                d = os.path.dirname(rel_path).replace(os.sep, ".")
+                
+                try:
+                    formatted_time = f"{timestamp_str[0:4]}-{timestamp_str[4:6]}-{timestamp_str[6:8]} {timestamp_str[8:10]}:{timestamp_str[10:12]}:{timestamp_str[12:14]}"
+                except Exception:
+                    formatted_time = timestamp_str
 
-                    clean_name = d.replace("FrontPage.", "")
-                    if clean_name and not clean_name.endswith("SuiteSetUp") and not clean_name.endswith("SuiteTearDown"):
-                        results.append({
-                            "name": clean_name,
-                            "timestamp": formatted_time,
-                            "timestamp_raw": timestamp_str,
-                            "right": right,
-                            "wrong": wrong,
-                            "ignored": ignored,
-                            "exceptions": exceptions
-                        })
+                clean_name = d.replace("FrontPage.", "")
+                if clean_name and not clean_name.endswith("SuiteSetUp") and not clean_name.endswith("SuiteTearDown"):
+                    results.append({
+                        "name": clean_name,
+                        "timestamp": formatted_time,
+                        "timestamp_raw": timestamp_str,
+                        "right": right,
+                        "wrong": wrong,
+                        "ignored": ignored,
+                        "exceptions": exceptions
+                    })
             except Exception:
                 pass
             
@@ -151,27 +141,74 @@ def scan_test_results() -> List[dict]:
     results.sort(key=lambda x: x["timestamp_raw"], reverse=True)
     return results
 
+REFRESH_LOCK = os.path.join(BASE_DIR, "runtime", "report_refresh.lock")
+_REFRESH_QUIET_SECONDS = 25   # keep refreshing this long after the last recorded step
+
+
 def trigger_delayed_report() -> None:
+    """
+    FitNesse writes its result file only after the test page finishes, which can be well after the last step.
+    One background refresher regenerates the report every couple of seconds until the run has been quiet for a while.
+    """
     import subprocess
     import sys
 
-    # Delay execution slightly to ensure FitNesse finished writing XML files
-    creationflags = 0
-    if os.name == 'nt':
-        creationflags = 0x08000000  # CREATE_NO_WINDOW
-        
-    cmd = [
-        sys.executable,
-        "-c",
-        "import time, core.report_generator; time.sleep(1.5); core.report_generator.generate_html_report()"
-    ]
     try:
-        subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, close_fds=True, creationflags=creationflags)
+        os.makedirs(os.path.dirname(REFRESH_LOCK), exist_ok=True)
+        if os.path.exists(REFRESH_LOCK) and time.time() - os.path.getmtime(REFRESH_LOCK) < 15:
+            return  # a refresher is already running; it re-reads the history on every pass
+        with open(REFRESH_LOCK, "w", encoding="utf-8") as lock_file:
+            lock_file.write(str(os.getpid()))
     except Exception:
         pass
 
+    creationflags = 0
+    if os.name == 'nt':
+        creationflags = 0x08000000  # CREATE_NO_WINDOW
+
+    cmd = [sys.executable, "-c", "import core.report_generator as r; r.refresh_until_quiet()"]
+    try:
+        subprocess.Popen(cmd, cwd=BASE_DIR, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                         close_fds=True, creationflags=creationflags)
+    except Exception:
+        pass
+
+
+def refresh_until_quiet() -> None:
+    """Background loop started by trigger_delayed_report."""
+    try:
+        while True:
+            time.sleep(2)
+            load_history()
+            generate_html_report()
+            try:
+                with open(REFRESH_LOCK, "w", encoding="utf-8") as lock_file:
+                    lock_file.write(str(os.getpid()))
+            except Exception:
+                pass
+            last_activity = os.path.getmtime(HISTORY_FILE) if os.path.exists(HISTORY_FILE) else 0
+            if time.time() - last_activity > _REFRESH_QUIET_SECONDS:
+                break
+    finally:
+        try:
+            os.remove(REFRESH_LOCK)
+        except OSError:
+            pass
+
+
+def current_page_full_name() -> str:
+    """Name of the running test page as FitNesse stores it ("Suite.TestPage" or "TestPage")."""
+    name = os.environ.get("FITNESSE_PAGE_NAME", "").strip()
+    path = os.environ.get("FITNESSE_PAGE_PATH", "").strip()
+    if not name:
+        return ""
+    full = f"{path}.{name}" if path and not path.endswith("." + name) and path != name else (path or name)
+    return full[len("FrontPage."):] if full.startswith("FrontPage.") else full
+
+
 def add_record(record: dict) -> None:
     load_history()
+    record.setdefault("page", current_page_full_name())
     report_history.append(record)
     save_history()
     # Regenerate immediately with current memory cache
@@ -191,39 +228,50 @@ def generate_html_report() -> None:
         latest_page = results[0]["name"]
         suite_name = latest_page.split(".")[0] if "." in latest_page else latest_page
 
-        # Filter results for the active parent suite namespace
-        current_suite_pages = [r for r in results if (r["name"].startswith(suite_name + ".") or r["name"] == suite_name) and r["name"] != suite_name]
-        if current_suite_pages:
-            # Symmetrically include ALL test pages executed during this session!
-            active_pages = current_suite_pages
+        # A result that is the parent of other results is the suite summary, not a test case of its own.
+        parents = {r["name"] for r in results for other in results if other["name"].startswith(r["name"] + ".")}
+        if "." not in latest_page and latest_page in parents:
+            # The newest result is a suite summary: list the test cases of that suite.
+            active_pages = [r for r in results if r["name"].startswith(latest_page + ".")]
+        elif "." in latest_page:
+            # Filter results for the active parent suite namespace
+            active_pages = [r for r in results if r["name"].startswith(suite_name + ".")]
+        else:
+            # Test pages that sit directly under FrontPage are listed on their own.
+            active_pages = [r for r in results if "." not in r["name"] and r["name"] not in parents]
+            suite_name = ""
 
     # Initialize empty request lists on all active pages
     for p in active_pages:
         p["requests"] = []
 
     # Map HTTP requests / Playwright steps directly to their parent test pages
-    recent_history = report_history[-100:] if len(report_history) > 100 else report_history
+    recent_history = report_history[-300:] if len(report_history) > 300 else report_history
     active_requests = []
     for req in recent_history:
         try:
             req_dt = datetime.datetime.strptime(req["timestamp"], "%Y-%m-%d %H:%M:%S")
+            record_page = req.get("page", "")
             closest_page = None
             min_diff = 999999
-            
+
             for p in active_pages:
                 try:
                     p_dt = datetime.datetime.strptime(p["timestamp_raw"][:14], "%Y%m%d%H%M%S")
-                    diff = (p_dt - req_dt).total_seconds()
-                    
-                    # 60s window safely maps both fast API and slower Playwright UI execution steps!
-                    if -5 <= diff <= 60:
-                        abs_diff = abs(diff)
-                        if abs_diff < min_diff:
-                            min_diff = abs_diff
+                    # FitNesse stamps a result with the moment the test STARTED, so a step belongs to the run that
+                    # started most recently before it (a few seconds of clock slack allowed). Steps tagged with their
+                    # page are only matched against results of that page.
+                    gap = (req_dt - p_dt).total_seconds()
+                    if record_page and p["name"] != record_page:
+                        continue
+                    if -5 <= gap <= 6 * 3600:
+                        rank = (0 if gap >= 0 else 1, abs(gap))   # latest start before the step wins
+                        if min_diff == 999999 or rank < min_diff:
+                            min_diff = rank
                             closest_page = p
                 except Exception:
                     pass
-                    
+
             if closest_page:
                 closest_page["requests"].append(req)
                 if req not in active_requests:
@@ -310,14 +358,22 @@ def generate_html_report() -> None:
                     continue
                     
                 if r["method"] == "STEP":
-                    # Render a highly customized, gorgeous Playwright action step card!
+                    # One numbered card per UI action so QA can follow the run line by line.
+                    step_failed = isinstance(r.get("status_code"), int) and r["status_code"] >= 400
+                    step_color = "var(--fail)" if step_failed else "var(--success)"
+                    step_border = "#fecaca" if step_failed else "#e2e8f0"
+                    step_bg = "#fff5f5" if step_failed else "#ffffff"
+                    step_detail = ""
+                    if r.get("response_body"):
+                        step_detail = f"<div style=\"padding: 0 20px 14px 156px; color: var(--fail); font-size: 12px; white-space: pre-wrap;\">{html_escape(r['response_body'])}</div>"
                     requests_sub_html += f"""
-                    <div class="nested-request-row" style="border-color: #0284c7; margin-bottom: 12px; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
-                        <div class="nested-request-header" style="display: flex; align-items: center; gap: 16px; padding: 14px 20px; cursor: default; user-select: none;">
-                            <span class="badge badge-step" style="background: rgba(2, 132, 199, 0.1); color: #0284c7; border: 1px solid rgba(2, 132, 199, 0.2); display: inline-block; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; width: 110px; text-align: center;">⚙ STEP</span>
-                            <span class="nested-url" style="color: var(--text-main); font-weight: 600; font-size: 13px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{html_escape(r['url'])}</span>
-                            <span class="nested-time" style="color: var(--success); font-weight: 700; font-size: 12px;">PASS</span>
+                    <div class="nested-request-row" style="border-color: {step_border}; background: {step_bg}; margin-bottom: 8px; border-radius: 8px; overflow: hidden;">
+                        <div class="nested-request-header" style="display: flex; align-items: center; gap: 16px; padding: 12px 20px; cursor: default; user-select: none;">
+                            <span class="badge badge-step" style="background: rgba(231, 120, 23, 0.12); color: #C23029; border: 1px solid rgba(231, 120, 23, 0.3); display: inline-block; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; width: 110px; text-align: center;">STEP {r_idx + 1}</span>
+                            <span class="nested-url" style="color: var(--text-main); font-weight: 600; font-size: 13px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{html_escape(r['url'])}">{html_escape(r['url'])}</span>
+                            <span class="nested-time" style="color: {step_color}; font-weight: 700; font-size: 12px;">{'FAIL' if step_failed else 'PASS'}</span>
                         </div>
+                        {step_detail}
                     </div>
                     """
                     continue
@@ -370,7 +426,7 @@ def generate_html_report() -> None:
                 </div>
                 """
         else:
-            requests_sub_html = "<div class='no-requests'>No API HTTP requests or UI execution steps were logged for this page run.</div>"
+            requests_sub_html = "<div class='no-requests'>No steps were logged for this run (the page may not have reached its first action).</div>"
 
         json_files = [r.get("json_file", "") for r in p["requests"] if r.get("json_file")]
         download_all_btn = ""
@@ -401,7 +457,7 @@ def generate_html_report() -> None:
             <td colspan="3">
                 <div class="nested-requests-container">
                     <div class="audit-header">
-                        <h3>🔍 Executed API Requests Audit Trail</h3>
+                        <h3>🔍 Execution Steps &amp; Requests</h3>
                         {download_all_btn}
                     </div>
                     {requests_sub_html}

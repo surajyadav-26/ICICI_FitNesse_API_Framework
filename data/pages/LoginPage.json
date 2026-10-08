@@ -1,8 +1,10 @@
 {
   "page": "LoginPage",
   "locators": {
-    "username": "role=textbox:User ID",
-    "password": "label=Password",
-    "login button": "css=button.login-btn"
+    "username": "role=textbox:Username",
+    "password": "role=textbox:Password",
+    "login button": "role=button:Log In",
+    "login error message": "id=icici-login-error",
+    "sign out button": "role=button:🚪 Sign Out"
   }
 }

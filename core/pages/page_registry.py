@@ -44,9 +44,11 @@ def list_pages() -> dict:
         path = os.path.join(PAGES_DIR, file_name)
         try:
             with open(path, "r", encoding="utf-8") as page_file:
-                name = json.load(page_file).get("page") or file_name[:-5]
-            pages[str(name)] = _read(path)
-        except (OSError, ValueError):
+                data = json.load(page_file)
+            if not isinstance(data, dict):
+                continue      # not a page file
+            pages[str(data.get("page") or file_name[:-5])] = _read(path)
+        except (OSError, ValueError, AttributeError):
             continue
     return pages
 
