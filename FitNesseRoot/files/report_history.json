@@ -1,6 +1,6 @@
 [
   {
-    "timestamp": "2026-10-08 11:13:38",
+    "timestamp": "2026-10-10 17:53:16",
     "method": "STEP",
     "url": "Start Browser (browser: chromium, headless: False)",
     "status_code": 200,
@@ -9,10 +9,22 @@
     "response_body": "",
     "curl": "",
     "json_file": "",
-    "page": "Login"
+    "page": "VisualRegression.LoginPage"
   },
   {
-    "timestamp": "2026-10-08 11:13:38",
+    "timestamp": "2026-10-10 17:53:16",
+    "method": "STEP",
+    "url": "ROW 1: url=http://localhost:8080/, name=login page, viewport=1600x1043, threshold=6",
+    "status_code": 200,
+    "response_time_ms": 0,
+    "request_body": "",
+    "response_body": "",
+    "curl": "",
+    "json_file": "",
+    "page": "VisualRegression.LoginPage"
+  },
+  {
+    "timestamp": "2026-10-10 17:53:17",
     "method": "STEP",
     "url": "Navigate to 'http://localhost:8080/'",
     "status_code": 200,
@@ -21,66 +33,54 @@
     "response_body": "",
     "curl": "",
     "json_file": "",
-    "page": "Login"
+    "page": "VisualRegression.LoginPage"
   },
   {
-    "timestamp": "2026-10-08 11:13:38",
+    "timestamp": "2026-10-10 17:53:17",
     "method": "STEP",
-    "url": "Enter text 'admin' into 'username'",
+    "url": "Set visual threshold to 6.0%",
     "status_code": 200,
     "response_time_ms": 0,
     "request_body": "",
     "response_body": "",
     "curl": "",
     "json_file": "",
-    "page": "Login"
+    "page": "VisualRegression.LoginPage"
   },
   {
-    "timestamp": "2026-10-08 11:13:38",
+    "timestamp": "2026-10-10 17:53:23",
+    "method": "VISUAL",
+    "url": "login page [chromium-1600x1043] - PASSED (5.3307% diff)",
+    "status_code": 200,
+    "response_time_ms": 0,
+    "request_body": "Matches the reference image (scaled to the page)",
+    "response_body": "<div style=\"display:flex;gap:10px;padding:8px\"><div style=\"flex:1;text-align:center;font-size:11px;color:#5C6E89\">Baseline<br><img src=\"http://localhost:8080/files/testResults/visual/chromium-1600x1043/login%20page/baseline.png\" style=\"max-width:100%;border:1px solid #E5E8EB;border-radius:6px\"></div><div style=\"flex:1;text-align:center;font-size:11px;color:#5C6E89\">Actual<br><img src=\"http://localhost:8080/files/testResults/visual/chromium-1600x1043/login%20page/actual.png\" style=\"max-width:100%;border:1px solid #E5E8EB;border-radius:6px\"></div></div><p style=\"padding:0 8px\"><a href=\"http://localhost:8080/files/testResults/visual/chromium-1600x1043/login%20page/report.html\" target=\"_blank\">Open the full visual report</a></p>",
+    "curl": "",
+    "json_file": "",
+    "page": "VisualRegression.LoginPage"
+  },
+  {
+    "timestamp": "2026-10-10 17:53:23",
     "method": "STEP",
-    "url": "Enter text 'admin13' into 'password'",
+    "url": "Visual passed: 'login page' (chromium-1600x1043): Matches the reference image (scaled to the page)",
     "status_code": 200,
     "response_time_ms": 0,
     "request_body": "",
     "response_body": "",
     "curl": "",
     "json_file": "",
-    "page": "Login"
+    "page": "VisualRegression.LoginPage"
   },
   {
-    "timestamp": "2026-10-08 11:13:39",
+    "timestamp": "2026-10-10 17:53:23",
     "method": "STEP",
-    "url": "Click 'login button'",
+    "url": "ROW 1 result: status=passed, difference=5.3307, message=Matches the reference image (scaled to the page), baseline=reference image, report=<a href=\"/files/testResults/visual/chromium-1600x1043/login%20page/report.html\" target=\"_blank\">report</a>",
     "status_code": 200,
     "response_time_ms": 0,
     "request_body": "",
     "response_body": "",
     "curl": "",
     "json_file": "",
-    "page": "Login"
-  },
-  {
-    "timestamp": "2026-10-08 11:13:39",
-    "method": "STEP",
-    "url": "IF text present: Invalid username or password. -> True",
-    "status_code": 200,
-    "response_time_ms": 0,
-    "request_body": "",
-    "response_body": "",
-    "curl": "",
-    "json_file": "",
-    "page": "Login"
-  },
-  {
-    "timestamp": "2026-10-08 11:13:39",
-    "method": "STEP",
-    "url": "Verify text present 'Invalid username or password.'",
-    "status_code": 200,
-    "response_time_ms": 0,
-    "request_body": "",
-    "response_body": "",
-    "curl": "",
-    "json_file": "",
-    "page": "Login"
+    "page": "VisualRegression.LoginPage"
   }
 ]

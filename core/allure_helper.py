@@ -17,6 +17,10 @@ ALLURE_RESULTS_DIR = os.path.join(BASE_DIR, "FitNesseRoot", "files", "testResult
 
 _ACTIVE_RESULTS: dict = {}
 
+# Test kinds shown in Allure's Behaviors / Categories tabs and as tags, so UI, API, visual and accessibility runs
+# can be told apart and filtered.
+KINDS = {"ui": "UI", "api": "API", "visual": "Visual", "accessibility": "Accessibility"}
+
 
 class AllureHelper:
     """
@@ -34,6 +38,16 @@ class AllureHelper:
         self.error_message = ""
         self.error_trace = ""
         self.test_uuid = str(uuid.uuid4())
+        self.kinds = []            # kinds of test that ran on this page, in the order they were first used
+        self.parameters = {}       # name -> value shown on the test (browser, url, ...)
+
+    def mark(self, kind: str, **parameters) -> None:
+        """Records what kind of test this page ran (ui / api / visual / accessibility) and optional parameters."""
+        if kind in KINDS and kind not in self.kinds:
+            self.kinds.append(kind)
+        for name, value in parameters.items():
+            if value not in (None, ""):
+                self.parameters.setdefault(str(name), str(value))
 
     @classmethod
     def for_test(cls, test_name: str, suite_name: str = "FitNesse Suite") -> "AllureHelper":
@@ -112,8 +126,14 @@ class AllureHelper:
                 {"name": "suite", "value": self.suite_name},
                 {"name": "subSuite", "value": self.test_name},
                 {"name": "framework", "value": "Nirikshan Framework"},
-                {"name": "language", "value": "python"}
-            ],
+                {"name": "language", "value": "python"},
+                {"name": "epic", "value": "ICICI Nirikshan"},
+                {"name": "story", "value": self.test_name},
+                {"name": "severity", "value": "normal"},
+            ] + [{"name": "feature", "value": KINDS[kind]} for kind in self.kinds]
+              + [{"name": "tag", "value": KINDS[kind]} for kind in self.kinds],
+            "parameters": [{"name": name, "value": value} for name, value in self.parameters.items()],
+            "description": self._description(),
             "name": self.test_name,
             "status": self.status,
             "stage": "finished",
@@ -138,6 +158,19 @@ class AllureHelper:
         except Exception as e:
             print(f"[ALLURE WARNING] Writing result JSON failed: {e}")
 
+    def _description(self) -> str:
+        kinds = ", ".join(KINDS[kind] for kind in self.kinds) or "not classified"
+        lines = [f"Page: {self.test_name}", f"Suite: {self.suite_name}", f"Test kind: {kinds}"]
+        lines += [f"{name}: {value}" for name, value in self.parameters.items()]
+        return "\n\n".join(lines)
+
+    def finish(self) -> None:
+        """Persist the final result and remove it from the active per-test cache."""
+        self.write_result()
+        for key, active_result in list(_ACTIVE_RESULTS.items()):
+            if active_result is self:
+                del _ACTIVE_RESULTS[key]
+
 
 def current_names(default_test: str) -> tuple:
     """Test and suite name of the running FitNesse page (falls back to the given default test name)."""
@@ -161,6 +194,7 @@ def record_http_step(default_test: str, step_name: str, ok: bool, duration_ms: i
     if test_name == suite_name:
         return  # parent suite pages must not create empty cards
     helper = AllureHelper.for_test(test_name, suite_name)
+    helper.mark("api")
     links = []
     for name, content, mime_type, file_ext in (attachments or []):
         link = helper.add_attachment(name, content, mime_type, file_ext, step=True)

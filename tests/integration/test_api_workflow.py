@@ -5,9 +5,9 @@ Tests end-to-end request execution, token management, and reporting
 """
 import pytest
 import time
-from fixtures.get_request_fixture import GetRequestFixture
-from fixtures.post_request_fixture import PostRequestFixture
-from fixtures.auth_fixture import AuthFixture
+from fixtures.api.get_request_fixture import GetRequestFixture
+from fixtures.api.post_request_fixture import PostRequestFixture
+from fixtures.api.auth_fixture import AuthFixture
 from core.config import Config
 
 

@@ -4,7 +4,7 @@ import re
 
 import pytest
 
-from fixtures.ui_fixture import UiFixture
+from fixtures.ui.ui_fixture import UiFixture
 
 HEADER = os.path.join(os.path.dirname(__file__), "..", "..", "FitNesseRoot", "PageHeader", "content.txt")
 ACTION_PATTERN = re.compile(r'\{c:"([^"]+)", l:"([^"]+)", s:\[([^\]]*)\], p:\[(.*?)\], d:')

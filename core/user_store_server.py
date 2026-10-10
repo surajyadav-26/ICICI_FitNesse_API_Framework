@@ -5,6 +5,7 @@ import json
 import os
 import re
 import sys
+import subprocess
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -201,63 +202,10 @@ class UserStoreHandler(BaseHTTPRequestHandler):
             
         elif self.path == "/serve-allure":
             try:
-                import subprocess
-                import shutil
-                results_path = os.path.join(BASE_DIR, "FitNesseRoot", "files", "testResults", "allure-results")
-                report_path = os.path.join(BASE_DIR, "FitNesseRoot", "files", "testResults", "allure-report")
-                os.makedirs(results_path, exist_ok=True)
-                
-                # Write Environment Metadata to populate the Allure Environment widget!
-                env_path = os.path.join(results_path, "environment.properties")
-                with open(env_path, "w", encoding="utf-8") as ef:
-                    ef.write("Browser=Chromium (Playwright)\n")
-                    ef.write("Headless=Headed (Live Debug Supported)\n")
-                    ef.write("Platform=Windows 10/11\n")
-                    ef.write("Framework=Python-native Playwright Symmetrical Automation\n")
-                    ef.write(f"Active_URL={active_urls()}\n")
-                    
-                # Write Executor Metadata to populate the Allure Executors widget beautifully (removing 'Unknown')!
-                exec_path = os.path.join(results_path, "executor.json")
-                with open(exec_path, "w", encoding="utf-8") as exf:
-                    json.dump({
-                        "name": "Nirikshan Test Automation Runner",
-                        "type": "fitnesse",
-                        "url": "http://localhost:8080",
-                        "buildOrder": 1,
-                        "buildName": "Local Run",
-                        "buildUrl": "http://localhost:8080/FrontPage"
-                    }, exf, indent=2)
-                
-                # Symmetrical Allure History Copier (Natively preserves Trend and History graphs!)
-                prev_history_path = os.path.join(report_path, "history")
-                dest_history_path = os.path.join(results_path, "history")
-                if os.path.exists(prev_history_path):
-                    try:
-                        # Copy previous history directory to allure-results before generating
-                        shutil.copytree(prev_history_path, dest_history_path, dirs_exist_ok=True)
-                    except Exception as hist_err:
-                        pass
-                
-                # Compile the results permanently as a static folder inside your project!
-                try:
-                    # Generate the permanent report
-                    gen_proc = subprocess.run(f"allure generate \"{results_path}\" -o \"{report_path}\" --clean", shell=True, capture_output=True, text=True)
-                    
-                    # Inject a native script inside the compiled HTML to force Allure to load in its premium Dark Mode theme!
-                    index_html_path = os.path.join(report_path, "index.html")
-                    if os.path.exists(index_html_path):
-                        with open(index_html_path, "r", encoding="utf-8") as f:
-                            html_content = f.read()
-                        if "allure-theme" not in html_content:
-                            dark_script = '<script>localStorage.setItem("allure-theme", "dark"); localStorage.setItem("allure-playbook-theme", "dark"); if(!document.body.classList.contains("theme_dark")){document.body.classList.add("theme_dark");}</script>'
-                            html_content = html_content.replace("</head>", f"{dark_script}</head>")
-                            with open(index_html_path, "w", encoding="utf-8") as f:
-                                f.write(html_content)
-                                
-                    self._send_json(200, {"served": True, "url": "http://localhost:8090/allure/index.html"})
-                except FileNotFoundError:
-                    self._send_json(400, {"error": "Allure CLI command was not found in your system PATH! Make sure Allure is installed."})
-            except Exception as error:
+                from core.allure_report import generate_allure_report
+                generate_allure_report(active_urls())
+                self._send_json(200, {"served": True, "url": "http://localhost:8090/allure/index.html"})
+            except (OSError, subprocess.SubprocessError) as error:
                 self._send_json(500, {"error": str(error)})
             return
 
@@ -578,9 +526,17 @@ class UserStoreHandler(BaseHTTPRequestHandler):
                 self._send_json(500, {"error": str(error)})
             return
 
+        elif self.path == "/fixtures":
+            try:
+                from core import fixture_catalog
+                self._send_json(200, fixture_catalog.list_fixtures())
+            except Exception as error:
+                self._send_json(500, {"error": str(error)})
+            return
+
         elif self.path == "/pages":
             try:
-                from core.pages import page_registry
+                from pages import registry as page_registry
                 self._send_json(200, {"pages": page_registry.list_pages()})
             except Exception as error:
                 self._send_json(500, {"error": str(error)})
@@ -598,6 +554,63 @@ class UserStoreHandler(BaseHTTPRequestHandler):
                 self.wfile.write(body)
             except Exception as error:
                 self._send_json(500, {"error": str(error)})
+            return
+
+        elif self.path.split("?")[0] == "/accessibility":
+            try:
+                from core import accessibility_review
+                body = accessibility_review.render_page().encode("utf-8")
+                self.send_response(200)
+                self.send_header("Content-Type", "text/html; charset=utf-8")
+                self.send_header("Content-Length", str(len(body)))
+                self.send_header("Cache-Control", "no-store")
+                self.end_headers()
+                self.wfile.write(body)
+            except Exception as error:
+                self._send_json(500, {"error": str(error)})
+            return
+
+        elif self.path.startswith("/accessibility-report/"):
+            try:
+                from urllib.parse import unquote
+                from core import accessibility_review
+                path = accessibility_review.report_path(unquote(self.path.split("?")[0].split("/")[-1]))
+                with open(path, "rb") as report:
+                    data = report.read()
+                self.send_response(200)
+                self.send_header("Content-Type", "text/html; charset=utf-8")
+                self.send_header("Content-Length", str(len(data)))
+                self.send_header("Cache-Control", "no-store")
+                self.end_headers()
+                self.wfile.write(data)
+            except FileNotFoundError:
+                self._send_json(404, {"error": "Report not found"})
+            except Exception as error:
+                self._send_json(400, {"error": str(error)})
+            return
+
+        elif self.path.startswith("/visual-report/"):
+            try:
+                from urllib.parse import unquote
+                from core import visual_compare
+                parts = unquote(self.path.split("?")[0]).split("/")          # ['', 'visual-report', profile, name]
+                if len(parts) != 4:
+                    raise ValueError("Bad report path")
+                report_path = visual_compare.result_file(parts[2], parts[3], "report")
+                if not os.path.isfile(report_path):
+                    raise FileNotFoundError("Report not found")
+                with open(report_path, "rb") as report:
+                    data = report.read()
+                self.send_response(200)
+                self.send_header("Content-Type", "text/html; charset=utf-8")
+                self.send_header("Content-Length", str(len(data)))
+                self.send_header("Cache-Control", "no-store")
+                self.end_headers()
+                self.wfile.write(data)
+            except FileNotFoundError as error:
+                self._send_json(404, {"error": str(error)})
+            except Exception as error:
+                self._send_json(400, {"error": str(error)})
             return
 
         elif self.path.startswith("/visual-image/"):
@@ -673,43 +686,15 @@ class UserStoreHandler(BaseHTTPRequestHandler):
             return
             
         elif self.path == "/pages":
-            try:
-                from core.pages import page_registry
-                length = int(self.headers.get("Content-Length", "0"))
-                payload = json.loads(self.rfile.read(length).decode("utf-8"))
-                if payload.get("remove"):
-                    locators = page_registry.remove_locator(payload.get("page"), payload["remove"])
-                else:
-                    locators = page_registry.save_locator(payload.get("page"), payload.get("locator"), payload.get("selector"))
-                self._send_json(200, {"saved": True, "page": payload.get("page"), "locators": locators})
-            except Exception as error:
-                self._send_json(400, {"error": str(error)})
-            return
-
-        elif self.path == "/visual/approve":
-            try:
-                from core import visual_compare
-                length = int(self.headers.get("Content-Length", "0"))
-                payload = json.loads(self.rfile.read(length).decode("utf-8"))
-                items = payload.get("items") or []
-                if not items:
-                    raise ValueError("Nothing to approve")
-                approved = 0
-                for item in items:
-                    visual_compare.approve(item.get("profile"), item.get("name"))
-                    approved += 1
-                self._send_json(200, {"approved": approved})
-            except Exception as error:
-                self._send_json(400, {"error": str(error)})
+            # Locators are defined in the page objects (pages/*.py); they are changed in code and reviewed in git.
+            self._send_json(410, {"error": "Page locators are defined in pages/*.py and can no longer be edited here"})
             return
 
         elif self.path == "/live-debug":
             try:
-                debug_file = os.path.join(BASE_DIR, "runtime", "live-debug.txt")
-                os.makedirs(os.path.dirname(debug_file), exist_ok=True)
-                with open(debug_file, "w", encoding="utf-8") as f:
-                    f.write("true")
-                self._send_json(200, {"debug": True})
+                from core import live_debug
+                expires = live_debug.activate()
+                self._send_json(200, {"debug": True, "until": expires})
             except Exception as error:
                 self._send_json(400, {"error": str(error)})
             return
@@ -787,6 +772,8 @@ class UserStoreHandler(BaseHTTPRequestHandler):
             try:
                 length = int(self.headers.get("Content-Length", "0"))
                 payload = json.loads(self.rfile.read(length).decode("utf-8"))
+                from core import live_debug
+                live_debug.clear()        # a normal Run starts here; Live Debug sets its flag after this call
                 page_path = payload.get("page", "")
                 if page_path:
                     page_name = page_path.split(".")[-1].split("/")[-1]

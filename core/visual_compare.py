@@ -2,7 +2,8 @@
 Visual regression engine: baseline storage, image comparison and result bookkeeping.
 
 Layout
-    data/visual/baselines/<profile>/<name>.png          reviewed baselines (commit these)
+    fixtures/visual/baseline/<name>.png                 reference images you supply by hand (used for every browser / viewport)
+    data/visual/baselines/<profile>/<name>.png          baselines created by the framework per browser and viewport (commit these)
     FitNesseRoot/files/testResults/visual/<profile>/<name>/{baseline,actual,diff}.png
     FitNesseRoot/files/testResults/visual/results.json  latest result per profile/name (for the Visual Review page)
 
@@ -13,12 +14,14 @@ import os
 import re
 import shutil
 import time
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 
 from PIL import Image, ImageChops, ImageEnhance
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BASELINE_DIR = os.path.join(BASE_DIR, "data", "visual", "baselines")
+REFERENCE_DIR = os.path.join(BASE_DIR, "fixtures", "visual", "baseline")
+ASPECT_TOLERANCE = 0.02            # a reference is scaled to the page only when both have (nearly) the same shape
 RESULT_DIR = os.path.join(BASE_DIR, "FitNesseRoot", "files", "testResults", "visual")
 RESULTS_FILE = os.path.join(RESULT_DIR, "results.json")
 
@@ -40,6 +43,7 @@ class VisualResult:
     timestamp: str = ""
     test: str = ""
     message: str = ""
+    regions: list = field(default_factory=list)      # boxes around the differing areas
 
     def to_dict(self) -> dict:
         data = asdict(self)
@@ -64,6 +68,29 @@ def clean_profile(profile: str) -> str:
 
 def baseline_path(profile: str, name: str) -> str:
     return os.path.join(BASELINE_DIR, clean_profile(profile), f"{clean_name(name)}.png")
+
+
+def reference_path(name: str) -> str:
+    """The hand-supplied reference image for a name (it may not exist)."""
+    return os.path.join(REFERENCE_DIR, f"{clean_name(name)}.png")
+
+
+def active_baseline(profile: str, name: str) -> str:
+    """The file a comparison uses: the reference image when one exists, otherwise the per-profile baseline."""
+    reference = reference_path(name)
+    return reference if os.path.isfile(reference) else baseline_path(profile, name)
+
+
+def _scaled_reference(reference_file: str, actual_file: str, target_file: str) -> bool:
+    """Writes the reference resized to the screenshot's size when both have the same shape. False = left as it is."""
+    with Image.open(reference_file) as reference, Image.open(actual_file) as actual:
+        if reference.size == actual.size:
+            return False
+        ref_ratio, act_ratio = reference.width / reference.height, actual.width / actual.height
+        if abs(ref_ratio - act_ratio) / act_ratio > ASPECT_TOLERANCE:
+            return False
+        reference.convert("RGB").resize(actual.size, Image.LANCZOS).save(target_file)
+    return True
 
 
 def result_dir(profile: str, name: str) -> str:
@@ -100,6 +127,11 @@ def compare_images(baseline_file: str, actual_file: str, diff_file: str, pixel_t
 
     diff_pixels = mask.histogram()[255]
     total_pixels = width * height
+    try:
+        from core import visual_report
+        regions = visual_report.find_regions(mask) if diff_pixels else []
+    except Exception:                       # the numbers matter more than the boxes
+        regions = []
 
     faded = ImageEnhance.Brightness(ImageEnhance.Color(canvas_a).enhance(0.35)).enhance(1.35)
     highlight = Image.new("RGB", (width, height), (231, 40, 40))
@@ -113,6 +145,7 @@ def compare_images(baseline_file: str, actual_file: str, diff_file: str, pixel_t
         "baseline_size": baseline.size,
         "actual_size": actual.size,
         "size_mismatch": size_mismatch,
+        "regions": regions,
     }
 
 
@@ -125,7 +158,8 @@ def check_against_baseline(actual_file: str, profile: str, name: str, threshold_
       * otherwise        -> pixel comparison, "passed" when mismatch <= threshold_pct, else "failed"
     Artifacts for the review page are always written to the result folder.
     """
-    base_file = baseline_path(profile, name)
+    base_file = active_baseline(profile, name)
+    is_reference = os.path.abspath(base_file) == os.path.abspath(reference_path(name))
     folder = result_dir(profile, name)
     os.makedirs(folder, exist_ok=True)
     shutil.copyfile(actual_file, os.path.join(folder, "actual.png"))
@@ -136,7 +170,7 @@ def check_against_baseline(actual_file: str, profile: str, name: str, threshold_
         return result
 
     if update or not os.path.isfile(base_file):
-        os.makedirs(os.path.dirname(base_file), exist_ok=True)
+        os.makedirs(os.path.dirname(base_file), exist_ok=True)      # "update" replaces the reference image when one is in use
         shutil.copyfile(actual_file, base_file)
         shutil.copyfile(actual_file, os.path.join(folder, "baseline.png"))
         size = Image.open(actual_file).size
@@ -148,15 +182,23 @@ def check_against_baseline(actual_file: str, profile: str, name: str, threshold_
                                    timestamp=stamp, test=test,
                                    message="Baseline created from this run" if status == "new" else "Baseline updated"))
 
-    shutil.copyfile(base_file, os.path.join(folder, "baseline.png"))
-    measured = compare_images(base_file, actual_file, os.path.join(folder, "diff.png"), pixel_tolerance)
+    shown_baseline = os.path.join(folder, "baseline.png")
+    scaled = is_reference and _scaled_reference(base_file, actual_file, shown_baseline)
+    if not scaled:
+        shutil.copyfile(base_file, shown_baseline)
+    measured = compare_images(shown_baseline, actual_file, os.path.join(folder, "diff.png"), pixel_tolerance)
     passed = measured["mismatch_pct"] <= threshold_pct and not measured["size_mismatch"]
-    message = "Matches baseline" if passed else (
-        f"Image size changed {measured['baseline_size']} -> {measured['actual_size']}" if measured["size_mismatch"]
-        else f"{measured['mismatch_pct']}% of pixels differ (allowed {threshold_pct}%)")
+    if passed:
+        message = "Matches the reference image (scaled to the page)" if scaled else "Matches baseline"
+    elif measured["size_mismatch"]:
+        message = f"Image size changed {measured['baseline_size']} -> {measured['actual_size']}"
+        if is_reference:
+            message += " - set the viewport column so the page has the same shape as the reference image"
+    else:
+        message = f"{measured['mismatch_pct']}% of pixels differ (allowed {threshold_pct}%)"
     return finish(VisualResult("passed" if passed else "failed", name, profile, measured["mismatch_pct"], measured["diff_pixels"],
                                measured["total_pixels"], measured["baseline_size"], measured["actual_size"],
-                               measured["size_mismatch"], threshold_pct, stamp, test, message))
+                               measured["size_mismatch"], threshold_pct, stamp, test, message, measured["regions"]))
 
 
 # ── Results index + approval (used by the Visual Review page) ────────────────
@@ -198,7 +240,7 @@ def approve(profile: str, name: str) -> dict:
     actual = os.path.join(folder, "actual.png")
     if not os.path.isfile(actual):
         raise FileNotFoundError(f"No screenshot to approve for {profile}/{name}")
-    target = baseline_path(profile, name)
+    target = active_baseline(profile, name)
     os.makedirs(os.path.dirname(target), exist_ok=True)
     shutil.copyfile(actual, target)
     shutil.copyfile(actual, os.path.join(folder, "baseline.png"))
@@ -216,7 +258,9 @@ def approve(profile: str, name: str) -> dict:
 
 
 def result_file(profile: str, name: str, kind: str) -> str:
-    """Safe path of baseline.png / actual.png / diff.png for the review page."""
+    """Safe path of baseline.png / actual.png / diff.png / report.html for the review page."""
+    if kind == "report":
+        return os.path.join(result_dir(profile, name), "report.html")
     if kind not in ("baseline", "actual", "diff"):
         raise ValueError("Unknown image kind")
     return os.path.join(result_dir(profile, name), f"{kind}.png")

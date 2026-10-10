@@ -147,6 +147,7 @@ ICICI_FitNesseAPIFramework/
 ### **1. Prerequisites**
 - Python 3.10+ ([Download](https://www.python.org/downloads/))
 - Java 17+ ([Download](https://www.oracle.com/java/technologies/downloads/))
+- Allure Commandline (required to generate the browsable Allure HTML report)
 - Git (for cloning)
 
 ### **2. Clone Repository**
@@ -169,6 +170,10 @@ pip install -r requirements.txt
 # Install browser runtime for Playwright UI tests
 python -m playwright install chromium
 ```
+
+Run the focused framework checks with `python -m pytest tests/unit`. The GitHub Actions workflow installs the
+dependencies from `requirements.txt` and runs the selected FitNesse suite; public connectivity smoke pages should be
+selected only when network access is available.
 
 ### **4. Start Server**
 ```powershell
@@ -805,8 +810,19 @@ Enterprise Internal Use Only - ICICI Prudential Life Insurance
 **Last Updated:** 2026-07-16  
 ## UI Step Library
 
-Open **Step Builder** (profile menu) in the FitNesse header to compose steps visually and copy the script table.
-Every row is `| keyword | arg | keyword | arg |` against `fixtures.UiFixture`.
+Open **Step Builder** (profile menu) in the FitNesse header to compose tests visually and copy the result into a wiki page.
+It has two table types:
+
+- **Script table** - steps one after another, `| keyword | arg | keyword | arg |` against `fixtures.UiFixture` (the table below).
+- **Column table** - pick a ready-made fixture (UI scenarios such as `login test`, `accessibility test`, and every API request fixture),
+  see its columns marked *required*, *optional* or *result*, tick the optional ones you need, type one row per data set, and copy the
+  finished table (no `|import|` table is needed). Required cells must be filled before the table can be added; a value containing `|` is wrapped
+  so the wiki table stays intact; password-like cells are hidden while you type. Script steps and column tables can be mixed in one script.
+
+The fixture list is read from the user store server (`http://localhost:8090/fixtures`) every time the Column table tab opens, so a new or edited fixture appears without a restart (restart `start_server.bat` once after updating the framework itself).
+
+**Live Debug** (profile menu) runs the current page with visible browsers: every browser started in that run is headed, so all rows of a
+column table are visible. It lasts 15 minutes and a normal **Run** switches it off. It only matters when `UI_HEADLESS=true`.
 
 | Category | Steps |
 |---|---|
@@ -823,24 +839,167 @@ Every row is `| keyword | arg | keyword | arg |` against `fixtures.UiFixture`.
 | Error handling | `retry action \| n` (next step), `continue on failure` (default), `stop on failure`, `take screenshot` |
 | Reusable flow | `execute reusable component \| Name [\| with \| k=v,k2=v2]` runs `data/components/Name.flow` |
 
-### Pages and locators
+### Reusable components
 
-Locators are grouped per page in `data/pages/<PageName>.json` (for example `LoginPage.json`, `DashboardPage.json`):
+A component is a `.flow` file in `data/components/` (created when you add the first one), one step per line in the same pipe format
+(`#` starts a comment); parameters arrive as `${name}`. Call it from a script table with
+`| execute reusable component | Name | with | k=v,k2=v2 |`. For login, prefer the `login test` column table, which keeps the data in table columns and uses the `LoginPage` page object.
 
-```json
-{"page": "LoginPage", "locators": {"username": "role=textbox:User ID", "login button": "css=button.login-btn"}}
+For deterministic API checks use the local mock server on port 8089 (`mock server fixture`); it needs no internet access.
+
+### Fixture layout
+
+```
+core/                      shared code that is not a fixture: flow engine (flow.py), json helpers, reports, locators
+fixtures/
+  ui/                      UiFixture, column-table base (decision_fixture.py), scenario folders such as ui/scenario/login
+  api/                     get/post/put/patch/delete/... request fixtures, auth, oauth2, graphql, grpc, websocket, mock server
+  visual/                  visual_steps.py (the `verify visual match` steps UiFixture inherits); engine: core/visual_compare.py
+  accessibility/           accessibility fixture (script table) and accessibility test (column table); engine: core/accessibility.py
+pages/                     page objects: locators + actions per page (login_page.py, ...)
+data/                      users.json and reusable components (data/components/*.flow)
 ```
 
-Pick the page in **Step Builder**; the locator drop-down then lists only that page's locators. When `LoginPage` is
-selected, the builder emits short names such as `username`; for other pages it emits page-qualified names such as
-`DashboardPage.username` to avoid collisions. **Manage page locators** in the drawer lets you add or remove locators
-and pages. In a table, `Page.locator` always resolves explicitly. If a page has been selected with `use page`, its
-short locator names take precedence; with no page selected, short names from `LoginPage` are resolved by default.
+Existing wiki pages keep working: `fixtures.UiFixture`, `| import | fixtures |` and the other short names are re-exported by
+`fixtures/__init__.py`. Module fixtures use their folder path, e.g. `| import | fixtures.ui.scenario.login |`, and an area can be imported
+whole, e.g. `| import | fixtures.api |`.
+Wiki pages need no `import` table: the Slim runner searches every package under `fixtures/` automatically (`fixtures.fixture_packages()`), so a new fixture folder is found as soon as it exists. An explicit `import` table still works and is tried first.
+
+### Column fixtures (one row per data set)
+
+A column table runs the same test for many data sets. Put the inputs in columns and the expected result in a `?` column:
+
+```
+|login test|
+|username|password|browser|login result?|
+|admin|admin123||Success|
+|admin|wrong-password||Invalid username or password.|
+|admin|admin123|firefox|Success|
+```
+
+- **`browser` is optional.** Empty or missing means the browser selected in the environment settings; a value
+  (`chromium`, `firefox`, `webkit`) applies to that row only. Failure screenshots are automatic, so there is no screenshot column.
+- **Each row is its own fresh browser session and its own test case** in Allure (`LoginWithData - row 2: admin / ***`),
+  with the steps of that row; the simple report shows a `ROW n` marker before them. A wrong result is also recorded as a
+  failed step with the expected and actual values. Columns whose name contains `pass`, `pwd`, `secret`, `otp`, `cvv` or `pin`
+  are masked in reports and logs.
+- **`${UI_BASE_URL}` and other variables** work inside cells.
+- **A new fixture** is a small class in its module folder (see `fixtures/ui/scenario/login/login_test.py`):
+
+```python
+from fixtures.ui.decision_fixture import DecisionFixture
+
+class LoginTest(DecisionFixture):          # fixtures/ui/scenario/login/login_test.py, exported from fixtures/ui/scenario/login/__init__.py
+    INPUTS = ("username", "password", "browser")
+    OUTPUTS = ("login_result",)
+
+    def run_row(self, row):                # row.username, row.get("browser", "default"), row.has("otp")
+        self.do(self.ui.navigate_to, "${UI_BASE_URL}")      # do() stops the row if a step fails
+        self.do(self.ui.enter_text_with_value, "LoginPage.username", row.username)
+        return {"login_result": "Success"}                  # compared with the cell by FitNesse
+```
+
+Group fixtures per module (`fixtures/ui/scenario/login/`, `fixtures/ui/scenario/deposit/`, ...) and import the module on the wiki page.
+
+**Declare the columns** so the Step Builder can list them (required / optional, allowed values, an example, a help line):
+
+```python
+from core.fixture_meta import input_column, output_column
+
+class LoginTest(DecisionFixture):
+    DESCRIPTION = "Logs in with each username and password and returns what the form shows."
+    COLUMNS = (
+        input_column("username", required=True, example="admin"),
+        input_column("password", required=True, secret=True),
+        input_column("browser", options=("chromium", "firefox", "webkit"), help="Optional. Empty = the environment's browser"),
+        output_column("login_result", example="Success"),
+    )
+```
+
+Names are snake_case (`login_result` is the `login result?` column). Any class under `fixtures/ui/scenario/`, `fixtures/accessibility/` or
+`fixtures/api/` with `COLUMNS` shows up in the Step Builder automatically. `tests/unit/test_fixture_catalog.py` checks that every listed
+column really exists on its fixture, and `tests/unit/test_wiki_pages.py` checks that the example pages only use columns the fixtures offer.
+
+### API tables
+
+Every request fixture is a column table too. Build one in the Step Builder (**Column table**, then e.g. `get request fixture`):
+
+```
+|get request fixture|
+|url|key|status code?|json value?|
+|${API_BASE_URL}/users/1|firstName|200|Emily|
+|${API_BASE_URL}/users/99999|message|404|User with id '99999' not found|
+```
+
+`${API_BASE_URL}` is the API URL of the environment selected in the ENV selector. Optional columns: `basic auth`, `timeout`, `retries`,
+`retry delay`, `ssl verify`, `header lookup`; POST / PUT / PATCH add `body json`. Results: `status code?`, `json value?`, `response time?`,
+`response header?`, `response body?`. `auth fixture` logs in once and the later tables send the token automatically.
+The Step Builder generates these tables (Column table, then the request fixture).
+
+### Page objects and locators
+
+Each application page is a Python class in `pages/` holding its locators (UPPER_CASE attributes) and its actions (methods):
+
+```python
+# pages/login_page.py
+class LoginPage(BasePage):
+    USERNAME = "role=textbox:Username"
+    LOGIN_BUTTON = "role=button:Log In"
+
+    def login(self, username, password):          # fixtures reuse the action
+        self.fill("username", username)
+        self.fill("password", password)
+        self.click("login button")
+```
+
+- A locator is named after its attribute in lower case (`LOGIN_BUTTON` -> `login button`); case, spaces, `_` and `-` do not matter in tables.
+- **Wiki tables:** `LoginPage.username` always resolves from that page. With no page selected, short names such as `username` resolve
+  from `LoginPage` (our own login screen); `| use page | DashboardPage |` makes later short names resolve from that page first.
+- **Step Builder:** pick the page and the locator drop-down lists that page's locators (short names for `LoginPage`, page-qualified for the rest).
+- **Fixtures** call the page, e.g. `LoginPage(self.ui).login(row.username, row.password)`.
+- **New page:** add `pages/<name>_page.py` with a `BasePage` subclass; nothing else to register. Locators are changed in code and reviewed in git.
 Anything not found on the applicable page is treated as a normal selector.
 
 The [`LoginAuthenticationTest` FitNesse page](./FitNesseRoot/FrontPage/LoginAuthenticationTest/content.txt) shows
-login steps in a plain script table using `username`, `password`, and `login button` directly, without a `use page` row
-or a `LoginPage.` prefix.
+login steps in a plain `fixtures.UiFixture` script table using the generic text-entry, click, and URL-verification
+actions. The same fixture can be reused for other UI modules without a login-specific fixture.
+
+### Accessibility testing (WCAG)
+
+Checks a page with axe-core (vendored in `core/axe.min.js`, no install needed) and fails it when it has more violations than allowed.
+
+Script table (one page):
+
+```
+|import|
+|fixtures.accessibility|
+
+|script|accessibility fixture|
+|set url|${UI_BASE_URL}|
+|set wcag version|2.1|
+|set max violations|0|
+|run accessibility check|
+|check|status|PASS|
+|show|violations|
+|show|report|
+```
+
+Column table (one row per page or WCAG setting):
+
+```
+|accessibility test|
+|url|wcag version|max violations|minimum impact|browser|violations?|compliance?|status?|
+|${UI_BASE_URL}|2.1|0||||||PASS|
+|${UI_BASE_URL}home|2.2|3|serious|firefox||||
+```
+
+- `wcag version` 2.0 / 2.1 / 2.2 (default 2.1), `wcag level` A / AA / AAA (default AA), `max violations` (default 0),
+  `minimum impact` minor / moderate / serious / critical (findings below it are listed but not counted), `browser` optional.
+- Results: `violations?`, `all violations?`, `passed checks?`, `needs review?`, `compliance?`, `status?`, `report?`
+  (compliance = passed rules / (passed + violated + needs-review rules)).
+- A page over its limit is a failed test case in Allure even without an expected cell. Each violation is an Allure step; the HTML report
+  (impact, rule, WCAG tags, affected elements, how to fix) and the JSON are attached, and also saved in `FitNesseRoot/files/testResults/accessibility`.
+- Build the table in the Step Builder (Column table, then `accessibility test`).
 
 ### Visual testing
 
@@ -857,12 +1016,28 @@ Compare the screen with an approved baseline on every build:
 
 - Baselines are PNGs in `data/visual/baselines/<browser>-<width>x<height>/<name>.png`. **Commit them**; you can also drop
   your own reference screenshots there. A browser/viewport pair never compares against another one.
+- **Your own reference image:** put `<name>.png` in `fixtures/visual/baseline/` (for example `login page.png`). It is used for
+  every browser and viewport, is never overwritten by a run (only by Approve or `update visual baseline`), and is scaled to the
+  page when both have the same shape - use the `viewport` column to give the page the shape of the image.
+- **Column table:** the Step Builder lists it as **Visual > visual test**:
+
+```
+|visual test|
+|url           |name      |viewport |threshold|status?|
+|${UI_BASE_URL}|login page|1600x1043|6        |passed |
+```
+
+  Columns: `url`, `name` (required); `viewport`, `threshold`, `ignore`, `browser` (optional); results `status?`, `difference?`,
+  `message?`, `baseline?`.
 - The first run for a name creates its baseline (reported as *new*). Set `VISUAL_FAIL_ON_NEW=true` in CI to fail instead.
 - A comparison fails when more than the allowed % of pixels differ (`VISUAL_THRESHOLD`, default 0.1) or the image size
   changes. `VISUAL_PIXEL_TOLERANCE` (default 10 of 255) ignores faint anti-aliasing noise.
 - Animations and the caret are frozen and fonts are awaited before every shot. `ignore visual region` paints a mask over
   dynamic content; set it before the baseline is created and keep it for later runs.
-- Baseline, actual and diff images are attached to Allure and the simple report. Open **Visual Review** (profile menu,
+- **HTML report per comparison** (`report?` column, "Open full report" on the Visual Review Report, and attached to Allure): one
+  self-contained file with the difference %, every differing area (position, size, baseline vs actual crop), the actual image with
+  the areas marked, side-by-side / slider / diff views and a copy-ready defect description. Attach the file to the defect as it is.
+- Baseline, actual and diff images are attached to Allure and the simple report. Open **Visual Review Report** (profile menu,
   `http://localhost:8090/visual`) to see side-by-side / slider / diff views and approve intended changes in one click.
 - `VISUAL_UPDATE_BASELINE=true` re-baselines every comparison of a run; `VISUAL_FULL_PAGE=false` captures only the viewport.
 
@@ -877,3 +1052,14 @@ A `.flow` file holds one step per line in the same pipe format (`#` starts a com
 ---
 
 **⭐ Star this repository if you find it useful!**
+
+## Reports
+
+| Where | What |
+|---|---|
+| **Allure Report** (top bar button) | Allure dashboard. Each result is classified as UI, API, Visual or Accessibility (Behaviors tab and tags), shows its browser / page / WCAG parameters, and failures are grouped on the Categories tab (visual differences, accessibility violations, API failures, UI element problems). Visual steps carry baseline, actual and diff images; accessibility steps carry the full report and every violation; API steps carry request and response. |
+| **Simple Report** (profile menu) | The plain run report with steps. |
+| **Visual Review Report** (profile menu) | Baseline / actual / diff with one-click approval. |
+| **Accessibility Report** (profile menu) | Every accessibility check run so far, newest first, each linking to its full WCAG report. Served by the user store server at `/accessibility`. |
+
+Restart `start_server.bat` once so the user store server picks up the new `/accessibility` page.

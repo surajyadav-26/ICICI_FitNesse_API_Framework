@@ -1,0 +1,10 @@
+---
+Test
+---
+!1 Login page
+
+The page is compared with the reference image `fixtures/visual/baseline/login page.png` on every build. `viewport` gives the page the shape of the image and `threshold` is the percent of pixels allowed to differ.
+
+|visual test|
+|url|name|viewport|threshold|status?|difference?|report?|
+|${UI_BASE_URL}|login page|1600x1043|6|passed| | |

@@ -27,6 +27,8 @@ def _card(item: dict) -> str:
     if show_diff:
         modes += '<button class="mode" data-mode="diff">Diff</button>'
     approve = (f'<button class="approve" onclick="approve(this)">✓ Approve as baseline</button>' if can_approve else "")
+    report_link = (f'<a class="report" target="_blank" href="/visual-report/{quote(item["profile"])}/{quote(item["name"])}">'
+                   'Open full report</a>')
     diff_cell = (f'<figure><figcaption>Difference</figcaption><img src="{_image_url(item, "diff")}"></figure>' if show_diff else "")
     return f"""
 <section class="card {status}" data-status="{status}" data-name="{data_name}" data-profile="{data_profile}">
@@ -37,7 +39,7 @@ def _card(item: dict) -> str:
     <span class="meta">{' · '.join(meta)}</span>
   </header>
   <p class="msg">{html.escape(item.get('message', ''))}</p>
-  <div class="bar"><div class="modes">{modes}</div>{approve}</div>
+  <div class="bar"><div class="modes">{modes}</div>{report_link}{approve}</div>
   <div class="view side">
     <figure><figcaption>Baseline</figcaption><img src="{_image_url(item, 'baseline')}"></figure>
     <figure><figcaption>Actual</figcaption><img src="{_image_url(item, 'actual')}"></figure>
@@ -59,7 +61,7 @@ def render_page() -> str:
         '<div class="empty"><h2>No visual results yet</h2><p>Run a test that uses <code>verify visual match</code>; '
         'the first run creates the baseline and later runs show up here.</p></div>')
     return f"""<!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"><title>ICICI Nirikshan - Visual Review</title>
+<html lang="en"><head><meta charset="UTF-8"><title>ICICI Nirikshan - Visual Review Report</title>
 <link rel="icon" type="image/x-icon" href="/favicon.ico">
 <link href="https://fonts.googleapis.com/css2?family=Mulish:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -92,6 +94,8 @@ main {{ max-width:1400px; margin:22px auto; padding:0 24px 60px; }}
 .mode.active {{ border-color:var(--orange); background:#FCEEE2; color:var(--dark); }}
 .approve {{ border:1.5px solid var(--orange); background:#fff; color:var(--red); border-radius:8px; padding:6px 14px; font-size:12px; font-weight:800; cursor:pointer; font-family:inherit; }}
 .approve:hover {{ background:#FCEEE2; }}
+.report {{ font-size:12px; font-weight:800; color:var(--red); text-decoration:none; border:1.5px solid var(--line); border-radius:8px; padding:6px 12px; }}
+.report:hover {{ background:#FCEEE2; border-color:var(--orange); }}
 .view.side {{ display:flex; gap:14px; }}
 .view figure {{ flex:1; margin:0; min-width:0; }}
 .view figcaption {{ font-size:11px; font-weight:800; color:var(--slate); text-transform:uppercase; margin-bottom:6px; }}
@@ -106,7 +110,7 @@ main {{ max-width:1400px; margin:22px auto; padding:0 24px 60px; }}
 .toast {{ position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:var(--dark); color:#fff; padding:10px 20px; border-radius:24px; font-size:13px; opacity:0; transition:.25s; pointer-events:none; }}
 .toast.show {{ opacity:1; }}
 </style></head><body>
-<div class="hdr"><img src="/logo.png" alt="ICICI Nirikshan"><h1>Visual Review<small>Compare each build with its approved baseline</small></h1>
+<div class="hdr"><img src="/logo.png" alt="ICICI Nirikshan"><h1>Visual Review Report<small>Compare each build with its approved baseline</small></h1>
   <div class="chips">
     <button class="chip active" data-filter="all">All ({len(items)})</button>
     <button class="chip" data-filter="failed">Mismatch ({counts['failed']})</button>

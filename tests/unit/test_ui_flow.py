@@ -1,8 +1,10 @@
 """Unit tests for the UI flow engine (variables, IF/ELSE, FOR EACH, failure modes, components)."""
+from pathlib import Path
+
 import pytest
 
-from fixtures import ui_flow
-from fixtures.ui_flow import FlowMixin, step
+from core import flow as ui_flow
+from core.flow import FlowMixin, step
 
 
 class FakeFixture(FlowMixin):
@@ -193,3 +195,10 @@ def test_reusable_component_recursion_is_capped(tmp_path, monkeypatch):
     (tmp_path / "Loop.flow").write_text("| execute reusable component | Loop |\n", encoding="utf-8")
     fx = FakeFixture()
     assert "failed" in fx.execute_reusable_component("Loop")
+
+
+def test_secret_looking_fields_are_hidden_in_logs_and_reports():
+    from core.flow import shown_value
+    assert shown_value("LoginPage.password", "admin123") == "***"
+    assert shown_value("css=#otp-input", "123456") == "***"
+    assert shown_value("LoginPage.username", "admin") == "admin"

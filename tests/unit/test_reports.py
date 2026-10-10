@@ -5,7 +5,7 @@ import os
 import pytest
 
 from core import allure_helper, report_generator
-from fixtures import ui_flow
+from core import flow as ui_flow
 
 
 @pytest.fixture
@@ -143,6 +143,18 @@ def test_first_failure_message_is_kept(workspace):
     assert helper.error_message == "first"
 
 
+def test_finishing_allure_result_evicts_cache_for_a_fresh_rerun(workspace):
+    first = allure_helper.AllureHelper.for_test("Login row 1", "UI Tests")
+    first.add_step("Login", "passed", 1)
+    first.finish()
+
+    second = allure_helper.AllureHelper.for_test("Login row 1", "UI Tests")
+
+    assert second is not first
+    assert second.test_uuid != first.test_uuid
+    assert ("UI Tests", "Login row 1") in allure_helper._ACTIVE_RESULTS
+
+
 def test_http_steps_share_one_result_with_attachments_inside_the_step(workspace, monkeypatch):
     monkeypatch.setenv("FITNESSE_PAGE_NAME", "GetUsers")
     monkeypatch.setenv("FITNESSE_PAGE_PATH", "FrontPage")
@@ -197,3 +209,25 @@ def test_fitnesse_rewritten_undefined_variable_is_restored(tmp_path, monkeypatch
 def test_undefined_environment_variable_stays_visible(tmp_path, monkeypatch):
     monkeypatch.setattr(ui_flow, "_WORKSPACE_DIR", str(tmp_path))
     assert ui_flow.substitute_variables("${UI_BASE_URL}", {}) == "${UI_BASE_URL}"
+
+
+def test_allure_result_is_classified_by_test_kind(workspace):
+    helper = allure_helper.AllureHelper.for_test("Home visual", "Visual Tests")
+    helper.mark("ui", Browser="chromium")
+    helper.mark("visual", **{"Visual profile": "chromium-1280x720"})
+    helper.mark("ui")                                    # marking twice must not duplicate the label
+    helper.add_step("Visual passed: home", "passed")
+    [result] = read_results(workspace)
+    labels = [(label["name"], label["value"]) for label in result["labels"]]
+    assert ("feature", "UI") in labels and ("feature", "Visual") in labels and labels.count(("feature", "UI")) == 1
+    assert ("tag", "Visual") in labels and ("epic", "ICICI Nirikshan") in labels and ("story", "Home visual") in labels
+    assert {"name": "Browser", "value": "chromium"} in result["parameters"]
+    assert "Test kind: UI, Visual" in result["description"]
+
+
+def test_http_steps_are_marked_as_api(workspace, monkeypatch):
+    monkeypatch.setenv("FITNESSE_PAGE_NAME", "GetUsers")
+    monkeypatch.setenv("FITNESSE_PAGE_PATH", "FrontPage.Suite.GetUsers")
+    allure_helper.record_http_step("GetUsers", "GET /users -> 200", True, 5)
+    [result] = read_results(workspace)
+    assert ("feature", "API") in [(label["name"], label["value"]) for label in result["labels"]]

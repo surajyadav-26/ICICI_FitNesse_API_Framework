@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from core.pages import page_registry
-from fixtures.ui_fixture import UiFixture
+from pages import registry as page_registry
+from fixtures.ui.ui_fixture import UiFixture
 
 
 class FakeLocator:
@@ -83,4 +83,3 @@ def test_login_steps_fill_click_verify_and_logout():
     assert fixture.logout() is True
     assert fixture._page.locators[("css", "#icici-user-chip")].clicked is True
     assert fixture._page.locators[("role", "button", "🚪 Sign Out")].clicked is True
-

@@ -1,0 +1,9 @@
+!1 Login test
+
+Each row is one login attempt in its own fresh browser session. The browser column is optional: leave it empty to use the browser selected in the environment settings, or give chromium / firefox / webkit for that row only.
+
+|login test|
+|username|password|login result?|
+|admin|admin123|Success|
+|admin|admin12 |Invalid username or password.|
+|unknown-user|admin123|Invalid username or password.|

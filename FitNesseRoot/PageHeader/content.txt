@@ -83,7 +83,9 @@ body { padding-top: 64px !important; margin-top: 0 !important; }
     <div id="icici-profile-dropdown" class="icici-profile-dropdown" style="display: none;">
       <button class="ici-dropdown-item" onclick="iciLiveDebug()"><span class="ici-dropdown-icon">👁️</span><span>Live Debug</span></button>
       <button class="ici-dropdown-item" onclick="iciToggleDictDrawer()"><span class="ici-dropdown-icon">✍️</span><span>Step Builder</span></button>
-      <button class="ici-dropdown-item" onclick="iciOpenVisualReview()"><span class="ici-dropdown-icon">🖼️</span><span>Visual Review</span></button>
+      <button class="ici-dropdown-item" onclick="iciOpenSimpleReport()"><span class="ici-dropdown-icon">📝</span><span>Simple Report</span></button>
+      <button class="ici-dropdown-item" onclick="iciOpenVisualReview()"><span class="ici-dropdown-icon">🖼️</span><span>Visual Review Report</span></button>
+      <button class="ici-dropdown-item" onclick="iciOpenAccessibilityReport()"><span class="ici-dropdown-icon">♿</span><span>Accessibility Report</span></button>
       <button id="ici-logs-menu" class="ici-dropdown-item" onclick="iciOpenLogs()"><span class="ici-dropdown-icon">📋</span><span>Logs</span></button>
       <button id="ici-user-management-menu" class="ici-dropdown-item ici-user-management-hidden" onclick="iciOpenUserManagement()"><span class="ici-dropdown-icon">👥</span><span>Users</span></button>
       <button class="ici-dropdown-item" onclick="iciLogout()"><span class="ici-dropdown-icon">🚪</span><span>Sign Out</span></button>
@@ -231,6 +233,16 @@ body { padding-top: 64px !important; margin-top: 0 !important; }
   <div id="ici-drawer-pane-builder" class="ici-drawer-pane">
     <div class="ici-builder-card">
       <div class="ici-builder-field">
+        <label class="ici-builder-label">Table type</label>
+        <div class="ici-builder-tabs">
+          <button type="button" id="ici-tt-script" class="active" onclick="iciSetTableType('script')">Script table</button>
+          <button type="button" id="ici-tt-column" onclick="iciSetTableType('column')">Column table</button>
+        </div>
+        <div id="ici-tt-doc" class="ici-builder-doc">Steps one after another (open browser, click, verify...). Runs on UiFixture.</div>
+      </div>
+
+      <div id="ici-builder-script-mode">
+      <div class="ici-builder-field">
         <label class="ici-builder-label">Page</label>
         <select id="ici-builder-page" class="ici-env-input" onchange="iciOnBuilderPageChange()"></select>
       </div>
@@ -251,30 +263,32 @@ body { padding-top: 64px !important; margin-top: 0 !important; }
         <div id="ici-builder-doc" class="ici-builder-doc"></div>
       </div>
       <button class="ici-builder-add-btn" id="ici-builder-add" onclick="iciAppendStepToScript()">➕ Add step</button>
-    </div>
-
-    <details class="ici-builder-manage">
-      <summary>📄 Manage page locators</summary>
-      <div class="ici-builder-manage-body">
-        <div class="ici-builder-field">
-          <label class="ici-builder-label">Page</label>
-          <input type="text" id="ici-manage-page" class="ici-env-input" list="ici-manage-pages" oninput="iciRenderManageList()" placeholder="e.g. DashboardPage" />
-          <datalist id="ici-manage-pages"></datalist>
-        </div>
-        <div class="ici-builder-row">
-          <div class="ici-builder-col">
-            <label class="ici-builder-label">Locator name</label>
-            <input type="text" id="ici-manage-name" class="ici-env-input" placeholder="e.g. login button" />
-          </div>
-          <div class="ici-builder-col">
-            <label class="ici-builder-label">Selector</label>
-            <input type="text" id="ici-manage-selector" class="ici-env-input" placeholder="css=#login, //div, text=Sign in" />
-          </div>
-        </div>
-        <button class="ici-builder-copy-btn" style="margin-top: 0;" onclick="iciSaveLocator()">💾 Save locator</button>
-        <div id="ici-manage-list" class="ici-manage-list"></div>
       </div>
-    </details>
+
+      <div id="ici-builder-column-mode" style="display: none;">
+        <div class="ici-builder-field">
+          <label class="ici-builder-label">Fixture</label>
+          <select id="ici-col-fixture" class="ici-env-input" onchange="iciOnFixtureChange()"></select>
+          <div id="ici-col-doc" class="ici-builder-doc"></div>
+          <div id="ici-col-notes" class="ici-col-problem"></div>
+        </div>
+        <div class="ici-builder-field">
+          <label class="ici-builder-label">Columns</label>
+          <div id="ici-col-list" class="ici-col-list"></div>
+        </div>
+        <div class="ici-builder-field">
+          <label class="ici-builder-label">Data rows (one test per row)</label>
+          <div class="ici-col-grid-wrap"><table id="ici-col-grid" class="ici-col-grid"></table></div>
+          <button type="button" class="ici-col-addrow" onclick="iciAddColumnRow()">+ Add row</button>
+        </div>
+        <div class="ici-builder-preview-box">
+          <label class="ici-builder-label">Table preview</label>
+          <div id="ici-col-preview" class="ici-builder-preview"></div>
+          <div id="ici-col-problem" class="ici-col-problem"></div>
+        </div>
+        <button class="ici-builder-add-btn" id="ici-col-add" onclick="iciAppendTableToScript()">➕ Add table to script</button>
+      </div>
+    </div>
 
     <div class="ici-builder-steps-head">
       <span class="ici-builder-label" style="margin: 0;">Test script <span id="ici-builder-count" class="ici-builder-count">0</span></span>
@@ -335,7 +349,7 @@ body { padding-top: 64px !important; margin-top: 0 !important; }
 .ici-builder-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px; box-shadow: 0 1px 3px rgba(15,23,42,0.05); }
 .ici-builder-row { display: flex; gap: 10px; margin-bottom: 12px; }
 .ici-builder-col { flex: 1; min-width: 0; }
-.ici-drawer label, .ici-builder-manage summary { text-align: left !important; }
+.ici-drawer label { text-align: left !important; }
 .ici-builder-add-btn, .ici-builder-copy-btn { outline: none !important; }
 .ici-builder-label { display: block; text-align: left !important; font-size: 10px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 4px; }
 .ici-builder-field { margin-bottom: 10px; }
@@ -376,23 +390,38 @@ body { padding-top: 64px !important; margin-top: 0 !important; }
   max-width: 85%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .ici-drawer-toast.show { opacity: 1; transform: translate(-50%, 0); }
+.ici-builder-tabs { display: flex; gap: 6px; }
+.ici-builder-tabs button {
+  flex: 1; border: 1.5px solid #E5E8EB; background: #fff; color: #5C6E89; border-radius: 8px; padding: 8px 10px;
+  font-size: 12px; font-weight: 700; cursor: pointer; font-family: Arial, sans-serif;
+}
+.ici-builder-tabs button.active { border-color: #E77817; background: #FCEEE2; color: #97291E; }
+.ici-col-list { border: 1px solid #E5E8EB; border-radius: 8px; max-height: 190px; overflow-y: auto; background: #fff; }
+.ici-col-item { display: grid; grid-template-columns: 18px 1fr auto; column-gap: 8px; row-gap: 2px; align-items: center; padding: 7px 10px; border-bottom: 1px dashed #E5E8EB; font-size: 12px; cursor: pointer; margin: 0; width: 100% !important; max-width: 100% !important; box-sizing: border-box; float: none !important; }
+.ici-col-item:last-child { border-bottom: none; }
+.ici-col-item .h { font-weight: 700; color: #0A192F; }
+.ici-col-item .tag { font-size: 10px; font-weight: 800; border-radius: 6px; padding: 1px 7px; }
+.ici-col-item .tag.required { background: #FBDADA; color: #B3261E; }
+.ici-col-item .tag.optional { background: #E5E8EB; color: #5C6E89; }
+.ici-col-item .tag.output { background: #DEE7DA; color: #1E7A4C; }
+.ici-col-item input { margin: 0; }
+.ici-col-item .help { grid-column: 2 / 4; color: #5C6E89; font-size: 11px; font-weight: 400; line-height: 1.4; }
+.ici-col-grid-wrap { overflow-x: auto; border: 1px solid #E5E8EB; border-radius: 8px; background: #fff; }
+.ici-col-grid { border-collapse: collapse; width: 100%; }
+.ici-col-grid th { background: #FCEEE2 !important; color: #97291E !important; font-size: 10px; text-transform: uppercase; padding: 6px 8px !important; text-align: left; white-space: nowrap; border: none !important; }
+.ici-col-grid td { padding: 4px; min-width: 112px; border: none !important; background: #fff !important; }
+.ici-col-grid td:last-child { min-width: 28px; }
+.ici-col-grid td input, .ici-col-grid td select { width: 100%; box-sizing: border-box; }
+.ici-col-grid .ctl { background: transparent; border: none; cursor: pointer; color: #64748b; font-size: 13px; }
+.ici-col-grid .ctl:hover:not([disabled]) { color: #C23029; }
+.ici-col-grid .ctl[disabled] { opacity: 0.3; cursor: default; }
+.ici-col-addrow { margin-top: 8px; border: 1.5px dashed #E77817; background: #fff; color: #C23029; border-radius: 8px; padding: 6px 12px; font-size: 12px; font-weight: 700; cursor: pointer; font-family: Arial, sans-serif; }
+.ici-col-addrow:hover { background: #FCEEE2; }
+.ici-col-problem { color: #B3261E; font-size: 11px; font-weight: 700; margin-top: 6px; min-height: 14px; }
 
-.ici-builder-manage { margin-top: 14px; background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; }
-.ici-builder-manage summary { cursor: pointer; padding: 10px 14px; font-size: 12px; font-weight: 700; color: #C23029; list-style: none; }
-.ici-builder-manage summary::-webkit-details-marker { display: none; }
-.ici-builder-manage[open] summary { border-bottom: 1px solid #e2e8f0; }
-.ici-builder-manage-body { padding: 14px; }
-.ici-manage-list { margin-top: 10px; }
-.ici-manage-row { display: flex; align-items: center; gap: 8px; padding: 5px 6px; border-bottom: 1px dashed #e2e8f0; font-size: 11px; }
-.ici-manage-row .n { font-weight: 700; color: #97291E; min-width: 90px; }
-.ici-manage-row .s { flex: 1; font-family: Consolas, monospace; color: #475569; word-break: break-all; }
-.ici-manage-row .ctl { background: transparent; border: none; cursor: pointer; color: #64748b; }
-.ici-manage-row .ctl:hover { color: #C23029; }
 .ici-builder-preview { white-space: pre-wrap; }
 
 
-.ici-builder-manage .ici-builder-copy-btn { background: #fff; color: #C23029; border: 1.5px solid #E77817; }
-.ici-builder-manage .ici-builder-copy-btn:hover { background: #FCEEE2; filter: none; }
 .ici-drawer .ici-env-input:focus { border-color: #E77817; box-shadow: 0 0 0 3px rgba(231,120,23,0.16); }
 
 /* ── Login Overlay (Nirikshan design) ────────────────── */
@@ -518,7 +547,7 @@ body { padding-top: 64px !important; margin-top: 0 !important; }
 .icici-header-nav::-webkit-scrollbar { display: none !important; }
 .icici-nav-btn {
   color:#fff; background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.25);
-  border-radius:4px; padding:5px 10px !important; font-size:11px; font-weight:600;
+  border-radius:4px; padding:5px 8px !important; font-size:11px; font-weight:600;
   cursor:pointer; text-decoration:none; transition:background .18s;
   display:inline-block;
   white-space: nowrap !important;
@@ -634,7 +663,7 @@ body { padding-top: 64px !important; margin-top: 0 !important; }
   border: 1px solid #cbd5e1 !important;
   border-radius: 6px !important;
   box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
-  width: 156px !important;
+  width: 200px !important;
   z-index: 100000 !important;
   padding: 4px 0 !important;
   overflow: hidden !important;
@@ -908,17 +937,17 @@ body { padding-top: 64px !important; margin-top: 0 !important; }
 
 /* ── Modernize All FitNesse Tables Natively! ── */
 table, .fit_table, .instructions, .collapsible {
-  width: auto !important; /* Fit content dynamically based on data, no forced stretching! */
+  width: fit-content !important; /* Fit content dynamically based on the columns */
   max-width: 100% !important; /* Prevent overflowing horizontally beyond page! */
-  min-width: 350px !important; /* Elegant minimum width boundary */
+  min-width: 0 !important; /* Width follows the columns */
   border-collapse: collapse !important;
   margin: 16px 0 !important;
   font-family: Arial, sans-serif !important;
   font-size: 13px !important;
   border-radius: 8px !important;
   overflow: hidden !important;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.03) !important;
-  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 0 0 1px #9ca3af !important;
+  border: 1px solid #cbd5e1 !important;
 }
 table tr th, .fit_table tr th, .instructions tr th {
   background: linear-gradient(135deg, #97291E 0%, #C23029 100%) !important;
@@ -937,6 +966,7 @@ table tr td, .fit_table tr td, .instructions tr td {
   background: #ffffff !important;
   line-height: 1.5 !important;
   word-break: break-word !important; /* Wrap long strings (like raw parameters) cleanly! */
+  min-width: 8ch !important; /* short values such as PASS never split */
 }
 /* Let columns self-size organically as per their data, with no hardcoded pixel widths! */
 table tr td:nth-child(1), .fit_table tr td:nth-child(1), .instructions tr td:nth-child(1) {
@@ -949,9 +979,21 @@ table tr td:nth-child(3), .fit_table tr td:nth-child(3), .instructions tr td:nth
 table tr td:has(.ici-response-wrapper) {
   width: auto !important; /* responseBody: self-contained single-line truncated preview! */
 }
-table tr:hover td, .fit_table tr:hover td {
+table tr:hover td:not(.pass):not(.fail):not(.error):not(.ignore):not(.right):not(.wrong), .fit_table tr:hover td:not(.pass):not(.fail):not(.error):not(.ignore):not(.right):not(.wrong) {
   background: #f8fafc !important;
 }
+/* Slim table rows: title row in brand orange, alternating rows so every cell of a row reads as a grid */
+table tr.slimRowTitle td {
+  word-break: normal !important;
+  overflow-wrap: normal !important;
+  white-space: normal !important;          /* long headers wrap between words, never inside one */
+  background: #f1f5f9 !important;
+  color: #1e293b !important;
+  font-weight: 700 !important;
+  border: 1px solid #cbd5e1 !important;
+}
+table tr.slimRowColor1 td:not(.pass):not(.fail):not(.error):not(.ignore) { background: #ffffff !important; }
+table tr.slimRowColor0 td:not(.pass):not(.fail):not(.error):not(.ignore) { background: #ffffff !important; }
 
 /* Slim table pass/fail status cells */
 .pass, .right {
@@ -1111,7 +1153,7 @@ body:not(.ici-authenticated) .ici-dash {
             location.href = getRunUrl();
           });
         } },
-      { label: "📊 Report",     href: "#", action: function(e, btn) { iciToggleReportDropdown(e, btn); } },
+      { label: "📊 Allure Report", href: "#", action: function(e, btn) { iciOpenAllureReport(); } },
       { label: "✎ Edit",        href: function(){ return p() + "?edit"; },       adminOnly: true },
       { label: "+ Add Test",    href: function(){ return p() + "?new"; },        adminOnly: true },
       { label: "❌ Delete",     href: function(){ return p() + "?deletePage"; }, adminOnly: true },
@@ -1131,7 +1173,7 @@ body:not(.ici-authenticated) .ici-dash {
             location.href = getRunUrl();
           });
         } },
-      { label: "📊 Report",     href: "#", action: function(e, btn) { iciToggleReportDropdown(e, btn); } },
+      { label: "📊 Allure Report", href: "#", action: function(e, btn) { iciOpenAllureReport(); } },
       { label: "✎ Edit",        href: function(){ return p() + "?edit"; } },
       { label: "+ Add Test",    href: function(){ return p() + "?new"; } },
       { label: "❌ Delete",     href: function(){ return p() + "?deletePage"; } },
@@ -1151,7 +1193,7 @@ body:not(.ici-authenticated) .ici-dash {
             location.href = getRunUrl();
           });
         } },
-      { label: "📊 Report",     href: "#", action: function(e, btn) { iciToggleReportDropdown(e, btn); } },
+      { label: "📊 Allure Report", href: "#", action: function(e, btn) { iciOpenAllureReport(); } },
       { label: "📋 Page History", href: function(){ return p() + "?pageHistory"; } }
     ]
   };
@@ -2296,6 +2338,39 @@ body:not(.ici-authenticated) .ici-dash {
      ICICI UX ENHANCEMENTS - All 5 fixes consolidated
      ═══════════════════════════════════════════════════════════════ */
   document.addEventListener("DOMContentLoaded", function() {
+    function maskPasswordSteps(root) {
+      var tables = [];
+      if (root && root.matches && root.matches("table")) { tables.push(root); }
+      if (root && root.querySelectorAll) {
+        tables = tables.concat(Array.from(root.querySelectorAll("table")));
+      }
+      tables.forEach(function(table) {
+        Array.from(table.rows).forEach(function(row) {
+          var cells = Array.from(row.cells);
+          if (cells.length < 4) { return; }
+          var action = cells[0].textContent.trim().toLowerCase();
+          var locator = cells[1].textContent.trim().toLowerCase().split(".").pop();
+          var valueKeyword = cells[2].textContent.trim().toLowerCase();
+          var valueCell = cells[3];
+          if (action === "enter text" && locator === "password" &&
+              valueKeyword === "with value" && valueCell.textContent.trim() !== "********") {
+            valueCell.textContent = "********";
+          }
+          if (action === "execute reusable component" && cells.length >= 4 &&
+              valueKeyword === "with") {
+            valueCell = cells[3];
+            var parameters = valueCell.textContent;
+            var maskedParameters = parameters.replace(
+              /(^|,)(\s*password\s*=\s*)[^,]*/gi, "$1$2********"
+            );
+            if (maskedParameters !== parameters) {
+              valueCell.textContent = maskedParameters;
+            }
+          }
+        });
+      });
+    }
+
     // Target and hide ONLY the specific table of fixtures.SuiteHelper and its closest parent collapsible!
     // This leaves all other collapsible sections, list of test pages, and contents perfectly intact and visible!
     var tables = document.querySelectorAll("table");
@@ -2307,6 +2382,19 @@ body:not(.ici-authenticated) .ici-dash {
         }
       }
     });
+
+    maskPasswordSteps(document.body);
+    if (typeof MutationObserver !== "undefined" && document.body) {
+      var passwordMaskObserver = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+          mutation.addedNodes.forEach(function(node) {
+            if (node.nodeType === 1) { maskPasswordSteps(node); }
+            else if (node.parentElement) { maskPasswordSteps(node.parentElement); }
+          });
+        });
+      });
+      passwordMaskObserver.observe(document.body, { childList: true, subtree: true });
+    }
 
     console.log('%c═══ ICICI UX ENHANCEMENTS LOADED ═══', 'background: #C23029; color: #fff; padding: 5px; font-weight: bold;');
     console.log('Page URL:', window.location.href);
@@ -2525,6 +2613,14 @@ body:not(.ici-authenticated) .ici-dash {
       window.open("http://localhost:8090/report.html", "_blank");
       var repDropdown = document.getElementById("ici-report-dropdown");
       if (repDropdown) repDropdown.style.display = "none";
+      var profMenu = document.getElementById("icici-profile-dropdown");
+      if (profMenu) profMenu.style.display = "none";
+    };
+
+    window.iciOpenAccessibilityReport = function() {
+      window.open("http://localhost:8090/accessibility", "_blank");
+      var profMenu = document.getElementById("icici-profile-dropdown");
+      if (profMenu) profMenu.style.display = "none";
     };
 
     window.iciOpenVisualReview = function() {
@@ -2629,6 +2725,7 @@ body:not(.ici-authenticated) .ici-dash {
         if (drawer.classList.contains("open")) {
           iciInitBuilder();
           iciLoadPages();
+          if (iciEl("ici-builder-column-mode").style.display !== "none") { iciLoadFixtures(); }
         }
       }
     };
@@ -2801,12 +2898,6 @@ body:not(.ici-authenticated) .ici-dash {
       Object.keys(iciPages).sort().forEach(function(name) { select.appendChild(new Option(name, name)); });
       if (previous && iciPages[previous]) { select.value = previous; }
       else if (!previous && Object.keys(iciPages).length === 1) { select.value = Object.keys(iciPages)[0]; }
-      var list = iciEl("ici-manage-pages");
-      if (list) {
-        list.innerHTML = "";
-        Object.keys(iciPages).sort().forEach(function(name) { list.appendChild(new Option(name, name)); });
-      }
-      iciRenderManageList();
     }
 
     window.iciLoadPages = function() {
@@ -2822,9 +2913,6 @@ body:not(.ici-authenticated) .ici-dash {
 
     window.iciOnBuilderPageChange = function() {
       iciOnBuilderActionChange();
-      var manage = iciEl("ici-manage-page");
-      if (manage && iciSelectedPage()) { manage.value = iciSelectedPage(); }
-      iciRenderManageList();
     };
 
     window.iciOnBuilderCategoryChange = function() {
@@ -2935,7 +3023,7 @@ body:not(.ici-authenticated) .ici-dash {
         line.querySelector(".num").textContent = (index + 1);
         var text = line.querySelector(".txt");
         text.style.paddingLeft = (depth * 14) + "px";
-        text.textContent = item.row;
+        text.textContent = item.label || item.row;
         var buttons = line.querySelectorAll(".ctl");
         buttons[0].onclick = function() { iciMoveStep(index, -1); };
         buttons[1].onclick = function() { iciMoveStep(index, 1); };
@@ -2944,14 +3032,10 @@ body:not(.ici-authenticated) .ici-dash {
         if (item.kind === "if condition" || item.kind === "for each" || item.kind === "else branch") { depth += 1; }
       });
       if (!iciBuilderSteps.length) {
-        list.innerHTML = '<div class="ici-builder-empty">No steps yet. Pick an action above and press Add step.</div>';
+        list.innerHTML = '<div class="ici-builder-empty">Nothing yet. Add a step (script table) or a table (column table) above.</div>';
       }
       iciEl("ici-builder-count").textContent = iciBuilderSteps.length;
-      var script = "";
-      if (iciBuilderSteps.length) {
-        script = "| script | fixtures.UiFixture |\n" + iciBuilderSteps.map(function(item) { return item.row; }).join("\n");
-      }
-      iciEl("ici-builder-script").value = script;
+      iciEl("ici-builder-script").value = iciCompileScript();
     }
 
     function iciMoveStep(index, direction) {
@@ -2961,6 +3045,250 @@ body:not(.ici-authenticated) .ici-dash {
       iciBuilderSteps.splice(target, 0, moved);
       iciRenderBuilderSteps();
       iciGenerateBuilderOutput();
+    }
+
+    /* ── Column tables: pick a fixture, choose its columns, type the data rows ── */
+    var ICI_FIXTURES_URL = "http://127.0.0.1:8090/fixtures";
+    var iciFixtures = [];
+    var iciFixturesLoaded = false;
+    var iciColumnState = { fixture: null, selected: {}, rows: [{}] };
+    var ICI_BANG = String.fromCharCode(33);   /* built from its code so this page never contains the wiki end marker */
+
+    function iciColumns() {
+      return iciColumnState.fixture ? iciColumnState.fixture.columns : [];
+    }
+
+    function iciSelectedColumns() {
+      return iciColumns().filter(function(column) { return iciColumnState.selected[column.name]; });
+    }
+
+    window.iciSetTableType = function(type) {
+      iciEl("ici-builder-script-mode").style.display = type === "script" ? "block" : "none";
+      iciEl("ici-builder-column-mode").style.display = type === "column" ? "block" : "none";
+      iciEl("ici-tt-script").classList.toggle("active", type === "script");
+      iciEl("ici-tt-column").classList.toggle("active", type === "column");
+      iciEl("ici-tt-doc").textContent = type === "script"
+        ? "Steps one after another (open browser, click, verify...). Runs on UiFixture."
+        : "One row per data set for a ready-made fixture: login, accessibility, API requests...";
+      if (type === "column" && !iciFixturesLoaded) { iciLoadFixtures(); }
+    };
+
+    window.iciLoadFixtures = function() {
+      return fetch(ICI_FIXTURES_URL).then(function(response) { return response.json(); }).then(function(data) {
+        iciFixtures = (data && data.fixtures) || [];
+        iciFixturesLoaded = true;
+        iciRenderFixtureOptions((data && data.problems) || []);
+      }).catch(function() {
+        iciFixtures = [];
+        iciRenderFixtureOptions(["The user store server is not reachable (port 8090)"]);
+      });
+    };
+
+    function iciRenderFixtureOptions(problems) {
+      var select = iciEl("ici-col-fixture");
+      if (!select) { return; }
+      var previous = iciColumnState.fixture ? iciColumnState.fixture["class"] : "";
+      select.innerHTML = "";
+      var groups = {};
+      iciFixtures.forEach(function(fixture, index) {
+        var label = fixture.group === fixture.area ? fixture.area : fixture.area + " - " + fixture.group;
+        if (!groups[label]) {
+          groups[label] = document.createElement("optgroup");
+          groups[label].label = label;
+          select.appendChild(groups[label]);
+        }
+        groups[label].appendChild(new Option(fixture.table, String(index)));
+      });
+      if (!iciFixtures.length) {
+        select.appendChild(new Option("(no fixtures found)", ""));
+      }
+      iciEl("ici-col-notes").textContent = problems.length ? "Some fixtures could not be loaded: " + problems.join("; ") : "";
+      var again = iciFixtures.findIndex(function(fixture) { return fixture["class"] === previous; });
+      select.value = String(again >= 0 ? again : (iciFixtures.length ? 0 : ""));
+      iciOnFixtureChange(again >= 0);
+    }
+
+    window.iciOnFixtureChange = function(keepRows) {
+      var index = parseInt(iciEl("ici-col-fixture").value, 10);
+      var fixture = isNaN(index) ? null : iciFixtures[index];
+      iciColumnState.fixture = fixture;
+      iciColumnState.selected = {};
+      if (fixture) {
+        fixture.columns.forEach(function(column) {
+          iciColumnState.selected[column.name] = column.kind === "input" ? !!column.required : !!column["default"];
+        });
+      }
+      if (keepRows !== true) { iciColumnState.rows = [{}]; }
+      iciEl("ici-col-doc").textContent = fixture ? fixture.description + "  (import: " + fixture["import"] + ")" : "";
+      iciRenderColumnList();
+      iciRenderColumnGrid();
+    };
+
+    function iciRenderColumnList() {
+      var holder = iciEl("ici-col-list");
+      holder.innerHTML = "";
+      iciColumns().forEach(function(column) {
+        var item = document.createElement("label");
+        item.className = "ici-col-item";
+        var box = document.createElement("input");
+        box.type = "checkbox";
+        box.checked = !!iciColumnState.selected[column.name];
+        var required = column.kind === "input" && column.required;
+        box.disabled = required;
+        box.addEventListener("change", function() {
+          iciColumnState.selected[column.name] = box.checked;
+          iciRenderColumnGrid();
+        });
+        var head = document.createElement("span");
+        head.className = "h";
+        head.textContent = column.header;
+        var tag = document.createElement("span");
+        tag.className = "tag " + (column.kind === "output" ? "output" : (required ? "required" : "optional"));
+        tag.textContent = column.kind === "output" ? "result" : (required ? "required" : "optional");
+        var help = document.createElement("span");
+        help.className = "help";
+        help.textContent = column.help || "";
+        item.appendChild(box);
+        item.appendChild(head);
+        item.appendChild(tag);
+        item.appendChild(help);
+        holder.appendChild(item);
+      });
+    }
+
+    function iciRenderColumnGrid() {
+      var grid = iciEl("ici-col-grid");
+      grid.innerHTML = "";
+      var columns = iciSelectedColumns();
+      var head = document.createElement("tr");
+      columns.forEach(function(column) {
+        var cell = document.createElement("th");
+        cell.textContent = column.header;
+        head.appendChild(cell);
+      });
+      head.appendChild(document.createElement("th"));
+      grid.appendChild(head);
+      iciColumnState.rows.forEach(function(row, rowIndex) {
+        var line = document.createElement("tr");
+        columns.forEach(function(column) {
+          var cell = document.createElement("td");
+          var input;
+          if (column.options && column.options.length) {
+            input = document.createElement("select");
+            input.appendChild(new Option(column.kind === "output" ? "(any)" : "(default)", ""));
+            column.options.forEach(function(option) { input.appendChild(new Option(option, option)); });
+          } else {
+            input = document.createElement("input");
+            input.type = column.secret ? "password" : "text";
+            input.placeholder = (column.kind === "output" ? "expected: " : "e.g. ") + (column.example || "");
+          }
+          input.className = "ici-env-input";
+          input.value = row[column.name] || "";
+          input.title = column.help || column.header;
+          input.addEventListener("input", function() { row[column.name] = input.value; iciUpdateColumnPreview(); });
+          input.addEventListener("change", function() { row[column.name] = input.value; iciUpdateColumnPreview(); });
+          cell.appendChild(input);
+          line.appendChild(cell);
+        });
+        var remove = document.createElement("td");
+        var button = document.createElement("button");
+        button.type = "button";
+        button.className = "ctl";
+        button.title = "Remove row";
+        button.textContent = "✕";
+        button.disabled = iciColumnState.rows.length < 2;
+        button.onclick = function() { iciColumnState.rows.splice(rowIndex, 1); iciRenderColumnGrid(); };
+        remove.appendChild(button);
+        line.appendChild(remove);
+        grid.appendChild(line);
+      });
+      iciUpdateColumnPreview();
+    }
+
+    window.iciAddColumnRow = function() {
+      iciColumnState.rows.push({});
+      iciRenderColumnGrid();
+    };
+
+    /* a cell that holds a pipe would split the wiki table, so it is wrapped in the wiki's literal markers */
+    function iciWikiCell(value) {
+      var text = String(value == null ? "" : value).replace(/[\r\n]+/g, " ").trim();
+      if (text.indexOf("|") !== -1) { return ICI_BANG + "-" + text + "-" + ICI_BANG; }
+      return text;
+    }
+
+    function iciColumnProblem() {
+      var fixture = iciColumnState.fixture;
+      if (!fixture) { return "Pick a fixture."; }
+      var columns = iciSelectedColumns();
+      if (!columns.some(function(column) { return column.kind === "input"; })) { return "Select at least one input column."; }
+      for (var r = 0; r < iciColumnState.rows.length; r++) {
+        var row = iciColumnState.rows[r];
+        for (var c = 0; c < columns.length; c++) {
+          var column = columns[c];
+          var value = String(row[column.name] || "");
+          if (column.kind === "input" && column.required && value.trim() === "") {
+            return "Row " + (r + 1) + ": fill in " + column.header + ".";
+          }
+          if (value.indexOf("-" + ICI_BANG) !== -1) {
+            return "Row " + (r + 1) + ": " + column.header + " cannot contain the wiki marker made of a dash and an exclamation mark.";
+          }
+        }
+      }
+      return "";
+    }
+
+    function iciBuildColumnTable() {
+      var fixture = iciColumnState.fixture;
+      var columns = iciSelectedColumns();
+      var lines = ["|" + fixture.table + "|",
+                   "|" + columns.map(function(column) { return column.header; }).join("|") + "|"];
+      iciColumnState.rows.forEach(function(row) {
+        lines.push("|" + columns.map(function(column) { return iciWikiCell(row[column.name]); }).join("|") + "|");
+      });
+      return lines.join("\n");
+    }
+
+    function iciUpdateColumnPreview() {
+      var problem = iciColumnProblem();
+      iciEl("ici-col-problem").textContent = problem;
+      iciEl("ici-col-preview").textContent = iciColumnState.fixture ? iciBuildColumnTable() : "";
+      iciEl("ici-col-add").disabled = problem !== "";
+    }
+
+    window.iciAppendTableToScript = function() {
+      if (iciColumnProblem() !== "") { return; }
+      var fixture = iciColumnState.fixture;
+      iciBuilderSteps.push({
+        kind: "__table__",
+        row: iciBuildColumnTable(),
+        label: fixture.table + " - " + iciColumnState.rows.length + " row(s): " + iciSelectedColumns().map(function(column) { return column.header; }).join(", ")
+      });
+      iciColumnState.rows = [{}];
+      iciRenderColumnGrid();
+      iciRenderBuilderSteps();
+      iciDrawerToast("Table added");
+    };
+
+    /* Script steps are grouped under one script header; column tables are written as they are, each in its own block */
+    function iciCompileScript() {
+      var out = [];
+      var inScript = false;
+      iciBuilderSteps.forEach(function(item) {
+        if (item.kind === "__table__") {
+          if (out.length) { out.push(""); }
+          out.push(item.row);
+          inScript = false;
+        } else {
+          if (!inScript) {
+            if (out.length) { out.push(""); }
+            out.push("| script | fixtures.UiFixture |");
+            inScript = true;
+          }
+          out.push(item.row);
+        }
+      });
+      return out.join("\n");
     }
 
     window.iciClearBuilderScript = function() {
@@ -2977,52 +3305,6 @@ body:not(.ici-authenticated) .ici-dash {
         iciDrawerToast("Add some steps first");
       }
     };
-
-    /* ── Page locator management ── */
-    function iciRenderManageList() {
-      var holder = iciEl("ici-manage-list");
-      var pageInput = iciEl("ici-manage-page");
-      if (!holder || !pageInput) { return; }
-      var page = pageInput.value.trim();
-      var locators = iciPages[page] || {};
-      holder.innerHTML = "";
-      Object.keys(locators).forEach(function(name) {
-        var row = document.createElement("div");
-        row.className = "ici-manage-row";
-        row.innerHTML = '<span class="n"></span><span class="s"></span><button class="ctl" title="Remove">✕</button>';
-        row.querySelector(".n").textContent = name;
-        row.querySelector(".s").textContent = locators[name];
-        row.querySelector(".ctl").onclick = function() { iciPostPage({ page: page, remove: name }, "Locator removed"); };
-        holder.appendChild(row);
-      });
-    }
-
-    function iciPostPage(payload, doneMessage) {
-      return fetch(ICI_PAGES_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      }).then(function(response) { return response.json(); }).then(function(data) {
-        if (data.error) { iciDrawerToast("⚠️ " + data.error); return; }
-        iciDrawerToast(doneMessage);
-        return iciLoadPages();
-      }).catch(function() { iciDrawerToast("⚠️ User store server is not reachable"); });
-    }
-
-    window.iciSaveLocator = function() {
-      var page = iciEl("ici-manage-page").value.trim();
-      var name = iciEl("ici-manage-name").value.trim();
-      var selector = iciEl("ici-manage-selector").value.trim();
-      if (!page || !name || !selector) { iciDrawerToast("Page, locator name and selector are required"); return; }
-      iciPostPage({ page: page, locator: name, selector: selector }, "Locator saved").then(function() {
-        iciEl("ici-manage-name").value = "";
-        iciEl("ici-manage-selector").value = "";
-        iciEl("ici-builder-page").value = iciPages[page] ? page : iciEl("ici-builder-page").value;
-        iciOnBuilderActionChange();
-      });
-    };
-
-    window.iciRenderManageList = iciRenderManageList;
 
     function iciDrawerToast(message) {
       var toast = iciEl("ici-drawer-toast");
@@ -3049,9 +3331,16 @@ body:not(.ici-authenticated) .ici-dash {
     };
 
     window.iciLiveDebug = function() {
-      // POST to local backend on 8090 to activate the headless=false override
-      fetch("http://127.0.0.1:8090/live-debug", {
-        method: "POST"
+      // Prepare the run like the Run button does (this also clears any old flag), then ask for visible browsers
+      var store = "http://127.0.0.1:8090";
+      fetch(store + "/register-run", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ page: window.iciRealPath() })
+      }).then(function() {
+        return fetch(store + "/clear-allure", { method: "POST" });
+      }).then(function() {
+        return fetch(store + "/live-debug", { method: "POST" });      // after register-run, which clears the flag
       })
       .then(function() {
         // Redirect browser to trigger the test run
@@ -3066,6 +3355,46 @@ body:not(.ici-authenticated) .ici-dash {
     console.log('%c✓ All 6 UX fixes initialized successfully', 'color: green; font-weight: bold;');
   });
 
+})();
+</script>
+
+<script>
+/* Tables: show the cells of password-like columns as dots (display only; the page source and the Edit box are unchanged). */
+(function() {
+  var SECRET = /(^|[^a-z])(pass(word|wd|code)?|pwd|secret|token|otp|cvv|pin)([^a-z]|$)/i;
+  var DOTS = "\u2022\u2022\u2022\u2022\u2022\u2022";
+  function iciMaskSecretColumns() {
+    document.querySelectorAll("article table").forEach(function(table) {
+      var rows = table.querySelectorAll("tr");
+      var header = null;
+      for (var i = 0; i < rows.length; i++) {
+        if (rows[i].children.length > 1 && /slimRowTitle/.test(rows[i].className)) { header = rows[i]; break; }
+      }
+      if (!header) { return; }
+      var secretColumns = [];
+      for (var c = 0; c < header.children.length; c++) {
+        var label = header.children[c].textContent.trim();
+        if (label.slice(-1) !== "?" && SECRET.test(label)) { secretColumns.push(c); }
+      }
+      if (!secretColumns.length) { return; }
+      var seen = false;
+      for (var r = 0; r < rows.length; r++) {
+        if (rows[r] === header) { seen = true; continue; }
+        if (!seen) { continue; }
+        secretColumns.forEach(function(index) {
+          var cell = rows[r].children[index];
+          if (cell && cell.textContent.trim() !== "" && cell.textContent.trim() !== DOTS) { cell.textContent = DOTS; }
+        });
+      }
+    });
+  }
+  document.addEventListener("DOMContentLoaded", function() {
+    iciMaskSecretColumns();
+    var article = document.querySelector("article");
+    if (article && typeof MutationObserver !== "undefined") {
+      new MutationObserver(iciMaskSecretColumns).observe(article, { childList: true, subtree: true });
+    }
+  });
 })();
 </script>
 
