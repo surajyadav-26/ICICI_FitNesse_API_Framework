@@ -639,7 +639,7 @@ class UserStoreHandler(BaseHTTPRequestHandler):
                 self.send_response(200)
                 self.send_header("Content-Type", "image/png")
                 self.send_header("Content-Length", str(len(data)))
-                self.send_header("Cache-Control", "no-store")
+                self.send_header("Cache-Control", "private, max-age=600")      # the address carries the run time, so it changes per run
                 self.end_headers()
                 self.wfile.write(data)
             except FileNotFoundError as error:

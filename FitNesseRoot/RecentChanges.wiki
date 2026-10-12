@@ -1,3 +1,4 @@
+|VariablePage||14:15:04 Mon, Oct 12, 2026|
 |FrontPage.NirikshanFunctionalTesting.LoginTest||09:14:30 Mon, Oct 12, 2026|
 |FrontPage.VisualRegression.LoginPage||17:03:51 Sat, Oct 10, 2026|
 |FrontPage.APITesting||16:48:16 Sat, Oct 10, 2026|

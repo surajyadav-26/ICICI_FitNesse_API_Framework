@@ -228,14 +228,20 @@ def write_report(result, folder: str, context: dict = None) -> str:
     size = f"{result.actual_size[0]}&times;{result.actual_size[1]}" if result.actual_size[0] else ""
 
     page = _TEMPLATE
+    if result.status == "passed":
+        start, end = page.index("<h2>Compare</h2>"), page.index("<h2>Defect description</h2>")
+        page = (page[:start] + "<h2>Screenshot</h2><div class=\"view single active\"><img src=\"__ACTUAL__\" alt=\"actual\"></div>\n"
+                + page[end:])
+        page = page.replace('<button class="tab', '<button hidden class="tab')       # no tabs without a comparison
     for key, value in {
         "__NAME__": esc(result.name), "__STATUS_TEXT__": _STATUS_TEXT.get(result.status, result.status.upper()),
         "__STATUS__": esc(result.status), "__TIME__": esc(result.timestamp), "__PROFILE__": esc(result.profile),
         "__DIFFCLASS__": "bad" if result.status == "failed" else "good", "__PCT__": str(result.mismatch_pct),
         "__THRESHOLD__": str(result.threshold_pct), "__PIXELS__": f"{result.diff_pixels:,}", "__AREAS__": str(len(regions)),
         "__SIZE__": size, "__DETAILS__": details, "__REGIONS__": region_html,
-        "__BASELINE__": _data_uri(baseline), "__ACTUAL__": _data_uri(actual), "__MARKED__": _data_uri(marked),
-        "__DIFF__": _data_uri(diff), "__DEFECT__": esc(defect_text(result, context, regions)),
+        "__BASELINE__": _data_uri(baseline) if "__BASELINE__" in page else "", "__ACTUAL__": _data_uri(actual),
+        "__MARKED__": _data_uri(marked) if "__MARKED__" in page else "",
+        "__DIFF__": _data_uri(diff) if "__DIFF__" in page else "", "__DEFECT__": esc(defect_text(result, context, regions)),
     }.items():
         page = page.replace(key, value)
     path = os.path.join(folder, "report.html")

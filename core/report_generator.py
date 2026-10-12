@@ -2,6 +2,7 @@ import os
 import glob
 
 from core.config import Config
+from core.file_lock import FileLock, write_atomically
 import datetime
 import json
 import xml.etree.ElementTree as ET
@@ -38,9 +39,7 @@ def load_history() -> None:
 
 def save_history() -> None:
     try:
-        os.makedirs(os.path.dirname(HISTORY_FILE), exist_ok=True)
-        with open(HISTORY_FILE, "w", encoding="utf-8") as f:
-            json.dump(report_history, f, indent=2)
+        write_atomically(HISTORY_FILE, json.dumps(report_history, indent=2))
     except Exception:
         pass
 
@@ -209,10 +208,12 @@ def current_page_full_name() -> str:
 
 
 def add_record(record: dict) -> None:
-    load_history()
-    record.setdefault("page", current_page_full_name())
-    report_history.append(record)
-    save_history()
+    # Parallel runs: several Slim processes add records at once, so read-append-write happens under one lock.
+    with FileLock("report_history"):
+        load_history()
+        record.setdefault("page", current_page_full_name())
+        report_history.append(record)
+        save_history()
     # Regenerate immediately with current memory cache
     generate_html_report()
     # Trigger a delayed refresh to merge with fresh XML result logs 2 seconds later!
@@ -1164,8 +1165,6 @@ def generate_html_report() -> None:
 </html>
 """
     try:
-        os.makedirs(os.path.dirname(REPORT_FILE), exist_ok=True)
-        with open(REPORT_FILE, "w", encoding="utf-8") as f:
-            f.write(html_content)
+        write_atomically(REPORT_FILE, html_content)       # several processes regenerate it; readers see a whole file
     except Exception as e:
         print("ERROR WRITING REPORT_FILE:", e)

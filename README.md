@@ -1100,6 +1100,20 @@ artifact into `data/visual/baselines`. The nightly schedule is in the workflow f
 
 `python -m core.ci_run` and `python -m core.ci_reports` are plain Python, so any other runner can call them the same way.
 
+**Parallel runs.** FitNesse runs the pages of one suite request one after another, but it serves several requests at once,
+each with its own Slim process. `python -m core.ci_run --suite FrontPage.MySuite --parallel 4` finds the test pages below the
+suite and sends four requests at a time; the workflow takes the same value from the `workers` input or the repository variable
+`WORKERS` (default 1). A measured run of 8 mixed pages (login, visual, layout, accessibility, API) took 49 s one after
+another and 18 s with 4 workers, and every record reached the reports. Things to know:
+
+- A page that uses the embedded mock server (one fixed port) is run alone, after the parallel group.
+- The report history and the visual results index are written under a lock (`core/file_lock.py`), and report files are
+  replaced whole, so pages finishing together cannot lose each other's records.
+- Each worker is a browser, so size `workers` to the machine (limit 8). The suite-level tags and filters of FitNesse are not
+  applied; the runner takes every test page below the suite except SetUp / TearDown.
+- The pages must not depend on one another or share data; a visual or layout baseline that is created on the first run is
+  created by whichever page gets there first.
+
 **Reports on GitHub Pages (opt-in).** `python -m core.ci_reports --site site` gathers the Allure, visual, accessibility and
 simple reports into one folder with an index page, and the workflow deploys it when the repository variable `PUBLISH_PAGES`
 is `true` (Settings > Pages > Source: *GitHub Actions*). The link appears on the run page. On a public repository the site is
@@ -1144,3 +1158,30 @@ only point to it, so any tool that reads one of them lands on the same rules.
 `tests/unit/test_architecture.py` enforces the structural rules (import directions, no new top-level folder, no application
 name or port in framework code, no killing processes by name, every column fixture declares its columns). A change that
 breaks the design fails the normal test run.
+
+
+### Many screens
+
+A suite with hundreds of visual rows stays usable:
+
+- **Visual Review Report** (profile menu): every screen is a collapsed row; its three images are requested only when the row
+  is opened. Mismatches are opened for you when there are 5 or fewer. The list has search (name, browser / viewport), status
+  filters and paging (10 / 25 / 50 / 100 per page). "Approve all mismatches & new" still covers every screen, not only the
+  page you are on.
+- **Static index for CI** (`testResults/visual/index.html`): one table row per screen, each linking to its own report.
+- **Evidence only where it is needed:** a matching screen adds no images or report to Allure, and its own report holds a
+  single screenshot (about a quarter of the size). Mismatches and new baselines keep baseline, actual, diff and the full report.
+- **Run time:** a visual row is one browser and one screenshot. Use `--parallel N` (see *Parallel runs*) to spread rows over
+  several pages; give each group of screens its own wiki page so they can run side by side.
+
+
+### Many accessibility pages
+
+- **Report page** (profile menu > Accessibility Report, and `testResults/accessibility/index.html` in CI): the latest result of
+  every page and standard, with a "most frequent issues" table across all pages (worst impact first, then number of pages), a
+  status filter, search by address and paging. Earlier runs of a page are one tick away ("include earlier runs").
+- **Disk:** the newest 20 reports of each page and standard are kept (`ACCESSIBILITY_KEEP_RUNS` in `.env`, 0 keeps all).
+  Report file names carry a short hash of the full address, so two pages whose addresses start the same never overwrite
+  each other, also when they run in parallel.
+- **Suite:** `FrontPage.AccessibilityTesting.LoginTest` checks the login page against WCAG 2.1 AA. Add a row per page, or a
+  page per area, and run with `--parallel N` for a long list.

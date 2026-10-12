@@ -91,6 +91,7 @@ class Config:
     VISUAL_UPDATE_BASELINE = os.getenv("VISUAL_UPDATE_BASELINE", "false").lower() == "true"
     VISUAL_FAIL_ON_NEW = os.getenv("VISUAL_FAIL_ON_NEW", "false").lower() == "true"  # strict mode for CI
     VISUAL_FULL_PAGE = os.getenv("VISUAL_FULL_PAGE", "true").lower() == "true"
+    ACCESSIBILITY_KEEP_RUNS = int(os.getenv("ACCESSIBILITY_KEEP_RUNS", "20"))   # reports kept per page and standard
     LAYOUT_TOLERANCE = float(os.getenv("LAYOUT_TOLERANCE", "2"))                 # pixels a position / size may move
 
     # Mock Server

@@ -63,3 +63,16 @@ def test_report_is_one_file_with_images_regions_and_a_defect_text(tmp_path, monk
     assert "http://x/login?a=&lt;b&gt;" in page and "?a=<b>" not in page
     assert "[Visual] &#x27;login page&#x27; differs from its baseline" in page
     assert visual_report.report_url("chromium-300x200", "login page") == "/files/testResults/visual/chromium-300x200/login%20page/report.html"
+
+
+def test_a_matching_screen_has_a_small_report_with_one_screenshot(tmp_path, monkeypatch):
+    monkeypatch.setattr(vc, "BASELINE_DIR", str(tmp_path / "b"))
+    monkeypatch.setattr(vc, "REFERENCE_DIR", str(tmp_path / "r"))
+    monkeypatch.setattr(vc, "RESULT_DIR", str(tmp_path / "out"))
+    monkeypatch.setattr(vc, "RESULTS_FILE", str(tmp_path / "out" / "results.json"))
+    vc.check_against_baseline(shot(tmp_path / "a.png"), "p", "home")
+    passed = vc.check_against_baseline(shot(tmp_path / "a.png"), "p", "home")
+    page = open(visual_report.write_report(passed, vc.result_dir("p", "home"), {"url": "http://x/"}), encoding="utf-8").read()
+    assert passed.status == "passed" and "MATCH" in page
+    assert page.count("data:image/jpeg;base64,") == 1                   # not baseline + actual + marked + diff
+    assert "Defect description" in page and "Side by side" not in page

@@ -18,6 +18,8 @@ from dataclasses import asdict, dataclass, field
 
 from PIL import Image, ImageChops, ImageEnhance
 
+from core.file_lock import FileLock, write_atomically
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BASELINE_DIR = os.path.join(BASE_DIR, "data", "visual", "baselines")
 REFERENCE_DIR = os.path.join(BASE_DIR, "fixtures", "visual", "baseline")
@@ -212,17 +214,14 @@ def _read_results() -> dict:
 
 
 def _write_results(results: dict) -> None:
-    os.makedirs(RESULT_DIR, exist_ok=True)
-    temporary = RESULTS_FILE + ".tmp"
-    with open(temporary, "w", encoding="utf-8") as results_file:
-        json.dump(results, results_file, indent=2)
-    os.replace(temporary, RESULTS_FILE)
+    write_atomically(RESULTS_FILE, json.dumps(results, indent=2))
 
 
 def record_result(result: VisualResult) -> None:
-    results = _read_results()
-    results[f"{result.profile}/{result.name}"] = result.to_dict()
-    _write_results(results)
+    with FileLock("visual_results"):          # parallel runs record at the same time
+        results = _read_results()
+        results[f"{result.profile}/{result.name}"] = result.to_dict()
+        _write_results(results)
 
 
 def list_results() -> list:
@@ -247,13 +246,14 @@ def approve(profile: str, name: str) -> dict:
     diff = os.path.join(folder, "diff.png")
     if os.path.exists(diff):
         os.remove(diff)
-    results = _read_results()
-    key = f"{profile}/{name}"
-    entry = results.get(key, {"name": name, "profile": profile})
-    entry.update({"status": "updated", "mismatch_pct": 0.0, "diff_pixels": 0, "size_mismatch": False,
-                  "message": "Baseline approved", "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")})
-    results[key] = entry
-    _write_results(results)
+    with FileLock("visual_results"):
+        results = _read_results()
+        key = f"{profile}/{name}"
+        entry = results.get(key, {"name": name, "profile": profile})
+        entry.update({"status": "updated", "mismatch_pct": 0.0, "diff_pixels": 0, "size_mismatch": False,
+                      "message": "Baseline approved", "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")})
+        results[key] = entry
+        _write_results(results)
     return entry
 
 

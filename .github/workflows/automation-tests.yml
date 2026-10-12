@@ -30,6 +30,10 @@ on:
         description: 'Extra attempts for a UI row that fails (0 = off)'
         required: false
         default: '1'
+      workers:
+        description: 'Test pages run at the same time (1 = one after another, max 8)'
+        required: false
+        default: '1'
   # schedule:
   #   - cron: '30 20 * * *'      # every night 02:00 IST; remove the comment marks to turn it on
 
@@ -60,6 +64,7 @@ jobs:
       SUITE: ${{ inputs.suite || 'FrontPage' }}
       API_URL: ${{ inputs.api_url || vars.API_BASE_URL }}
       UI_URL: ${{ inputs.ui_url || vars.UI_BASE_URL }}
+      WORKERS: ${{ inputs.workers || vars.WORKERS || '1' }}
       PYTHONPATH: ${{ github.workspace }}
     steps:
       - name: Check out
@@ -134,6 +139,7 @@ jobs:
               $runArguments = @('--suite', $env:SUITE, '--out', 'test_results.xml')
               if ($env:API_URL) { $runArguments += @('--api-url', $env:API_URL) }
               if ($env:UI_URL) { $runArguments += @('--ui-url', $env:UI_URL) }
+              if ([int]$env:WORKERS -gt 1) { $runArguments += @('--parallel', $env:WORKERS) }
               python -m core.ci_run @runArguments
               $runExit = $LASTEXITCODE
             }
@@ -155,7 +161,7 @@ jobs:
           if (Test-Path FitNesseRoot/files/testResults) { Copy-Item FitNesseRoot/files/testResults test-artifacts/testResults -Recurse -Force }
           if (Test-Path FitNesseRoot/files/report.html) { Copy-Item FitNesseRoot/files/report.html test-artifacts/ }
           if (Test-Path logs) { Copy-Item logs test-artifacts/logs -Recurse -Force }
-          foreach ($file in 'test_results.xml', 'fitnesse_output.log', 'fitnesse_error.log') {
+          foreach ($file in 'test_results.xml', 'test_results.json', 'fitnesse_output.log', 'fitnesse_error.log') {
             if (Test-Path $file) { Copy-Item $file test-artifacts/ }
           }
 

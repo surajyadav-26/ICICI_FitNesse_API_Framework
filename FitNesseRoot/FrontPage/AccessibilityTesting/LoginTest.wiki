@@ -1,0 +1,12 @@
+---
+Test
+---
+!1 Login page accessibility
+
+The login page is opened and checked against WCAG 2.1 level AA with axe-core. `max violations` is how many findings are
+allowed before the page fails; the sample login screen has 2 known ones (a select without a label and a missing `lang`
+attribute), so it is set to 2 here. Set it to 0 to enforce. Open the `report?` link for every finding and how to fix it.
+
+|accessibility test|
+|url|wcag version|wcag level|max violations|status?|violations?|compliance?|report?|
+|${UI_BASE_URL}|2.1|AA|2|PASS| | | |

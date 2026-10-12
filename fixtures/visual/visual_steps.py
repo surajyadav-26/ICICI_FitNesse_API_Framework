@@ -176,14 +176,15 @@ class VisualTestingMixin:
         if self._allure:
             try:
                 links = []
-                for kind in ("baseline", "actual", "diff"):
+                attach = result.status != "passed"        # a matching screen needs no evidence; hundreds of them would only add weight
+                for kind in (("baseline", "actual", "diff") if attach else ()):
                     path = os.path.join(folder, f"{kind}.png")
                     if os.path.isfile(path):
                         with open(path, "rb") as image:
                             link = self._allure.add_attachment(f"{kind.title()} - {result.name}", image.read(), "image/png", "png", step=True)
                         if link:
                             links.append(link)
-                if report_file:
+                if report_file and attach:
                     with open(report_file, "r", encoding="utf-8") as report:
                         link = self._allure.add_attachment(f"Visual regression report - {result.name}", report.read(),
                                                            "text/html", "html", step=True)
@@ -202,7 +203,7 @@ class VisualTestingMixin:
             import time
             base = f"{Config.fitnesse_url()}/files/testResults/visual/{quote(result.profile)}/{quote(result.name)}"
             cell = ('<div style="flex:1;text-align:center;font-size:11px;color:#5C6E89">{}<br>'
-                    '<img src="{}/{}.png" style="max-width:100%;border:1px solid #E5E8EB;border-radius:6px"></div>')
+                    '<img loading="lazy" src="{}/{}.png" style="max-width:100%;border:1px solid #E5E8EB;border-radius:6px"></div>')
             images = "".join(cell.format(kind.title(), base, kind) for kind in ("baseline", "actual", "diff")
                              if kind != "diff" or result.status == "failed")
             add_record({

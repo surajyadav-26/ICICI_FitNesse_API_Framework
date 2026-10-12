@@ -94,17 +94,39 @@ def _file_stem(name: str) -> str:
     return re.sub(r"[^\w\-]+", "_", str(name)).strip("_")[:60] or "accessibility"
 
 
-def write_report(summary: dict, name: str, folder: str = None) -> tuple:
-    """Writes <name>-<time>.html and .json; returns (html path, json path)."""
+def write_report(summary: dict, name: str, folder: str = None, keep: int = None) -> tuple:
+    """
+    Writes <page>-<id>-<time>.html and .json; returns (html path, json path).
+    The id is a short hash of the full address, version and level, so two pages whose addresses start the same never share a
+    file name, and only the newest `keep` reports of one page and standard are kept (ACCESSIBILITY_KEEP_RUNS).
+    """
+    import hashlib
     folder = folder or REPORT_DIR
     os.makedirs(folder, exist_ok=True)
-    stem = f"{_file_stem(name)}-{time.strftime('%Y%m%d-%H%M%S')}"
+    key = f"{name}|{summary.get('wcagVersion', '')}|{summary.get('wcagLevel', '')}"
+    prefix = f"{_file_stem(name)[:40]}-{hashlib.sha1(key.encode('utf-8')).hexdigest()[:8]}"
+    stem = f"{prefix}-{time.strftime('%Y%m%d-%H%M%S')}-{os.getpid()}"
     html_path, json_path = os.path.join(folder, stem + ".html"), os.path.join(folder, stem + ".json")
     with open(json_path, "w", encoding="utf-8") as json_file:
         json.dump(summary, json_file, indent=2)
     with open(html_path, "w", encoding="utf-8") as html_file:
         html_file.write(render_html(summary))
+    _prune(folder, prefix, keep if keep is not None else Config.ACCESSIBILITY_KEEP_RUNS)
     return html_path, json_path
+
+
+def _prune(folder: str, prefix: str, keep: int) -> None:
+    """Removes the oldest reports of one page and standard beyond `keep` (0 or less keeps everything)."""
+    if keep <= 0:
+        return
+    stems = sorted({name[:-5] for name in os.listdir(folder)
+                    if name.startswith(prefix + "-") and name.endswith(".json")})
+    for stem in stems[:-keep]:
+        for extension in (".json", ".html"):
+            try:
+                os.remove(os.path.join(folder, stem + extension))
+            except OSError:
+                pass
 
 
 def report_url(path: str) -> str:

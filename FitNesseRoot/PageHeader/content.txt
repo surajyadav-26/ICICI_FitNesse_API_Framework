@@ -1061,6 +1061,25 @@ body:not(.ici-authenticated) .ici-dash {
      The real wiki path is kept in window.__iciRealPath so every feature keeps working. */
   window.__iciRealPath = window.__iciRealPath || location.pathname;
   window.iciRealPath = function() { return window.__iciRealPath || location.pathname; };
+
+  /* A run address (...?test, ...?suite) starts the tests every time the page is loaded, so a refresh, a bookmark or a
+     restored tab would run them again. The fact that this is a run page is remembered for this load; then the run
+     query is taken out of the address bar, so a refresh opens the page and does not start another run. Someone who is
+     not signed in must not start a run behind the login form: that load is stopped and the plain page is opened. */
+  var runMatch = location.search.match(/[?&](test|suite)(&|=|$)/i);
+  window.__iciRunKind = runMatch ? runMatch[1].toLowerCase() : "";
+  window.__iciRunPage = window.__iciRunKind !== "";
+  window.iciIsRunPage = function() { return !!window.__iciRunPage; };
+  if (window.__iciRunPage) {
+    var signedIn = false;
+    try { signedIn = !!JSON.parse(sessionStorage.getItem("ici_session")); } catch (e) {}
+    if (!signedIn) {
+      try { window.stop(); } catch (e) {}
+      location.replace(location.pathname + location.hash);
+    } else {
+      try { history.replaceState(null, "", location.pathname + location.hash); } catch (e) {}
+    }
+  }
   window.iciPrettyUrl = function(loggedIn) {
     try {
       if (location.search || location.hash) { return; }
@@ -1905,7 +1924,7 @@ window.ICI_APP.ready = fetch("/files/app-config.json", { cache: "no-store" })
 
   // Fetch true suite test total on load dynamically from the static wiki contents list!
   window._iciTotalSuiteTests = 0;
-  if (/[?&]suite/i.test(location.search)) {
+  if (window.__iciRunKind === "suite") {
     fetch(window.iciRealPath())
       .then(function(res) { return res.text(); })
       .then(function(html) {
@@ -1964,7 +1983,7 @@ window.ICI_APP.ready = fetch("/files/app-config.json", { cache: "no-store" })
     var isPageRunning = stopBtn !== null;
     
     var progressSpinner = document.getElementById("ici-header-progress");
-    var isRunningPage = /[?&](test|suite)/i.test(location.search);
+    var isRunningPage = window.iciIsRunPage();
     var hasFinished = !isPageRunning && summaryEl;
     
     if (isRunningPage) {
