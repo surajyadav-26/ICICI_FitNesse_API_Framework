@@ -12,6 +12,8 @@ import os
 import time
 import uuid
 
+from core.config import Config
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ALLURE_RESULTS_DIR = os.path.join(BASE_DIR, "FitNesseRoot", "files", "testResults", "allure-results")
 
@@ -40,6 +42,7 @@ class AllureHelper:
         self.test_uuid = str(uuid.uuid4())
         self.kinds = []            # kinds of test that ran on this page, in the order they were first used
         self.parameters = {}       # name -> value shown on the test (browser, url, ...)
+        self.flaky_note = ""       # set when the test failed first and passed on a retry
 
     def mark(self, kind: str, **parameters) -> None:
         """Records what kind of test this page ran (ui / api / visual / accessibility) and optional parameters."""
@@ -48,6 +51,21 @@ class AllureHelper:
         for name, value in parameters.items():
             if value not in (None, ""):
                 self.parameters.setdefault(str(name), str(value))
+
+    def add_parameters(self, values: dict) -> None:
+        """Adds name/value pairs shown on the test (long values are cut; an empty value is skipped)."""
+        for name, value in (values or {}).items():
+            text = str(value).strip()
+            if text:
+                self.parameters.setdefault(str(name), text[:200])
+
+    def recover(self, note: str) -> None:
+        """A retry passed: the result is passed again, but it is flagged flaky and keeps the failed attempt's steps."""
+        self.status = "passed"
+        self.error_message = ""
+        self.error_trace = ""
+        self.flaky_note = str(note).strip()
+        self.add_step(f"Passed on a retry - {self.flaky_note}", "passed", 1)
 
     @classmethod
     def for_test(cls, test_name: str, suite_name: str = "FitNesse Suite") -> "AllureHelper":
@@ -125,14 +143,15 @@ class AllureHelper:
                 {"name": "parentSuite", "value": "FitNesseRoot"},
                 {"name": "suite", "value": self.suite_name},
                 {"name": "subSuite", "value": self.test_name},
-                {"name": "framework", "value": "Nirikshan Framework"},
+                {"name": "framework", "value": f"{Config.APP_NAME} Framework"},
                 {"name": "language", "value": "python"},
-                {"name": "epic", "value": "ICICI Nirikshan"},
+                {"name": "epic", "value": Config.APP_NAME},
                 {"name": "story", "value": self.test_name},
                 {"name": "severity", "value": "normal"},
             ] + [{"name": "feature", "value": KINDS[kind]} for kind in self.kinds]
               + [{"name": "tag", "value": KINDS[kind]} for kind in self.kinds],
             "parameters": [{"name": name, "value": value} for name, value in self.parameters.items()],
+            "links": self._links(),
             "description": self._description(),
             "name": self.test_name,
             "status": self.status,
@@ -148,6 +167,8 @@ class AllureHelper:
                 "message": self.error_message,
                 "trace": self.error_trace
             }
+        elif self.flaky_note:
+            result["statusDetails"] = {"flaky": True, "message": self.flaky_note}
 
         result_path = os.path.join(ALLURE_RESULTS_DIR, f"{self.test_uuid}-result.json")
         temporary = result_path + ".tmp"
@@ -157,6 +178,13 @@ class AllureHelper:
             os.replace(temporary, result_path)
         except Exception as e:
             print(f"[ALLURE WARNING] Writing result JSON failed: {e}")
+
+    def _links(self) -> list:
+        """A link back to the FitNesse page that was running, so QA can open the table and re-run it."""
+        page = os.environ.get("FITNESSE_PAGE_PATH", "").strip()
+        if not page:
+            return []
+        return [{"name": f"Open the test page ({page})", "url": f"{Config.fitnesse_url()}/{page}", "type": "custom"}]
 
     def _description(self) -> str:
         kinds = ", ".join(KINDS[kind] for kind in self.kinds) or "not classified"

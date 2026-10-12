@@ -78,7 +78,7 @@ Enterprise-grade REST API testing framework for ICICI Prudential AML & Complianc
 
 ### **CI/CD Automation**
 - ✅ **GitHub Actions**: Auto-trigger on push/PR, scheduled runs, manual dispatch
-- ✅ **Jenkins Pipeline**: Parameterized builds, email notifications, HTML reports
+- ✅ **GitHub Actions**: unit tests, suite run, quality gate and reports on every push (`.github/workflows/automation-tests.yml`)
 - ✅ **Multi-Environment**: Dev/Staging/UAT/Prod support
 - ✅ **Artifact Archiving**: Test results saved for 30 days
 
@@ -137,7 +137,6 @@ ICICI_FitNesseAPIFramework/
 ├── .github/workflows/            # GitHub Actions
 │   └── api-tests.yml             # CI/CD workflow (238 lines)
 │
-└── Jenkinsfile                   # Jenkins Pipeline (332 lines)
 ```
 
 ---
@@ -538,28 +537,9 @@ on:
         options: [dev, staging, uat]
 ```
 
-### **Jenkins Pipeline**
+### **CI**
 
-**File:** `Jenkinsfile`
-
-**Features:**
-- ✅ Parameterized builds (environment, test suite)
-- ✅ Email notifications (success/failure)
-- ✅ HTML report publishing
-- ✅ Artifact archiving (30 days)
-- ✅ Scheduled builds (daily 2 AM)
-
-**Setup:**
-1. Create new Pipeline job in Jenkins
-2. Point to `Jenkinsfile` in repository
-3. Configure email settings in pipeline
-4. Run with parameters
-
-**Parameters:**
-- `TEST_ENVIRONMENT`: dev/staging/uat/prod
-- `TEST_SUITE`: FrontPage, FrontPage.Sanity, etc.
-- `SEND_EMAIL`: Enable/disable notifications
-- `FAIL_ON_ERROR`: Fail build on test failures
+CI is GitHub Actions only; see the *CI* section near the end of this file. There is no Jenkins pipeline.
 
 ---
 
@@ -797,7 +777,7 @@ Enterprise Internal Use Only - ICICI Prudential Life Insurance
 - 15 Python fixtures for comprehensive API testing
 - OAuth2, GraphQL, WebSocket, gRPC support
 - Custom ICICI branding and theme
-- GitHub Actions & Jenkins CI/CD integration
+- GitHub Actions CI/CD integration
 - Multi-environment support (Dev/QA/UAT/Prod)
 - Automated HTML report generation
 
@@ -1063,3 +1043,104 @@ A `.flow` file holds one step per line in the same pipe format (`#` starts a com
 | **Accessibility Report** (profile menu) | Every accessibility check run so far, newest first, each linking to its full WCAG report. Served by the user store server at `/accessibility`. |
 
 Restart `start_server.bat` once so the user store server picks up the new `/accessibility` page.
+
+
+## Using this framework for another application
+
+Make one copy of the framework folder per application. Nothing in the code names an application or a port, so a copy needs
+only configuration:
+
+1. **`.env`** - `APP_NAME`, `APP_TITLE`, `FITNESSE_PORT`, `STORE_PORT`, `MOCK_SERVER_PORT` (see `.env.example`). Give each copy
+   its own ports and two copies run side by side; `start_server.bat` frees only that copy's ports.
+2. **Environments** - add the dev / uat / prod API and UI URLs in the ENV drawer (they are written to `.env`).
+3. **Application code** - replace `pages/login_page.py` with your page objects, `fixtures/ui/scenario/login` with your scenarios,
+   the `NirikshanFunctionalTesting` and `VisualRegression` suites with yours, `fixtures/visual/baseline/*.png` with your
+   reference images, and `data/users.json` with your own users. The logo files are under `FitNesseRoot/files/fitnesse/icici/img`.
+
+Everything else (`core/`, the fixture engines, the report generators, the Step Builder) is shared framework code; do not edit
+it per application so fixes can be copied between copies.
+
+### Flaky rows
+
+`ROW_RETRIES=1` in `.env` re-runs a UI table row that errors or returns a wrong result, in a fresh browser. The first
+failure keeps its screenshot and steps; a row that passes on a retry is reported as passed and flagged *flaky* in Allure
+(the failed attempt is listed under Retries). `0` (default) turns it off.
+
+### API response shape (`schema` column)
+
+Request tables accept a `schema` column: a file name in `data/schemas` (`user` = `data/schemas/user.json`) or the JSON Schema
+itself. A response that does not match fails the step in Allure and the simple report, and `schema valid?` shows `valid` or
+the first differences (`$.id: expected integer but found string`). Supported keywords are listed in `core/json_schema.py`;
+an unsupported keyword is reported instead of being ignored.
+
+```
+|get request fixture|
+|url                            |key      |schema|status code?|schema valid?|
+|${API_BASE_URL}/users/1        |firstName|user  |200         |valid        |
+```
+
+### CI
+
+**GitHub Actions** (`.github/workflows/automation-tests.yml`) is the CI of this framework. On a push or pull request to
+`main`, or when started by hand (Actions > Automation Tests > Run workflow), it:
+
+1. runs the unit tests, which include the design rules in `tests/unit/test_architecture.py`;
+2. starts FitNesse, runs the suite with `python -m core.ci_run` (exit code 1 = a table is wrong, 2 = FitNesse did not answer),
+   and stops it again, all in one step;
+3. builds the reports and applies the quality gate with `python -m core.ci_reports --gate` (a visual mismatch or an
+   accessibility failure fails the job);
+4. uploads the **test-reports** artifact: `testResults/allure-report/index.html`, `testResults/visual/index.html`,
+   `testResults/accessibility/index.html` and `report.html`, plus a summary on the run page.
+
+Settings: the manual run asks for `suite`, `api_url`, `ui_url` and `row_retries`; for push and pull-request runs set the
+repository **variables** `API_BASE_URL` and `UI_BASE_URL` (Settings > Secrets and variables > Actions > Variables). They are
+written to `VariablePage` before the run, so the environment under test is never taken from a committed file. Visual
+baselines must be created on the runner (Windows) or they will differ by fonts: run once, then copy the images from the
+artifact into `data/visual/baselines`. The nightly schedule is in the workflow file, commented out.
+
+`python -m core.ci_run` and `python -m core.ci_reports` are plain Python, so any other runner can call them the same way.
+
+**Reports on GitHub Pages (opt-in).** `python -m core.ci_reports --site site` gathers the Allure, visual, accessibility and
+simple reports into one folder with an index page, and the workflow deploys it when the repository variable `PUBLISH_PAGES`
+is `true` (Settings > Pages > Source: *GitHub Actions*). The link appears on the run page. On a public repository the site is
+public, and the reports contain screenshots and the URLs of the environment under test, so leave it off unless that is fine.
+
+**Repository must contain `waferslim/` as ordinary files.** If it was added from a folder that was itself a git repository,
+git stores an empty "gitlink" and a fresh checkout has no Slim server, so no table can run. Fix once with
+`git rm --cached waferslim`, `git add waferslim`, commit. The workflow's first step fails with that instruction when the
+folder is empty.
+
+
+### Pages behind a login, and alignment / size / colour checks
+
+`visual test` and `layout test` take optional `username` and `password` columns. When they are filled, the row signs in
+through the application's `pages/login_page.py` (`LoginPage.open()`, `.login(user, password)`, `.outcome()` returning
+`Success`) before it opens the `url`, so a page that needs a login is compared and not the login screen. A refused login is
+an `ERROR` row with the application's message. The password column is masked on screen and in the reports.
+
+`layout test` compares the **position, size and colours** of the elements you list, not pixels, so a changed text or image is
+ignored but a moved field, a resized box or a different colour is not:
+
+```
+|layout test|
+|url               |name      |elements                                   |tolerance|username|password|status?|differences?|
+|${UI_BASE_URL}home|home page |LoginPage.username, LoginPage.login button |2        |qa      |qa123   |passed |            |
+```
+
+Measured per element: left / top position, width, height, text colour, background colour, border colour and width, font size,
+weight and family, and text alignment. Position and size may move by `tolerance` pixels (`LAYOUT_TOLERANCE`, default 2); colours
+and fonts must match exactly. The first run for a name stores the values in `data/visual/layouts/<browser>-<w>x<h>/<name>.json`
+(commit them); a hand-written `fixtures/visual/layout/<name>.json` is used instead when present. The `report?` link opens a
+page with the measured values, the differences highlighted and a defect description; set `update` to `true` to accept a
+change as the new baseline.
+
+
+## Rules for AI coding tools and developers
+
+`AGENTS.md` is the single rulebook: the layers, what may import what, where each kind of change goes, the hard rules and
+when to ask the owner first. `CLAUDE.md`, `GEMINI.md`, `.github/copilot-instructions.md` and `.cursor/rules/framework.mdc`
+only point to it, so any tool that reads one of them lands on the same rules.
+
+`tests/unit/test_architecture.py` enforces the structural rules (import directions, no new top-level folder, no application
+name or port in framework code, no killing processes by name, every column fixture declares its columns). A change that
+breaks the design fails the normal test run.

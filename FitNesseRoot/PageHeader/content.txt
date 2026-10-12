@@ -1074,13 +1074,30 @@ body:not(.ici-authenticated) .ici-dash {
 })();
 </script>
 <script>
+/* Application identity and server addresses: read once from /files/app-config.json (written by the user store server),
+   so nothing in this header names a port or an application. */
+window.ICI_APP = { name: "ICICI Nirikshan", title: "ICICI Nirikshan AML Application", storePort: 8090, fitnessePort: location.port || 80 };
+window.iciStore = function(path) { return location.protocol + "//" + location.hostname + ":" + window.ICI_APP.storePort + (path || ""); };
+window.ICI_APP.ready = fetch("/files/app-config.json", { cache: "no-store" })
+  .then(function(response) { return response.ok ? response.json() : {}; })
+  .then(function(cfg) {
+    if (cfg.appName) { window.ICI_APP.name = cfg.appName; }
+    if (cfg.appTitle) { window.ICI_APP.title = cfg.appTitle; }
+    if (cfg.storePort) { window.ICI_APP.storePort = cfg.storePort; }
+    var banner = document.querySelector(".icici-header-title");
+    if (banner && cfg.appTitle) { banner.textContent = cfg.appTitle; }
+    if (cfg.appName) { document.title = document.title.replace(/^ICICI Nirikshan/, cfg.appName); }
+  })
+  .catch(function() {});
+</script>
+<script>
 (function() {
 
   /* ── UI user store ─────────────────────────────────────────────────
      This store is browser-local for the demo application.
   ─────────────────────────────────────────────────────────────────── */
   var USER_STORE_KEY = "nirikshan_users";
-  var USER_STORE_API = "http://127.0.0.1:8090/users";
+  function userStoreApi() { return iciStore("/users"); }
   var DEFAULT_USERS = {
     "admin":  { password: "admin123",  role: "admin",  display: "Admin" },
     "editor": { password: "editor123", role: "editor", display: "Editor" },
@@ -1098,7 +1115,7 @@ body:not(.ici-authenticated) .ici-dash {
 
   function saveUsers(users) {
     localStorage.setItem(USER_STORE_KEY, JSON.stringify(users));
-    fetch(USER_STORE_API, {
+    fetch(userStoreApi(), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(users)
@@ -1107,7 +1124,7 @@ body:not(.ici-authenticated) .ici-dash {
     });
   }
 
-  fetch(USER_STORE_API)
+  ICI_APP.ready.then(function() { return fetch(userStoreApi()); })
     .then(function(response) { return response.ok ? response.json() : Promise.reject(response.status); })
     .then(function(users) {
       if (users && typeof users === "object") {
@@ -1633,7 +1650,7 @@ body:not(.ici-authenticated) .ici-dash {
   };
 
   window.iciSetActivePage = function() {
-    return fetch("http://127.0.0.1:8090/active-page", {
+    return fetch(iciStore("/active-page"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ page: window.iciRealPath() })
@@ -1808,7 +1825,7 @@ body:not(.ici-authenticated) .ici-dash {
     };
     
     // Natively POST the updated environments to your Python backend to write straight to .env on disk!
-    fetch("http://127.0.0.1:8090/environments", {
+    fetch(iciStore("/environments"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
@@ -1867,7 +1884,7 @@ body:not(.ici-authenticated) .ici-dash {
 
   /* ── Force corporate browser tab title overrides beautifully! ── */
   function updateBrowserTabTitle() {
-    var baseTitle = "ICICI Nirikshan";
+    var baseTitle = ICI_APP.name;
     var session = loadSession();
     if (!session || !session.role) {
       document.title = baseTitle;
@@ -2610,7 +2627,7 @@ body:not(.ici-authenticated) .ici-dash {
     };
 
     window.iciOpenSimpleReport = function() {
-      window.open("http://localhost:8090/report.html", "_blank");
+      window.open(iciStore("/report.html"), "_blank");
       var repDropdown = document.getElementById("ici-report-dropdown");
       if (repDropdown) repDropdown.style.display = "none";
       var profMenu = document.getElementById("icici-profile-dropdown");
@@ -2618,17 +2635,17 @@ body:not(.ici-authenticated) .ici-dash {
     };
 
     window.iciOpenAccessibilityReport = function() {
-      window.open("http://localhost:8090/accessibility", "_blank");
+      window.open(iciStore("/accessibility"), "_blank");
       var profMenu = document.getElementById("icici-profile-dropdown");
       if (profMenu) profMenu.style.display = "none";
     };
 
     window.iciOpenVisualReview = function() {
-      window.open("http://localhost:8090/visual", "_blank");
+      window.open(iciStore("/visual"), "_blank");
     };
 
     window.iciOpenLogs = function() {
-      window.open("http://localhost:8090/framework-logs", "_blank");
+      window.open(iciStore("/framework-logs"), "_blank");
       var profDropdown = document.getElementById("icici-profile-dropdown");
       if (profDropdown) profDropdown.style.display = "none";
     };
@@ -2657,21 +2674,21 @@ body:not(.ici-authenticated) .ici-dash {
       var progressSpinner = document.getElementById("ici-header-progress");
       if (progressSpinner) progressSpinner.style.display = "flex";
 
-      fetch("http://127.0.0.1:8090/serve-allure")
+      fetch(iciStore("/serve-allure"))
       .then(function(r) { return r.json(); })
       .then(function(data) {
         if (progressSpinner) progressSpinner.style.display = "none";
         if (data.error) {
           alert("Allure Launch Failed:\n\nAllure command-line utility was not found in your system PATH!\n\nTo install Allure globally on Windows, open your command prompt and run:\nnpm install -g allure-commandline\n\nOnce installed, restart start_server.bat and click Allure Report again!");
         } else if (data.url) {
-          // Open the permanent, local FitNesse-hosted Allure dashboard directly on port 8080!
+          // Open the permanent, local FitNesse-hosted Allure dashboard directly!
           window.open(data.url, "_blank");
         }
       })
       .catch(function(err) {
         if (progressSpinner) progressSpinner.style.display = "none";
         console.error("Allure launch request failed:", err);
-        alert("Failed to connect to local server on port 8090. Make sure your start_server.bat is active!");
+        alert("Failed to connect to the local server on port " + ICI_APP.storePort + ". Make sure your start_server.bat is active!");
       });
     };
 
@@ -2703,14 +2720,14 @@ body:not(.ici-authenticated) .ici-dash {
 
     window.iciClearAllureResults = function() {
       // 1. Silently register the running page name in the server's memory-queue with ZERO table edits!
-      fetch("http://127.0.0.1:8090/register-run", {
+      fetch(iciStore("/register-run"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ page: window.iciRealPath() })
       }).catch(function(err) {});
 
       // 2. Silently clear older allure results to keep the history logs fresh and clean!
-      return fetch("http://127.0.0.1:8090/clear-allure", {
+      return fetch(iciStore("/clear-allure"), {
         method: "POST"
       }).catch(function(err) {
         console.warn("User store offline; allure results not cleared:", err);
@@ -2836,7 +2853,6 @@ body:not(.ici-authenticated) .ici-dash {
     }
 
 
-    var ICI_PAGES_URL = "http://127.0.0.1:8090/pages";
     var iciPages = {};
 
     function iciCurrentAction() {
@@ -2901,7 +2917,7 @@ body:not(.ici-authenticated) .ici-dash {
     }
 
     window.iciLoadPages = function() {
-      return fetch(ICI_PAGES_URL).then(function(response) { return response.json(); }).then(function(data) {
+      return fetch(iciStore("/pages")).then(function(response) { return response.json(); }).then(function(data) {
         iciPages = (data && data.pages) || {};
       }).catch(function() {
         iciPages = {};
@@ -3048,7 +3064,6 @@ body:not(.ici-authenticated) .ici-dash {
     }
 
     /* ── Column tables: pick a fixture, choose its columns, type the data rows ── */
-    var ICI_FIXTURES_URL = "http://127.0.0.1:8090/fixtures";
     var iciFixtures = [];
     var iciFixturesLoaded = false;
     var iciColumnState = { fixture: null, selected: {}, rows: [{}] };
@@ -3074,13 +3089,13 @@ body:not(.ici-authenticated) .ici-dash {
     };
 
     window.iciLoadFixtures = function() {
-      return fetch(ICI_FIXTURES_URL).then(function(response) { return response.json(); }).then(function(data) {
+      return fetch(iciStore("/fixtures")).then(function(response) { return response.json(); }).then(function(data) {
         iciFixtures = (data && data.fixtures) || [];
         iciFixturesLoaded = true;
         iciRenderFixtureOptions((data && data.problems) || []);
       }).catch(function() {
         iciFixtures = [];
-        iciRenderFixtureOptions(["The user store server is not reachable (port 8090)"]);
+        iciRenderFixtureOptions(["The user store server is not reachable (port " + ICI_APP.storePort + ")"]);
       });
     };
 
@@ -3332,7 +3347,7 @@ body:not(.ici-authenticated) .ici-dash {
 
     window.iciLiveDebug = function() {
       // Prepare the run like the Run button does (this also clears any old flag), then ask for visible browsers
-      var store = "http://127.0.0.1:8090";
+      var store = iciStore("");
       fetch(store + "/register-run", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

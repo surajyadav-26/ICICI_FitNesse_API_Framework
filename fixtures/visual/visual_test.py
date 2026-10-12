@@ -14,6 +14,7 @@ Columns (url and name are required)
                 the reference is scaled to the page when both have the same shape
     threshold   optional, percent of pixels allowed to differ (default VISUAL_THRESHOLD, 0.1)
     ignore      optional, locators to mask, separated by commas (a clock, an ad)
+    username, password   optional; sign in through pages/login_page.py (LoginPage) before opening the url
     browser     optional, chromium / firefox / webkit; empty -> the browser selected in the environment settings
 Results: status? (passed / failed / new / updated), difference? (percent of pixels), message?, baseline? (where it came from),
 report? (HTML report: baseline, actual, the marked differences and a defect description to paste into a bug)
@@ -28,13 +29,14 @@ from core.config import Config
 from core.fixture_meta import input_column, output_column
 from core.flow import is_failure
 from fixtures.ui.decision_fixture import DecisionFixture, RowFailure
+from fixtures.ui.sign_in import sign_in
 
 _VIEWPORT = re.compile(r"^\s*(\d{3,5})\s*[xX*]\s*(\d{3,5})\s*$")
 
 
 class VisualTest(DecisionFixture):
     DESCRIPTION = "Opens each page and compares it with its reference image or stored baseline; returns the difference."
-    INPUTS = ("url", "name", "viewport", "threshold", "ignore", "browser")
+    INPUTS = ("url", "name", "viewport", "threshold", "ignore", "username", "password", "browser")
     OUTPUTS = ("status", "difference", "message", "baseline", "report")
     COLUMNS = (
         input_column("url", required=True, example="${UI_BASE_URL}", help="Page to open; ${UI_BASE_URL} is the selected environment"),
@@ -43,6 +45,8 @@ class VisualTest(DecisionFixture):
         input_column("viewport", example="1600x1043", help="Optional. WIDTHxHEIGHT; match the shape of your reference image"),
         input_column("threshold", example="0.5", help="Optional. Percent of pixels allowed to differ. Default 0.1"),
         input_column("ignore", example="css=.clock", help="Optional. Locators to mask, separated by commas"),
+        input_column("username", example="qa", help="Optional. Signs in through pages/login_page.py before opening the url"),
+        input_column("password", secret=True, example="qa123", help="Optional. Masked in reports and on screen"),
         input_column("browser", options=("chromium", "firefox", "webkit"), help="Optional. Empty = the environment's browser"),
         output_column("status", example="passed", help="passed, failed, new (baseline created) or updated"),
         output_column("difference", example="0.0", help="Percent of pixels that differ"),
@@ -59,6 +63,8 @@ class VisualTest(DecisionFixture):
         name = row.name
         if not name:
             raise RowFailure("The name column is empty: give the baseline a name such as 'login page'")
+        if row.has("username"):
+            sign_in(self.ui, row.username, row.password)         # pages behind a login need it before the url is opened
         self.do(self.ui.navigate_to, row.url)
         if row.has("viewport"):
             match = _VIEWPORT.match(row.viewport)

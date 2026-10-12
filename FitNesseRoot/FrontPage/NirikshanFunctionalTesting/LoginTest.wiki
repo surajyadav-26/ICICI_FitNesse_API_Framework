@@ -1,6 +1,5 @@
-!1 Login test
+!1 Login test Scenario - Valid & Invalid
 
-Each row is one login attempt in its own fresh browser session. The browser column is optional: leave it empty to use the browser selected in the environment settings, or give chromium / firefox / webkit for that row only.
 
 |login test|
 |username|password|login result?|

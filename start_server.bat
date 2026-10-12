@@ -39,13 +39,19 @@ if errorlevel 1 (
     goto no_java
 )
 
-rem ── Force-kill any lingering zombie Python, FitNesse, or SLiM processes to free up ports and prevent duplicate SlimService runs ──
-echo [INFO] Flushing and cleaning all zombie background processes...
-taskkill /f /im java.exe >nul 2>&1
-taskkill /f /im python.exe >nul 2>&1
-for /f "tokens=5" %%a in ('netstat -aon 2^>nul ^| findstr 8085') do taskkill /f /pid %%a >nul 2>&1
-for /f "tokens=5" %%a in ('netstat -aon 2^>nul ^| findstr 8080') do taskkill /f /pid %%a >nul 2>&1
-for /f "tokens=5" %%a in ('netstat -aon 2^>nul ^| findstr 8090') do taskkill /f /pid %%a >nul 2>&1
+rem ── Ports of THIS copy come from .env (FITNESSE_PORT, STORE_PORT, MOCK_SERVER_PORT) through core/config.py ──
+for /f "delims=" %%p in ('python -W ignore -c "from core.config import Config; print(Config.FITNESSE_PORT)" 2^>nul') do set FITNESSE_PORT=%%p
+for /f "delims=" %%p in ('python -W ignore -c "from core.config import Config; print(Config.STORE_PORT)" 2^>nul') do set STORE_PORT=%%p
+for /f "delims=" %%p in ('python -W ignore -c "from core.config import Config; print(Config.MOCK_SERVER_PORT)" 2^>nul') do set MOCK_SERVER_PORT=%%p
+if not defined FITNESSE_PORT set FITNESSE_PORT=8080
+if not defined STORE_PORT set STORE_PORT=8090
+if not defined MOCK_SERVER_PORT set MOCK_SERVER_PORT=8089
+
+rem ── Free only THIS copy's ports. Other Java / Python programs (and other copies of the framework) are left alone ──
+echo [INFO] Freeing ports %FITNESSE_PORT%, %STORE_PORT% and %MOCK_SERVER_PORT%...
+for %%q in (%FITNESSE_PORT% %STORE_PORT% %MOCK_SERVER_PORT%) do (
+    for /f "tokens=5" %%a in ('netstat -aon 2^>nul ^| findstr /R /C:":%%q .*LISTENING"') do taskkill /f /pid %%a >nul 2>&1
+)
 
 echo [INFO] Cleansing old results to start session fresh...
 del /q /s "%~dp0FitNesseRoot\files\testResults\allure-results\*" >nul 2>&1
@@ -58,22 +64,22 @@ for /d %%p in ("%~dp0FitNesseRoot\files\testResults\*") do (
     )
 )
 
-rem ── Start Nirikshan User Store Server on port 8090 in the background ──
-echo [INFO] Starting JSON-backed Local User Store Server on port 8090...
+rem ── Start the user store / report server in the background ──
+echo [INFO] Starting JSON-backed Local User Store Server on port %STORE_PORT%...
 start "Nirikshan User Store" /b python "%~dp0core\user_store_server.py"
 if errorlevel 1 (
     echo [WARNING] Failed to start User Store Server. UI account edits may be disabled.
 )
 
-rem ── Start FitNesse Standalone Server on port 8080 ──
-echo [INFO] Starting FitNesse Acceptor Engine on port 8080...
-echo [INFO] Launching FitNesse on http://localhost:8080/
+rem ── Start FitNesse Standalone Server ──
+echo [INFO] Starting FitNesse Acceptor Engine on port %FITNESSE_PORT%...
+echo [INFO] Launching FitNesse on http://localhost:%FITNESSE_PORT%/
 
 rem Inject Java 25 bypasses (-Dprevent.system.exit=false), timezone silencer (-Duser.timezone=Asia/Kolkata -Dsun.timezone.ids.oldmapping=false), sequential thread pool (-Dfitnesse.runner.parallel=1), and modular bypasses (--add-opens) for a pristine console run on ALL Java versions
 if defined JAVA_HOME (
-    "%JAVA_HOME%\bin\java" -Dfitnesse.runner.parallel=1 -Duser.timezone=Asia/Kolkata -Dsun.timezone.ids.oldmapping=false -Dprevent.system.exit=false -Dfitnesse.security.manager.enabled=false --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED -cp "%~dp0.;%~dp0fitnesse-standalone.jar" fitnesseMain.FitNesseMain -p 8080
+    "%JAVA_HOME%\bin\java" -Dfitnesse.runner.parallel=1 -Duser.timezone=Asia/Kolkata -Dsun.timezone.ids.oldmapping=false -Dprevent.system.exit=false -Dfitnesse.security.manager.enabled=false --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED -cp "%~dp0.;%~dp0fitnesse-standalone.jar" fitnesseMain.FitNesseMain -p %FITNESSE_PORT%
 ) else (
-    java -Dfitnesse.runner.parallel=1 -Duser.timezone=Asia/Kolkata -Dsun.timezone.ids.oldmapping=false -Dprevent.system.exit=false -Dfitnesse.security.manager.enabled=false --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED -cp "%~dp0.;%~dp0fitnesse-standalone.jar" fitnesseMain.FitNesseMain -p 8080
+    java -Dfitnesse.runner.parallel=1 -Duser.timezone=Asia/Kolkata -Dsun.timezone.ids.oldmapping=false -Dprevent.system.exit=false -Dfitnesse.security.manager.enabled=false --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED -cp "%~dp0.;%~dp0fitnesse-standalone.jar" fitnesseMain.FitNesseMain -p %FITNESSE_PORT%
 )
 
 goto end

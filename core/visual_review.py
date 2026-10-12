@@ -3,6 +3,7 @@ import html
 from urllib.parse import quote
 
 from core import visual_compare
+from core.config import Config
 
 _STATUS_LABEL = {"failed": "Mismatch", "new": "New baseline", "updated": "Updated", "passed": "Match"}
 
@@ -61,7 +62,7 @@ def render_page() -> str:
         '<div class="empty"><h2>No visual results yet</h2><p>Run a test that uses <code>verify visual match</code>; '
         'the first run creates the baseline and later runs show up here.</p></div>')
     return f"""<!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"><title>ICICI Nirikshan - Visual Review Report</title>
+<html lang="en"><head><meta charset="UTF-8"><title>{Config.APP_NAME} - Visual Review Report</title>
 <link rel="icon" type="image/x-icon" href="/favicon.ico">
 <link href="https://fonts.googleapis.com/css2?family=Mulish:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -110,7 +111,7 @@ main {{ max-width:1400px; margin:22px auto; padding:0 24px 60px; }}
 .toast {{ position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:var(--dark); color:#fff; padding:10px 20px; border-radius:24px; font-size:13px; opacity:0; transition:.25s; pointer-events:none; }}
 .toast.show {{ opacity:1; }}
 </style></head><body>
-<div class="hdr"><img src="/logo.png" alt="ICICI Nirikshan"><h1>Visual Review Report<small>Compare each build with its approved baseline</small></h1>
+<div class="hdr"><img src="/logo.png" alt="{Config.APP_NAME}"><h1>Visual Review Report<small>Compare each build with its approved baseline</small></h1>
   <div class="chips">
     <button class="chip active" data-filter="all">All ({len(items)})</button>
     <button class="chip" data-filter="failed">Mismatch ({counts['failed']})</button>

@@ -124,7 +124,7 @@ class UiFixture(FlowMixin, BrowserActionsMixin, VisualTestingMixin):
                 import urllib.request
                 import json
                 if not self._test_name_override:
-                    with urllib.request.urlopen("http://127.0.0.1:8090/pop-run", timeout=2) as response:
+                    with urllib.request.urlopen(Config.store_url("127.0.0.1") + "/pop-run", timeout=2) as response:
                         res_data = json.loads(response.read().decode("utf-8"))
                         retrieved_name = res_data.get("page_name", "")
                         if retrieved_name and retrieved_name != "UI Test Run":
@@ -508,14 +508,14 @@ class UiFixture(FlowMixin, BrowserActionsMixin, VisualTestingMixin):
                     "status_code": 500, # Pass integer to prevent TypeError crashes in report generator!
                     "response_time_ms": 0,
                     "request_body": f"UI Assertion failed on step: {raw_key.replace('_', ' ').title()}",
-                    "response_body": f'<div style="text-align: center; padding: 10px;"><img src="http://localhost:8080/{self._screenshot_dir_path}/{screenshot_name}" style="max-width: 100%; max-height: 450px; border: 2px solid var(--fail); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" alt="Failure Screenshot" /></div>',
-                    "curl": f"http://localhost:8080/{self._screenshot_dir_path}/{screenshot_name}",
+                    "response_body": f'<div style="text-align: center; padding: 10px;"><img src="{Config.fitnesse_url()}/{self._screenshot_dir_path}/{screenshot_name}" style="max-width: 100%; max-height: 450px; border: 2px solid var(--fail); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" alt="Failure Screenshot" /></div>',
+                    "curl": f"{Config.fitnesse_url()}/{self._screenshot_dir_path}/{screenshot_name}",
                     "json_file": "" # No JSON file for UI failures!
                 })
             except Exception as simple_err:
                 logger.debug(f"[UiFixture] Failed to log failure to Simple Report: {simple_err}")
 
-            url = f"http://localhost:8080/{self._screenshot_dir_path}/{screenshot_name}"
+            url = f"{Config.fitnesse_url()}/{self._screenshot_dir_path}/{screenshot_name}"
             self._last_error_html = f'<a href="{url}" target="_blank" style="color: #ef4444; font-weight: bold;">[VIEW FAILURE SCREENSHOT]</a>'
             logger.info(f"[UiFixture] Failure screenshot saved successfully: {screenshot_path}")
         except Exception as e:

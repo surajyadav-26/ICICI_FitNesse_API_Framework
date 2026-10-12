@@ -88,3 +88,6 @@ trace.zip
 # keep only if you intentionally want to track them:
 # Pipfile.lock
 # poetry.lock
+
+# Written at start-up by the user store server (name and ports of this copy)
+FitNesseRoot/files/app-config.json

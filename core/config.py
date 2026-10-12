@@ -22,6 +22,12 @@ class Config:
     Falls back to safe defaults if variables not set.
     """
     
+    # Identity and addresses of THIS copy of the framework (a new application = edit .env, no code change)
+    APP_NAME = os.getenv("APP_NAME", "ICICI Nirikshan")
+    APP_TITLE = os.getenv("APP_TITLE", "ICICI Nirikshan AML Application")
+    FITNESSE_PORT = int(os.getenv("FITNESSE_PORT", "8080"))
+    STORE_PORT = int(os.getenv("STORE_PORT", "8090"))        # user store / reports server
+
     # API Authentication
     API_ADMIN_USER = os.getenv("API_ADMIN_USER", "admin")
     API_ADMIN_PASS = os.getenv("API_ADMIN_PASS", "admin123")
@@ -67,6 +73,7 @@ class Config:
     # Framework Configuration
     DEFAULT_TIMEOUT = int(os.getenv("DEFAULT_TIMEOUT", "15"))
     MAX_RETRIES = int(os.getenv("MAX_RETRIES", "3"))
+    ROW_RETRIES = int(os.getenv("ROW_RETRIES", "0"))       # extra attempts for a UI table row that errors or differs (0 = off)
     RETRY_DELAY = float(os.getenv("RETRY_DELAY", "1.0"))
     SSL_VERIFY = os.getenv("SSL_VERIFY", "true").lower() == "true"
     
@@ -84,10 +91,21 @@ class Config:
     VISUAL_UPDATE_BASELINE = os.getenv("VISUAL_UPDATE_BASELINE", "false").lower() == "true"
     VISUAL_FAIL_ON_NEW = os.getenv("VISUAL_FAIL_ON_NEW", "false").lower() == "true"  # strict mode for CI
     VISUAL_FULL_PAGE = os.getenv("VISUAL_FULL_PAGE", "true").lower() == "true"
+    LAYOUT_TOLERANCE = float(os.getenv("LAYOUT_TOLERANCE", "2"))                 # pixels a position / size may move
 
     # Mock Server
     MOCK_SERVER_PORT = int(os.getenv("MOCK_SERVER_PORT", "8089"))
     
+    @classmethod
+    def fitnesse_url(cls) -> str:
+        """Address of this copy's FitNesse wiki, http://localhost:<FITNESSE_PORT>, no trailing slash."""
+        return f"http://localhost:{cls.FITNESSE_PORT}"
+
+    @classmethod
+    def store_url(cls, host: str = "localhost") -> str:
+        """Address of this copy's user store / report server, http://localhost:<STORE_PORT>."""
+        return f"http://{host}:{cls.STORE_PORT}"
+
     @classmethod
     def get_base_url(cls, environment: str) -> str:
         """

@@ -9,6 +9,8 @@ axe-core (Deque Systems, MPL-2.0) is vendored in core/axe.min.js, so no download
 Compliance % = passed rules / (passed + violated + needs-review rules), counted per rule as in the axe summary.
 """
 import html
+
+from core.config import Config
 import json
 import os
 import re
@@ -128,7 +130,7 @@ def render_html(summary: dict) -> str:
         rows = "<tr><td colspan='4' style='text-align:center;padding:24px'>No violations found.</td></tr>"
     impacts = " ".join(f"<span class='impact {impact}'>{impact}: {count}</span>" for impact, count in summary["byImpact"].items())
     return f"""<!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"><title>ICICI Nirikshan - Accessibility Report</title>
+<html lang="en"><head><meta charset="UTF-8"><title>{Config.APP_NAME} - Accessibility Report</title>
 <link rel="icon" type="image/x-icon" href="/files/fitnesse/icici/img/icici-favicon.ico">
 <style>
 body {{ margin:0; background:#F9F9F9; color:#0A192F; font-family:'Mulish',Arial,sans-serif; }}

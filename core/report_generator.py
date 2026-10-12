@@ -1,5 +1,7 @@
 import os
 import glob
+
+from core.config import Config
 import datetime
 import json
 import xml.etree.ElementTree as ET
@@ -474,7 +476,7 @@ def generate_html_report() -> None:
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ICICI Nirikshan - Test Report</title>
+    <title>{Config.APP_NAME} - Test Report</title>
     <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -1077,9 +1079,9 @@ def generate_html_report() -> None:
     <div class="container">
         <header>
             <div style="display: flex; align-items: center; gap: 16px;">
-                <img src="/logo.png" alt="ICICI Nirikshan" style="height: 46px; width: auto; object-fit: contain;">
+                <img src="/logo.png" alt="{Config.APP_NAME}" style="height: 46px; width: auto; object-fit: contain;">
                 <div class="header-title">
-                    <h1>ICICI Nirikshan AML Application API & UI Report</h1>
+                    <h1>{Config.APP_TITLE} API & UI Report</h1>
                     <p>Latest Test Run - Showing Most Recent Results</p>
                 </div>
             </div>

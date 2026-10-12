@@ -3,6 +3,7 @@ from core.flow import is_failure
 from pages.base_page import BasePage
 
 _RESULT_WAIT_MS = 6000
+_FIRST_LOAD_WAIT_MS = 30000
 
 
 class LoginPage(BasePage):
@@ -20,7 +21,14 @@ class LoginPage(BasePage):
 
     # Actions
     def open(self, url: str = "${UI_BASE_URL}"):
-        return self.do(self.ui.navigate_to, url)
+        opened = self.do(self.ui.navigate_to, url)
+        # The first page a freshly started server renders can take longer than a step's own 5 s wait, so the login form is
+        # waited for here, once, with room to spare. A form that never shows is reported by the fill step that follows.
+        try:
+            self.locator("username").first.wait_for(state="visible", timeout=_FIRST_LOAD_WAIT_MS)
+        except Exception:
+            pass
+        return opened
 
     def login(self, username: str, password: str):
         """Types the credentials and presses Log In."""

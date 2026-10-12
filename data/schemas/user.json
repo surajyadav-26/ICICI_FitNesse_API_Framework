@@ -1,0 +1,11 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Example: the answer of a user lookup",
+  "type": "object",
+  "required": ["id", "firstName"],
+  "properties": {
+    "id": { "type": "integer" },
+    "firstName": { "type": "string", "minLength": 1 },
+    "email": { "type": "string", "pattern": "@" }
+  }
+}

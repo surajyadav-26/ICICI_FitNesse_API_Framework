@@ -6,6 +6,7 @@ import re
 from urllib.parse import quote
 
 from core import accessibility
+from core.config import Config
 
 _SAFE_NAME = re.compile(r"^[\w\-]+\.html$")
 LIMIT = 300
@@ -41,7 +42,17 @@ def report_path(file_name: str, folder: str = None) -> str:
     return os.path.join(folder or accessibility.REPORT_DIR, file_name)
 
 
-def render_page(folder: str = None) -> str:
+def write_index(folder: str = None) -> str:
+    """Writes <folder>/index.html (links relative to the folder) so a CI server can publish the folder as it is."""
+    folder = folder or accessibility.REPORT_DIR
+    os.makedirs(folder, exist_ok=True)
+    path = os.path.join(folder, "index.html")
+    with open(path, "w", encoding="utf-8") as index:
+        index.write(render_page(folder, link_base=""))
+    return path
+
+
+def render_page(folder: str = None, link_base: str = "/accessibility-report/") -> str:
     esc = html.escape
     runs = list_runs(folder)
     passed = sum(1 for run in runs if run.get("status") == "PASS")
@@ -57,13 +68,13 @@ def render_page(folder: str = None) -> str:
             f"<td><span class='badge {css}'>{esc(status)}</span></td>"
             f"<td>{run.get('countedViolations', 0)} / {run.get('violationCount', 0)}</td>"
             f"<td>{run.get('affectedElements', 0)}</td><td>{run.get('compliancePercentage', 0)}%</td>"
-            f"<td><a href='/accessibility-report/{quote(run['file'])}' target='_blank'>Open</a></td></tr>")
+            f"<td><a href='{link_base}{quote(run['file'])}' target='_blank'>Open</a></td></tr>")
     if not rows:
         rows = ("<tr><td colspan='8' class='empty'>No accessibility checks yet. Run a page that uses "
                 "<code>accessibility test</code> or <code>accessibility fixture</code>.</td></tr>")
     return f"""<!DOCTYPE html>
 <html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ICICI Nirikshan - Accessibility Report</title><link rel="icon" href="/favicon.ico">
+<title>{Config.APP_NAME} - Accessibility Report</title><link rel="icon" href="/favicon.ico">
 <style>
 body {{ margin:0; background:#F9F9F9; color:#0A192F; font-family:'Mulish',Arial,sans-serif; }}
 header {{ background:#fff; border-bottom:3px solid #E77817; padding:16px 28px; display:flex; align-items:center; gap:14px; }}
@@ -81,7 +92,7 @@ td {{ padding:10px 12px; border-top:1px solid #E5E8EB; font-size:13px; }} td.url
 .badge.ok {{ background:#DCFCE7; color:#15803D; }} .badge.bad {{ background:#FEE2E2; color:#B91C1C; }}
 .empty {{ text-align:center; padding:28px; color:#5C6E89; }} a {{ color:#C23029; font-weight:700; }}
 </style></head><body>
-<header><img src="/logo.png" alt=""><h1>Accessibility Report</h1></header>
+<header><h1>Accessibility Report</h1></header>
 <main>
 <div class="cards">
 <div class="card"><span>Checks run</span><b>{len(runs)}</b></div>

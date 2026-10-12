@@ -1,0 +1,220 @@
+name: Automation Tests
+
+# Runs the framework's own unit tests (they include the design rules in AGENTS.md), then a FitNesse suite
+# (UI, API, accessibility and visual tables), then builds and uploads the reports.
+#
+# Settings for a run (Actions > Automation Tests > Run workflow, or repository variables):
+#   suite     FitNesse page to run, e.g. FrontPage, FrontPage.NirikshanFunctionalTesting, FrontPage.VisualRegression.LoginPage
+#   api_url   API base URL of the environment under test (repository variable API_BASE_URL when started by push / pull request)
+#   ui_url    UI base URL of the environment under test  (repository variable UI_BASE_URL  when started by push / pull request)
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: 'FitNesse suite or test page to run'
+        required: false
+        default: 'FrontPage'
+      api_url:
+        description: 'API base URL (empty = the value in VariablePage)'
+        required: false
+        default: ''
+      ui_url:
+        description: 'UI base URL (empty = the value in VariablePage)'
+        required: false
+        default: ''
+      row_retries:
+        description: 'Extra attempts for a UI row that fails (0 = off)'
+        required: false
+        default: '1'
+  # schedule:
+  #   - cron: '30 20 * * *'      # every night 02:00 IST; remove the comment marks to turn it on
+
+permissions:
+  contents: read
+
+concurrency:
+  group: automation-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FITNESSE_PORT: '8080'
+  STORE_PORT: '8090'
+  MOCK_SERVER_PORT: '8089'
+  UI_HEADLESS: 'true'
+  PYTHONUTF8: '1'
+  # The same names the .env file uses; a value here wins over .env
+  ROW_RETRIES: ${{ inputs.row_retries || '1' }}
+
+jobs:
+  tests:
+    name: Unit tests and FitNesse suite
+    runs-on: windows-latest        # Windows: the same fonts and browser build as the machines baselines are made on
+    timeout-minutes: 60
+    outputs:
+      site: ${{ steps.site.outcome }}
+    env:
+      SUITE: ${{ inputs.suite || 'FrontPage' }}
+      API_URL: ${{ inputs.api_url || vars.API_BASE_URL }}
+      UI_URL: ${{ inputs.ui_url || vars.UI_BASE_URL }}
+      PYTHONPATH: ${{ github.workspace }}
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Check the checkout is complete
+        shell: pwsh
+        run: |
+          # waferslim (the Slim server) must be committed as ordinary files. If it was added as a nested repository git
+          # records an empty gitlink, the folder arrives empty and no table can run.
+          if (-not (Test-Path waferslim/server.py)) {
+            throw "waferslim/ is empty in this checkout. In the repository run: git rm --cached waferslim; git add waferslim; commit and push."
+          }
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+
+      - name: Set up Java (FitNesse)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Node (Allure command line)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          python -m playwright install chromium
+          npm install -g allure-commandline
+          if (-not (Test-Path .env)) { Copy-Item .env.example .env }
+
+      - name: Framework unit tests (includes the design rules)
+        shell: pwsh
+        run: python -m pytest -q -p no:allure_pytest_bdd tests/unit
+
+      # FitNesse is started, used and stopped inside this one step, so nothing depends on a process surviving between steps.
+      - name: Start FitNesse, run the suite, build the reports
+        id: suite
+        shell: pwsh
+        run: |
+          $jar = Join-Path $env:GITHUB_WORKSPACE 'fitnesse-standalone.jar'
+          $arguments = @(
+            '-Dfitnesse.runner.parallel=1', '-Duser.timezone=Asia/Kolkata', '-Dsun.timezone.ids.oldmapping=false',
+            '-Dprevent.system.exit=false', '-Dfitnesse.security.manager.enabled=false',
+            '--add-opens', 'java.base/java.lang=ALL-UNNAMED', '--add-opens', 'java.base/java.util=ALL-UNNAMED',
+            '-cp', "$env:GITHUB_WORKSPACE;$jar", 'fitnesseMain.FitNesseMain', '-p', $env:FITNESSE_PORT, '-e', '0')
+          $server = Start-Process -FilePath java -ArgumentList $arguments -WorkingDirectory $env:GITHUB_WORKSPACE `
+            -RedirectStandardOutput fitnesse_output.log -RedirectStandardError fitnesse_error.log -WindowStyle Hidden -PassThru
+          $runExit = 2
+          $gateExit = 0
+          try {
+            $ready = $false
+            foreach ($attempt in 1..60) {
+              try {
+                $response = Invoke-WebRequest -Uri "http://localhost:$($env:FITNESSE_PORT)/" -UseBasicParsing -TimeoutSec 3
+                if ($response.StatusCode -eq 200) { $ready = $true; break }
+              } catch { Start-Sleep -Seconds 2 }
+            }
+            if (-not $ready) { Write-Host 'FitNesse did not start'; Get-Content fitnesse_error.log -ErrorAction SilentlyContinue }
+            else {
+              Write-Host "FitNesse is ready on port $($env:FITNESSE_PORT)"
+              # an empty value is dropped by PowerShell when it calls a program, so only pass the options that have one
+              $runArguments = @('--suite', $env:SUITE, '--out', 'test_results.xml')
+              if ($env:API_URL) { $runArguments += @('--api-url', $env:API_URL) }
+              if ($env:UI_URL) { $runArguments += @('--ui-url', $env:UI_URL) }
+              python -m core.ci_run @runArguments
+              $runExit = $LASTEXITCODE
+            }
+            python -m core.ci_reports --gate --site site
+            $gateExit = $LASTEXITCODE
+          }
+          finally {
+            if ($server -and -not $server.HasExited) { Stop-Process -Id $server.Id -Force -ErrorAction SilentlyContinue }
+          }
+          "run_exit=$runExit" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          "gate_exit=$gateExit" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          exit 0
+
+      - name: Collect artifacts
+        if: always()
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force test-artifacts | Out-Null
+          if (Test-Path FitNesseRoot/files/testResults) { Copy-Item FitNesseRoot/files/testResults test-artifacts/testResults -Recurse -Force }
+          if (Test-Path FitNesseRoot/files/report.html) { Copy-Item FitNesseRoot/files/report.html test-artifacts/ }
+          if (Test-Path logs) { Copy-Item logs test-artifacts/logs -Recurse -Force }
+          foreach ($file in 'test_results.xml', 'fitnesse_output.log', 'fitnesse_error.log') {
+            if (Test-Path $file) { Copy-Item $file test-artifacts/ }
+          }
+
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: test-artifacts
+          if-no-files-found: warn
+          retention-days: 30
+
+      # Publishing is opt-in: set the repository variable PUBLISH_PAGES to true (and Pages source to "GitHub Actions").
+      # On a public repository the site is public; reports contain page screenshots and URLs of the environment under test.
+      - name: Upload the report site
+        id: site
+        if: always() && vars.PUBLISH_PAGES == 'true' && github.event_name != 'pull_request' && hashFiles('site/index.html') != ''
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - name: Summary
+        if: always()
+        shell: pwsh
+        run: |
+          $run = '${{ steps.suite.outputs.run_exit }}'
+          $gate = '${{ steps.suite.outputs.gate_exit }}'
+          $runText = switch ($run) { '0' { 'passed' } '1' { 'failed (a table is wrong or raised an exception)' } '' { 'did not run' } default { 'did not run (FitNesse not reachable)' } }
+          $gateText = switch ($gate) { '0' { 'passed' } '1' { 'failed (a visual mismatch or an accessibility failure)' } default { 'not evaluated' } }
+          $lines = @('## Automation tests', '', "Suite: ``$env:SUITE``", '', '| Step | Result |', '|---|---|')
+          $lines += "| Suite run | $runText |"
+          $lines += "| Quality gate (visual and accessibility) | $gateText |"
+          $lines += '', 'Open the **test-reports** artifact: `testResults/allure-report/index.html`, `testResults/visual/index.html`, `testResults/accessibility/index.html` and `report.html`.'
+          $lines -join "`n" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
+
+      - name: Fail the job when the suite or the gate failed
+        if: steps.suite.outputs.run_exit != '0' || steps.suite.outputs.gate_exit != '0'
+        shell: pwsh
+        run: |
+          Write-Host "suite run exit code: ${{ steps.suite.outputs.run_exit }}, quality gate exit code: ${{ steps.suite.outputs.gate_exit }}"
+          exit 1
+
+  publish:
+    name: Publish reports to GitHub Pages
+    needs: tests
+    if: always() && vars.PUBLISH_PAGES == 'true' && github.event_name != 'pull_request' && needs.tests.outputs.site == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write        # deploy to Pages
+      id-token: write     # prove the deployment comes from this workflow
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Link
+        shell: bash
+        run: |
+          echo "Reports: ${{ steps.deployment.outputs.page_url }}" >> "$GITHUB_STEP_SUMMARY"

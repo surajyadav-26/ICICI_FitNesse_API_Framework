@@ -244,6 +244,56 @@ def write_report(result, folder: str, context: dict = None) -> str:
     return path
 
 
+def write_index(folder: str = None, results: list = None) -> str:
+    """Writes <results folder>/index.html listing the latest comparisons, each linking to its own report.html (relative links)."""
+    from urllib.parse import quote
+    from core import visual_compare
+    from core.config import Config
+
+    folder = folder or visual_compare.RESULT_DIR
+    items = results if results is not None else visual_compare.list_results()
+    esc = html.escape
+    counts = {key: sum(1 for item in items if item.get("status") == key) for key in ("failed", "new", "updated", "passed")}
+    rows = ""
+    for item in items:
+        link = f"{quote(item['profile'])}/{quote(item['name'])}/report.html"
+        status = item.get("status", "")
+        rows += (f"<tr><td><span class='badge {esc(status)}'>{esc(_STATUS_TEXT.get(status, status.upper()))}</span></td>"
+                 f"<td>{esc(item.get('name', ''))}</td><td>{esc(item.get('profile', ''))}</td>"
+                 f"<td>{item.get('mismatch_pct', 0)}%</td><td>{esc(item.get('message', ''))}</td>"
+                 f"<td><a href='{link}'>Open report</a></td></tr>")
+    if not rows:
+        rows = "<tr><td colspan='6' style='text-align:center;padding:24px'>No visual comparisons in this run.</td></tr>"
+    page = f"""<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{esc(Config.APP_NAME)} - Visual Regression Results</title>
+<style>
+body {{ margin:0; background:#F9F9F9; color:#0A192F; font-family:Arial,sans-serif; font-size:14px; }}
+header {{ background:#fff; border-bottom:3px solid #E77817; padding:16px 28px; }} h1 {{ margin:0; font-size:20px; }}
+main {{ max-width:1200px; margin:20px auto; padding:0 20px 50px; }}
+.cards {{ display:flex; gap:12px; flex-wrap:wrap; margin-bottom:18px; }}
+.card {{ flex:1; min-width:140px; background:#fff; border:1px solid #E5E8EB; border-top:4px solid #E77817; border-radius:10px; padding:12px 16px; }}
+.card b {{ display:block; font-size:24px; margin-top:4px; }}
+table {{ width:100%; border-collapse:collapse; background:#fff; border:1px solid #E5E8EB; }}
+th {{ text-align:left; background:#FCEEE2; color:#97291E; font-size:11px; text-transform:uppercase; padding:10px 12px; }}
+td {{ padding:10px 12px; border-top:1px solid #E5E8EB; }} a {{ color:#C23029; font-weight:700; }}
+.badge {{ padding:2px 10px; border-radius:6px; font-size:11px; font-weight:800; }}
+.badge.failed {{ background:#FBDADA; color:#B3261E; }} .badge.passed {{ background:#DCFCE7; color:#15803D; }}
+.badge.new, .badge.updated {{ background:#F7DCC5; color:#97291E; }}
+</style></head><body>
+<header><h1>{esc(Config.APP_NAME)} - Visual Regression Results</h1></header>
+<main>
+<div class="cards"><div class="card">Mismatch<b>{counts['failed']}</b></div><div class="card">Match<b>{counts['passed']}</b></div>
+<div class="card">New baseline<b>{counts['new']}</b></div><div class="card">Updated<b>{counts['updated']}</b></div></div>
+<table><tr><th>Status</th><th>Name</th><th>Browser / viewport</th><th>Difference</th><th>Result</th><th>Report</th></tr>{rows}</table>
+</main></body></html>"""
+    os.makedirs(folder, exist_ok=True)
+    path = os.path.join(folder, "index.html")
+    with open(path, "w", encoding="utf-8") as index:
+        index.write(page)
+    return path
+
+
 def report_url(profile: str, name: str) -> str:
     """Address of the report below FitNesse's /files folder (relative, so it works on any host)."""
     from urllib.parse import quote

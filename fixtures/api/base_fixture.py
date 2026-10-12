@@ -1,12 +1,14 @@
 import html
 import json
 import os
+import re
 import time
 import base64
 from typing import List, Optional
 import requests
 from .auth_fixture import AuthFixture
 from core.json_utils import extract_json_field
+from core import json_schema
 from core.html_utils import clean_html_text, clean_html_url
 from core.fixture_meta import input_column, output_column
 from core.logger import logger, log_request, log_response
@@ -27,11 +29,15 @@ def request_columns(has_body: bool = False, reads_json: bool = True, reads_heade
         input_column("retry_delay", example="1", help="Optional. Seconds before the first retry, doubling after each (default 1)"),
         input_column("ssl_verify", options=("true", "false"), help="Optional. false skips certificate checks (test environments only)"),
     ]
+    if reads_json:
+        columns.append(input_column("schema", example="user", help="Optional. JSON Schema the response must match: a file name in "
+                                    "data/schemas (user = data/schemas/user.json) or the schema itself as JSON"))
     if reads_headers:
         columns.append(input_column("header_lookup", example="Content-Type", help="Optional. Response header that response header? returns"))
     columns.append(output_column("status_code", example="200", help="HTTP status code of the response"))
     if reads_json:
         columns.append(output_column("json_value", example="Emily", help="Value of the key column in the JSON response"))
+        columns.append(output_column("schema_valid", example="valid", help="valid, or what differs from the schema", default=False))
     columns.append(output_column("response_time", help="Milliseconds the request took", default=False))
     if reads_headers:
         columns.append(output_column("response_header", help="Value of the header named in header lookup", default=False))
@@ -64,6 +70,11 @@ class BaseRequestFixture:
         self._response_body: str = ""
         self._response_time_ms: int = 0
         self._response_body_json: dict = {}
+        self._schema_text: str = ""
+        self._schema_problems: list = []
+        self._header: list = []            # column names of the decision table (snake_case), from table()
+        self._expected_rows: list = []     # the expected cells of every data row, so the reports can say what was expected
+        self._row_number: int = 0
 
     # Setters (Supporting both camelCase and snake_case natively for compatibility!)
     def set_url(self, url: str) -> None:
@@ -97,6 +108,72 @@ class BaseRequestFixture:
             
     def setBodyJson(self, body_json: str) -> None:
         self.set_body_json(body_json)
+
+    def table(self, table) -> None:
+        """Slim hands over the whole decision table: the cells of the `?` columns are what the row expects."""
+        try:
+            rows = [[clean_html_text(str(cell)) for cell in row] for row in table]
+            self._header = [re.sub(r"[^0-9a-zA-Z]+", "_", cell.strip().rstrip("?")).strip("_").lower() + ("?" if cell.strip().endswith("?") else "")
+                            for cell in rows[0]]
+            self._expected_rows = rows[1:]
+        except Exception:
+            self._header, self._expected_rows = [], []
+        self._row_number = 0
+
+    def _expected_cells(self) -> dict:
+        """{output column: expected text} of the current row; empty cells and Slim comparators (<, >, =~, _) are left out."""
+        if not self._header or not 0 < self._row_number <= len(self._expected_rows):
+            return {}
+        row = self._expected_rows[self._row_number - 1]
+        found = {}
+        for index, column in enumerate(self._header):
+            if index >= len(row) or not column.endswith("?"):
+                continue
+            expected = row[index].strip()
+            if expected == "" or re.match(r"^(=~|~=|<|>|!|_$)", expected):
+                continue
+            found[column[:-1]] = expected
+        return found
+
+    def _judge_response(self) -> tuple:
+        """
+        Returns (right, wrong, reasons, schema_issue) for the response just received.
+        A row that states the status it expects (a `status code?` cell) is judged by that, so a 404 test passes when it is a 404.
+        """
+        right, wrong = self._calculate_assertion_counts(self._actual_status_code, self._expected_codes)
+        reasons = []
+        expected = self._expected_cells()
+        if "status_code" in expected:
+            matches = str(self._actual_status_code) == expected["status_code"]
+            right, wrong = (1, 0) if matches else (0, 1)
+            if not matches:
+                reasons.append(f"status code: expected '{expected['status_code']}' but was '{self._actual_status_code}'")
+        elif wrong:
+            reasons.append(f"Expected status {self._expected_codes} but got {self._actual_status_code}" if self._expected_codes
+                           else f"Unexpected status {self._actual_status_code}")
+        schema_issue = self._check_schema()
+        if self._schema_text:
+            if schema_issue:
+                wrong += 1
+                reasons.append(f"Response does not match the schema: {schema_issue}")
+            else:
+                right += 1
+        for name, getter in (("json_value", self.json_value), ("response_header", self.response_header)):
+            if name in expected:
+                actual = str(getter())
+                if actual != expected[name]:
+                    wrong += 1
+                    reasons.append(f"{name.replace('_', ' ')}: expected '{expected[name]}' but was '{actual}'")
+                else:
+                    right += 1
+        return right, wrong, reasons, schema_issue
+
+    def set_schema(self, schema: str) -> None:
+        """JSON Schema the response must match: inline JSON or a file name in data/schemas."""
+        self._schema_text = html.unescape(str(schema or "")).strip()
+
+    def setSchema(self, schema: str) -> None:
+        self.set_schema(schema)
 
     def set_key(self, key: str) -> None:
         self._key = key
@@ -240,6 +317,7 @@ class BaseRequestFixture:
             pass
 
     def _make_request(self, method: str) -> bool:
+        self._row_number += 1
         # Validate URL before making request
         if not self._url:
             logger.error("[Validation] Cannot execute request: URL is empty")
@@ -320,7 +398,7 @@ class BaseRequestFixture:
                 logger.info(f"[{method}] {self._url} -> {self._actual_status_code} ({self._response_time_ms}ms)")
                 
                 # Calculate assertion counts and record to report
-                right_count, wrong_count = self._calculate_assertion_counts(self._actual_status_code, self._expected_codes)
+                right_count, wrong_count, reasons, schema_issue = self._judge_response()
                 self._record_to_report(
                     method=method,
                     url=self._url,
@@ -332,6 +410,14 @@ class BaseRequestFixture:
                     right=right_count,
                     wrong=wrong_count
                 )
+                if reasons:                      # the simple report shows the reason next to the request, not only a red code
+                    try:
+                        from core.report_generator import add_record
+                        add_record({"timestamp": time.strftime("%Y-%m-%d %H:%M:%S"), "method": "STEP",
+                                    "url": f"FAILED: {method} {self._url} - " + "; ".join(reasons), "status_code": 500,
+                                    "response_time_ms": 0, "request_body": "", "response_body": "", "curl": "", "json_file": ""})
+                    except Exception as report_err:
+                        logger.debug(f"[Report] Could not add the failure reason: {report_err}")
                 
                 # Allure: one readable step per request, with request and response attached inside it
                 try:
@@ -343,11 +429,11 @@ class BaseRequestFixture:
                     attachments.append(("Response Headers", json.dumps(self._response_headers, indent=2), "application/json", "json"))
                     attachments.append(("Response Body", self._response_body,
                                         "application/json" if json_response else "text/plain", "json" if json_response else "txt"))
-                    reason = (f"Expected status {self._expected_codes} but got {self._actual_status_code}"
-                              if wrong_count > 0 else "")
+                    if schema_issue:
+                        attachments.append(("Schema problems", schema_issue.replace("; ", "\n"), "text/plain", "txt"))
                     record_http_step(f"{method} {clean_url}",
                                      f"{method} {clean_url} -> {self._actual_status_code} ({self._response_time_ms} ms)",
-                                     wrong_count == 0, self._response_time_ms, attachments, reason)
+                                     not reasons, self._response_time_ms, attachments, "; ".join(reasons))
                 except Exception as allure_err:
                     logger.debug(f"Failed to compile Allure API results: {allure_err}")
 
@@ -443,6 +529,29 @@ class BaseRequestFixture:
 
     def json_value(self) -> str:
         return self.response_field()
+
+    def _check_schema(self) -> str:
+        """Validates the last response against the schema column; returns "" when it conforms (or no schema was given)."""
+        self._schema_problems = []
+        if not self._schema_text:
+            return ""
+        try:
+            schema = json_schema.load_schema(self._schema_text)
+            if not isinstance(self._response_body_json, (dict, list)):
+                self._schema_problems = ["$: the response is not JSON"]
+            else:
+                self._schema_problems = json_schema.check(self._response_body_json, schema)
+        except json_schema.SchemaError as error:
+            self._schema_problems = [str(error)]
+        return "; ".join(self._schema_problems)
+
+    def schema_valid(self) -> str:
+        """valid, or the first differences from the schema (empty when no schema column was given)."""
+        if not self._schema_text:
+            return "no schema"
+        if not self._executed and not self._response_body:
+            return "not run"
+        return "valid" if not self._schema_problems else "invalid: " + "; ".join(self._schema_problems[:3])
 
     def set_header(self, name: str, value: str) -> None:
         """Sets a custom HTTP header for the request."""

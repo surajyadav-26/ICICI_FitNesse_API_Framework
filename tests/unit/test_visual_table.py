@@ -125,3 +125,51 @@ def test_baseline_column_names_the_source(monkeypatch, tmp_path):
     (tmp_path / "login page.png").write_bytes(b"x")
     [out] = play(["url", "name", "baseline?"], [["http://x/", "login page", ""]])
     assert out["baseline"] == "reference image"
+
+
+# ── sign in before the page (username / password columns) ───────────────────
+def test_login_columns_sign_in_before_the_page_is_opened(monkeypatch):
+    calls = []
+    monkeypatch.setattr("fixtures.visual.visual_test.sign_in", lambda ui, user, password: calls.append((user, password, list(ui.opened))))
+    play(["url", "name", "username", "password", "status?"], [["http://x/home", "home page", "qa", "qa123", ""]])
+    assert calls == [("qa", "qa123", [])]                       # signed in while nothing had been opened yet
+    assert FakeUi.instances[0].opened == ["http://x/home"]
+
+
+def test_no_username_means_no_login(monkeypatch):
+    monkeypatch.setattr("fixtures.visual.visual_test.sign_in", lambda *a: pytest.fail("must not sign in"))
+    play(["url", "name", "status?"], [["http://x/home", "home page", ""]])
+
+
+def test_a_refused_login_is_an_error_row_not_a_visual_result(monkeypatch):
+    from fixtures.ui.decision_fixture import RowFailure
+
+    def refuse(ui, user, password):
+        raise RowFailure("Login as 'qa' failed: Invalid username or password.")
+
+    monkeypatch.setattr("fixtures.visual.visual_test.sign_in", refuse)
+    [out] = play(["url", "name", "username", "password", "status?"], [["http://x/home", "home page", "qa", "bad", ""]])
+    assert out["status"] == "ERROR: Login as 'qa' failed: Invalid username or password."
+    assert FakeUi.instances[0].opened == []
+
+
+def test_sign_in_uses_the_application_login_page(monkeypatch):
+    import sys
+    import types
+    from fixtures.ui import sign_in as module
+    seen = []
+
+    class FakeLogin:
+        def __init__(self, ui): seen.append(("ui", ui))
+        def open(self): seen.append("open")
+        def login(self, user, password): seen.append(("login", user, password))
+        def outcome(self): return "Success"
+
+    fake_module = types.ModuleType("pages.login_page")
+    fake_module.LoginPage = FakeLogin
+    monkeypatch.setitem(sys.modules, "pages.login_page", fake_module)
+    module.sign_in("UI", "qa", "qa123")
+    assert seen == [("ui", "UI"), "open", ("login", "qa", "qa123")]
+    FakeLogin.outcome = lambda self: "Invalid username or password."
+    with pytest.raises(Exception, match="Login as 'qa' failed: Invalid username or password"):
+        module.sign_in("UI", "qa", "qa123")

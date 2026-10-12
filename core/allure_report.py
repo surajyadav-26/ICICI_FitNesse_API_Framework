@@ -4,6 +4,8 @@ import os
 import shutil
 import subprocess
 
+from core.config import Config
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 RESULTS_DIR = os.path.join(BASE_DIR, "FitNesseRoot", "files", "testResults", "allure-results")
 REPORT_DIR = os.path.join(BASE_DIR, "FitNesseRoot", "files", "testResults", "allure-report")
@@ -14,9 +16,10 @@ CATEGORIES = [
     {"name": "Visual differences", "matchedStatuses": ["failed"], "messageRegex": ".*Visual (mismatch|error).*"},
     {"name": "Accessibility violations", "matchedStatuses": ["failed"], "messageRegex": ".*Accessibility WCAG.*"},
     {"name": "API failures", "matchedStatuses": ["failed", "broken"],
-     "messageRegex": ".*(Expected status|-> not sent|-> no response|-> crashed|Authenticat).*"},
+     "messageRegex": ".*(status code: expected|Expected status|Unexpected status|does not match the schema|-> not sent|-> no response|-> crashed|Authenticat).*"},
     {"name": "UI element problems", "matchedStatuses": ["failed", "broken"],
      "messageRegex": ".*(Timeout|not found|locator|not visible|Element).*"},
+    {"name": "Wrong result (expected vs actual)", "matchedStatuses": ["failed"], "messageRegex": ".*expected .*but (was|got).*"},
     {"name": "Other failures", "matchedStatuses": ["failed"]},
     {"name": "Test errors", "matchedStatuses": ["broken"]},
 ]
@@ -34,12 +37,12 @@ def generate_allure_report(active_url: str = "") -> str:
 
     with open(os.path.join(RESULTS_DIR, "executor.json"), "w", encoding="utf-8") as file:
         json.dump({
-            "name": "Nirikshan Test Automation Runner",
+            "name": f"{Config.APP_NAME} Test Automation Runner",
             "type": "fitnesse",
-            "url": "http://localhost:8080",
+            "url": Config.fitnesse_url(),
             "buildOrder": 1,
             "buildName": "Local Run",
-            "buildUrl": "http://localhost:8080/FrontPage",
+            "buildUrl": Config.fitnesse_url() + "/FrontPage",
         }, file, indent=2)
 
     with open(os.path.join(RESULTS_DIR, "categories.json"), "w", encoding="utf-8") as file:

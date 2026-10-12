@@ -4,6 +4,8 @@ import threading
 import json
 from typing import Optional
 
+from core.config import Config
+
 class MockServerRequestHandler(http.server.BaseHTTPRequestHandler):
     """Background HTTP Request Handler matching reference endpoints."""
     
@@ -92,11 +94,11 @@ class MockServerFixture:
 
             # Enable socket address reuse to prevent address-already-in-use errors on restarts
             socketserver.TCPServer.allow_reuse_address = True
-            MockServerFixture._server = socketserver.TCPServer(("127.0.0.1", 8089), MockServerRequestHandler)
+            MockServerFixture._server = socketserver.TCPServer(("127.0.0.1", Config.MOCK_SERVER_PORT), MockServerRequestHandler)
             
             MockServerFixture._thread = threading.Thread(target=MockServerFixture._server.serve_forever, daemon=True)
             MockServerFixture._thread.start()
-            print("[MockServer] Started at http://127.0.0.1:8089")
+            print(f"[MockServer] Started at http://127.0.0.1:{Config.MOCK_SERVER_PORT}")
             return True
         except Exception as e:
             print(f"[MockServer] Start failed: {str(e)}")

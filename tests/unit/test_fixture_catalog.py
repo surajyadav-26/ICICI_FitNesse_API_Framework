@@ -9,7 +9,7 @@ from core.fixture_meta import Column, input_column, output_column, table_name
 from fixtures.ui.decision_fixture import DecisionFixture
 
 EXPECTED_TABLES = {
-    "login test", "accessibility test", "visual test", "auth fixture", "get request fixture", "post request fixture", "put request fixture",
+    "login test", "accessibility test", "visual test", "layout test", "auth fixture", "get request fixture", "post request fixture", "put request fixture",
     "patch request fixture", "delete request fixture", "head request fixture", "options request fixture",
 }
 

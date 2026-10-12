@@ -200,7 +200,7 @@ class VisualTestingMixin:
         try:
             from core.report_generator import add_record
             import time
-            base = f"http://localhost:8080/files/testResults/visual/{quote(result.profile)}/{quote(result.name)}"
+            base = f"{Config.fitnesse_url()}/files/testResults/visual/{quote(result.profile)}/{quote(result.name)}"
             cell = ('<div style="flex:1;text-align:center;font-size:11px;color:#5C6E89">{}<br>'
                     '<img src="{}/{}.png" style="max-width:100%;border:1px solid #E5E8EB;border-radius:6px"></div>')
             images = "".join(cell.format(kind.title(), base, kind) for kind in ("baseline", "actual", "diff")

@@ -25,7 +25,9 @@ def harness_html() -> str:
     css = between("/* ── Step Builder Drawer", "/* ── Login Overlay")
     script = between("    /* ── Step Builder catalog", "    window.iciLiveDebug = function()")
     return (f"<html><head><style>.ici-env-input{{width:100%;box-sizing:border-box}}{css}</style></head><body>"
-            f"<script>window.iciToggleDictDrawer=function(){{document.getElementById('ici-dict-drawer').classList.toggle('open')}};</script>"
+            f"<script>window.iciToggleDictDrawer=function(){{document.getElementById('ici-dict-drawer').classList.toggle('open')}};"
+            f"window.ICI_APP={{name:'Test',storePort:8090,ready:Promise.resolve()}};"
+            f"window.iciStore=function(p){{return 'http://127.0.0.1:8090'+(p||'')}};</script>"
             f"{drawer}<script>{script}</script></body></html>")
 
 

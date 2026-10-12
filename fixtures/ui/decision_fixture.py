@@ -27,6 +27,7 @@ Writing a fixture:
 import os
 import re
 
+from core.config import Config
 from core.fixture_meta import input_column, output_column
 from core.logger import logger
 from core.flow import clean_cell, is_failure, substitute_variables
@@ -116,16 +117,29 @@ class DecisionFixture:
         self._row_number += 1
         row = Row(self._inputs)
         masked = ", ".join(f"{key}={value}" for key, value in row.masked().items() if value != "")
-        try:
-            self._start_row(row, masked)
-            self._outputs = {self._snake(key): value for key, value in (self.run_row(row) or {}).items()}
-            self._judge_row(masked)
-        except Exception as error:
-            self._row_error = str(error) or error.__class__.__name__
-            logger.error(f"[DecisionFixture] Row {self._row_number} failed: {self._row_error}")
-            self._record_row_failure(masked)
-        finally:
-            self._close_row()
+        attempts = 1 + max(int(Config.ROW_RETRIES), 0)
+        first_failure = ""
+        for attempt in range(1, attempts + 1):
+            self._outputs, self._row_error = {}, ""
+            failure = ""
+            try:
+                self._start_row(row, masked, attempt, attempts)
+                self._outputs = {self._snake(key): value for key, value in (self.run_row(row) or {}).items()}
+                failure = self._judge_row(masked)
+                if not failure and attempt > 1:
+                    self._note_recovered(attempt, attempts, first_failure)
+            except Exception as error:
+                self._row_error = str(error) or error.__class__.__name__
+                failure = self._row_error
+                logger.error(f"[DecisionFixture] Row {self._row_number} failed: {self._row_error}")
+                self._record_row_failure(masked)
+            finally:
+                self._close_row()
+            if not failure:
+                return
+            first_failure = first_failure or failure
+            if attempt < attempts:
+                logger.warning(f"[DecisionFixture] Row {self._row_number} attempt {attempt} of {attempts} failed; trying again")
 
     def end_table(self) -> None:
         self._close_row()
@@ -181,20 +195,28 @@ class DecisionFixture:
         from .ui_fixture import UiFixture
         return UiFixture(self.__class__.__name__)
 
-    def _start_row(self, row: Row, masked: str) -> None:
+    def _start_row(self, row: Row, masked: str, attempt: int = 1, attempts: int = 1) -> None:
         self._close_row()
         self._ui = self._new_ui()
         # Every row is its own test case in Allure, named after the page and its (masked) data.
+        # Short, stable name ("UiLogin - row 2 (admin)"); the full data of the row is shown as parameters of the test.
         page = os.environ.get("FITNESSE_PAGE_NAME") or self.__class__.__name__
-        self._ui.set_test_name(f"{page} - row {self._row_number}: {masked or 'no input'}"[:140])
+        first = next((str(value) for value in row.masked().values() if str(value).strip()), "")
+        label = f" ({first[:40]}{'...' if len(first) > 40 else ''})" if first else ""
+        self._ui.set_test_name(f"{page} - row {self._row_number}{label}"[:100])
         if row.has("browser"):
             self._ui.set_browser(row.browser)     # otherwise the browser selected in the environment settings
         if self._ui.start_browser() is False:
             raise RowFailure("The browser could not be started")
-        self._ui._ok(f"ROW {self._row_number}: {masked or 'no input'}")
+        allure = getattr(self._ui, "_allure", None)
+        if allure is not None and hasattr(allure, "add_parameters"):
+            allure.add_parameters({key: value for key, value in row.masked().items()})
+        suffix = f" (attempt {attempt} of {attempts})" if attempt > 1 else ""
+        self._ui._ok(f"ROW {self._row_number}{suffix}: {masked or 'no input'}")
 
-    def _judge_row(self, masked: str) -> None:
-        """Compares each output with the expected cell so Allure and the simple report show a wrong result."""
+    def _judge_row(self, masked: str) -> str:
+        """Compares each output with the expected cell so Allure and the simple report show a wrong result.
+        Returns the reason the row is wrong, or an empty string."""
         mismatches = []
         expected_row = self._expected_rows[self._row_number - 1] if self._row_number - 1 < len(self._expected_rows) else []
         for index, column in enumerate(self._header):
@@ -214,9 +236,22 @@ class DecisionFixture:
             mismatches.append(verdict)
         if mismatches:
             self._record_row_failure(masked, "; ".join(mismatches))
-        else:
-            results = ", ".join(f"{k}={v}" for k, v in self._outputs.items())
-            self._ui._ok(f"ROW {self._row_number} result: {results}")
+            return "; ".join(mismatches)
+        results = ", ".join(f"{k}={v}" for k, v in self._outputs.items())
+        self._ui._ok(f"ROW {self._row_number} result: {results}")
+        return ""
+
+    def _note_recovered(self, attempt: int, attempts: int, first_failure: str) -> None:
+        """A retry passed: say so in the reports and mark the Allure result flaky."""
+        note = f"row {self._row_number} passed on attempt {attempt} of {attempts}; first failure: {first_failure}"[:300]
+        logger.warning(f"[DecisionFixture] {note}")
+        try:
+            self._ui._ok(f"ROW {self._row_number} recovered - {note}")
+            allure = getattr(self._ui, "_allure", None)
+            if allure:
+                allure.recover(note)
+        except Exception as error:
+            logger.debug(f"[DecisionFixture] Flaky note skipped: {error}")
 
     def _record_row_failure(self, masked: str, detail: str = "") -> None:
         if self._ui is None:

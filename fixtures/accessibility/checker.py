@@ -1,5 +1,6 @@
 """Runs one accessibility check on a UiFixture whose browser is running, and records it in Allure and the simple report."""
 from core import accessibility
+from core.config import Config
 from core.flow import is_failure
 from core.logger import logger
 
@@ -41,7 +42,7 @@ def _record(ui, summary: dict, html_path: str, json_path: str, name: str) -> Non
     headline = (f"Accessibility WCAG {summary['wcagVersion']} {summary['wcagLevel']} on {summary['url']}: {summary['status']} - "
                 f"{summary['countedViolations']} violation(s) counted of {summary['violationCount']}, "
                 f"compliance {summary['compliancePercentage']}%")
-    link = "http://localhost:8080" + accessibility.report_url(html_path)
+    link = Config.fitnesse_url() + accessibility.report_url(html_path)
     logger.info(f"[Accessibility] {headline} ({html_path})")
     allure = getattr(ui, "_allure", None)
     if allure:

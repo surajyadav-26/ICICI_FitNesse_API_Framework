@@ -12,10 +12,21 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
 
+from core.config import Config  # noqa: E402  (BASE_DIR is on sys.path above)
+
 USERS_FILE = os.path.join(BASE_DIR, "data", "users.json")
+APP_CONFIG_FILE = os.path.join(BASE_DIR, "FitNesseRoot", "files", "app-config.json")
 FITNESSE_USERS_FILE = os.path.join(BASE_DIR, "runtime", "fitnesse-passwords.txt")
 HOST = "0.0.0.0"
-PORT = 8090
+PORT = Config.STORE_PORT
+
+
+def write_app_config() -> None:
+    """Publishes the name and ports to the wiki header (it reads /files/app-config.json), so it holds no hardcoded address."""
+    os.makedirs(os.path.dirname(APP_CONFIG_FILE), exist_ok=True)
+    with open(APP_CONFIG_FILE, "w", encoding="utf-8") as config_file:
+        json.dump({"appName": Config.APP_NAME, "appTitle": Config.APP_TITLE,
+                   "fitnessePort": Config.FITNESSE_PORT, "storePort": Config.STORE_PORT}, config_file, indent=2)
 
 # Memory-only Queue to dynamically source FitNesse page names with ZERO table modifications!
 ACTIVE_RUNS_QUEUE = []
@@ -142,7 +153,7 @@ def colorize_log(text):
 def message_page(title, message):
     """Small branded page shown instead of raw JSON when a report is not available yet."""
     return f"""<!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"><title>ICICI Nirikshan - {html.escape(title)}</title>
+<html lang="en"><head><meta charset="UTF-8"><title>{html.escape(Config.APP_NAME)} - {html.escape(title)}</title>
 <link rel="icon" type="image/x-icon" href="/favicon.ico" />
 <style>
 body {{ margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center; background: #f5f7fa; font-family: Arial, sans-serif; color: #1e293b; }}
@@ -153,8 +164,8 @@ p {{ font-size: 14px; line-height: 1.6; color: #64748b; margin: 0 0 20px; }}
 a {{ display: inline-block; background: #053C6D; color: #fff; text-decoration: none; padding: 10px 20px; border-radius: 8px; font-size: 13px; font-weight: 700; }}
 a:hover {{ background: #00488f; }}
 </style></head><body>
-<div class="card"><img src="/logo.png" alt="ICICI Nirikshan"><h1>{html.escape(title)}</h1><p>{html.escape(message)}</p>
-<a href="http://localhost:8080/">Back to Nirikshan</a></div></body></html>"""
+<div class="card"><img src="/logo.png" alt="{html.escape(Config.APP_NAME)}"><h1>{html.escape(title)}</h1><p>{html.escape(message)}</p>
+<a href="{Config.fitnesse_url()}/">Back to {html.escape(Config.APP_NAME)}</a></div></body></html>"""
 
 
 def active_urls():
@@ -204,7 +215,7 @@ class UserStoreHandler(BaseHTTPRequestHandler):
             try:
                 from core.allure_report import generate_allure_report
                 generate_allure_report(active_urls())
-                self._send_json(200, {"served": True, "url": "http://localhost:8090/allure/index.html"})
+                self._send_json(200, {"served": True, "url": Config.store_url() + "/allure/index.html"})
             except (OSError, subprocess.SubprocessError) as error:
                 self._send_json(500, {"error": str(error)})
             return
@@ -310,7 +321,7 @@ class UserStoreHandler(BaseHTTPRequestHandler):
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>ICICI Nirikshan - Framework Execution Logs ({log_filename})</title>
+    <title>{Config.APP_NAME} - Framework Execution Logs ({log_filename})</title>
     <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
@@ -444,9 +455,9 @@ class UserStoreHandler(BaseHTTPRequestHandler):
 <body>
     <header>
         <div style="display: flex; align-items: center; gap: 16px;">
-            <img src="/logo.png" alt="ICICI Nirikshan" style="height: 46px; width: auto; object-fit: contain;">
+            <img src="/logo.png" alt="{Config.APP_NAME}" style="height: 46px; width: auto; object-fit: contain;">
             <div>
-                <h1>📋 ICICI Nirikshan AML Framework Execution Logs</h1>
+                <h1>📋 {Config.APP_TITLE} - Framework Execution Logs</h1>
                 <div class="meta" style="margin-top: 6px; display: flex; align-items: center; gap: 8px;">
                     <span>Log file:</span>
                     <select id="log-file-select" class="file-select" onchange="openLogFile(this.value)">{options_html}</select>
@@ -806,4 +817,5 @@ if __name__ == "__main__":
     except Exception:
         pass
         
+    write_app_config()
     ThreadingHTTPServer((HOST, PORT), UserStoreHandler).serve_forever()

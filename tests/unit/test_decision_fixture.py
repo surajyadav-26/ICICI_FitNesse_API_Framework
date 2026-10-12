@@ -1,4 +1,4 @@
-"""Unit tests for column (decision-table) fixtures; the browser is replaced by a fake UiFixture."""
+﻿"""Unit tests for column (decision-table) fixtures; the browser is replaced by a fake UiFixture."""
 import pytest
 
 from fixtures.ui.decision_fixture import DecisionFixture, Row, RowFailure
@@ -172,7 +172,7 @@ def test_subclass_must_implement_run_row():
     assert "must implement run_row" in outputs[0]["y"]
 
 
-# ── The Login example fixture ─────────────────────────────────────────────────
+# â”€â”€ The Login example fixture â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class FakeLocator:
     def __init__(self, text="", hidden=False):
         self.text, self.hidden = text, hidden
@@ -236,3 +236,114 @@ def test_login_reports_the_error_text_shown_by_the_form(monkeypatch):
 
 def test_login_times_out_cleanly(monkeypatch):
     assert login(monkeypatch) == "No response from the login form"
+
+
+# â”€â”€ row retries (ROW_RETRIES) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+class Flaky(DecisionFixture):
+    """Fails the first `fail_times` attempts of every row, then returns a result."""
+
+    ui_class = FakeUi
+    fail_times = 1
+    INPUTS = ("name",)
+    OUTPUTS = ("greeting",)
+
+    def __init__(self):
+        super().__init__()
+        self.attempts = 0
+
+    def run_row(self, row):
+        self.attempts += 1
+        if self.attempts <= self.fail_times:
+            raise RowFailure("page was not ready")
+        return {"greeting": f"Hello {row.name}"}
+
+
+def test_row_is_not_retried_by_default(monkeypatch):
+    monkeypatch.setattr("fixtures.ui.decision_fixture.Config.ROW_RETRIES", 0)
+    fixture = Flaky()
+    outputs = run_table(fixture, ["name", "greeting?"], [["Asha", "Hello Asha"]])
+    assert fixture.attempts == 1 and outputs == [{"greeting": "ERROR: page was not ready"}]
+
+
+def test_a_failed_row_is_tried_again_and_the_passing_attempt_is_reported(monkeypatch):
+    monkeypatch.setattr("fixtures.ui.decision_fixture.Config.ROW_RETRIES", 2)
+    fixture = Flaky()
+    outputs = run_table(fixture, ["name", "greeting?"], [["Asha", "Hello Asha"]])
+    assert fixture.attempts == 2 and outputs == [{"greeting": "Hello Asha"}]
+    assert len(FakeUi.instances) == 2 and all(ui.closed for ui in FakeUi.instances)       # a fresh browser per attempt
+    assert FakeUi.instances[0].failures                                                      # the first failure keeps its evidence
+    assert any("attempt 2 of 3" in note for note in FakeUi.instances[1].notes)
+    assert any("recovered" in note and "page was not ready" in note for note in FakeUi.instances[1].notes)
+
+
+def test_the_error_stays_when_every_attempt_fails(monkeypatch):
+    monkeypatch.setattr("fixtures.ui.decision_fixture.Config.ROW_RETRIES", 1)
+    Flaky.fail_times = 5
+    try:
+        fixture = Flaky()
+        outputs = run_table(fixture, ["name", "greeting?"], [["Asha", "Hello Asha"]])
+    finally:
+        Flaky.fail_times = 1
+    assert fixture.attempts == 2 and outputs == [{"greeting": "ERROR: page was not ready"}]
+
+
+def test_a_wrong_result_is_retried_too(monkeypatch):
+    monkeypatch.setattr("fixtures.ui.decision_fixture.Config.ROW_RETRIES", 1)
+
+    class Slow(DecisionFixture):
+        ui_class = FakeUi
+        INPUTS = ("name",)
+        OUTPUTS = ("greeting",)
+        calls = 0
+
+        def run_row(self, row):
+            Slow.calls += 1
+            return {"greeting": "Loading" if Slow.calls == 1 else "Hello"}
+
+    outputs = run_table(Slow(), ["name", "greeting?"], [["Asha", "Hello"]])
+    assert Slow.calls == 2 and outputs == [{"greeting": "Hello"}]
+
+
+def test_allure_result_of_a_recovered_row_is_passed_and_flagged_flaky():
+    from core.allure_helper import AllureHelper
+    helper = AllureHelper("Row 1", "Suite")
+    helper.set_failed("Click failed")
+    helper.recover("row 1 passed on attempt 2 of 2; first failure: Click failed")
+    assert helper.status == "passed" and helper.error_message == ""
+    assert helper.flaky_note.startswith("row 1 passed on attempt 2")
+
+
+# ── short Allure names, full data as parameters ──────────────────────────────
+def test_the_allure_name_is_short_and_the_data_is_a_parameter(monkeypatch):
+    from core.allure_helper import AllureHelper
+
+    class UiWithAllure(FakeUi):
+        def __init__(self, name="x"):
+            super().__init__(name)
+            self._allure = AllureHelper("Echo", "Suite")
+
+    class Wide(DecisionFixture):
+        ui_class = UiWithAllure
+        INPUTS = ("url", "name", "password")
+        OUTPUTS = ("greeting",)
+
+        def run_row(self, row):
+            return {"greeting": "Hello"}
+
+    monkeypatch.setenv("FITNESSE_PAGE_NAME", "HomeCheck")
+    run_table(Wide(), ["url", "name", "password", "greeting?"],
+              [["http://localhost:8085/a/very/long/address/that/goes/on/and/on/and/on", "home page", "s3cret", "Hello"]])
+    ui = FakeUi.instances[0]
+    name = [args[0] for call, args in ui.calls if call == "set_test_name"][0]
+    assert name.startswith("HomeCheck - row 1 (http://localhost:8085/a/very/long/addres") and name.endswith("...)")
+    assert len(name) <= 100 and "s3cret" not in name
+    parameters = ui._allure.parameters
+    assert parameters["name"] == "home page" and parameters["password"] == "***"
+    assert parameters["url"].startswith("http://localhost:8085/")
+
+
+def test_a_row_without_input_still_gets_a_clear_name(monkeypatch):
+    monkeypatch.setenv("FITNESSE_PAGE_NAME", "Smoke")
+    run_table(Echo(), ["greeting?"], [["Hello"]])
+    names = [args[0] for call, args in FakeUi.instances[0].calls if call == "set_test_name"]
+    assert names == ["Smoke - row 1"]
