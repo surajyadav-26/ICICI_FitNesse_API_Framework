@@ -5,6 +5,7 @@ AGENTS.md in the same change.
 """
 import ast
 import os
+import re
 
 import pytest
 
@@ -148,3 +149,13 @@ def test_every_package_the_code_imports_is_in_requirements_txt():
             if package not in declared:
                 missing.setdefault(package, set()).add(relative(path))
     assert missing == {}, f"imported but not in requirements.txt: {missing}"
+
+
+def test_every_setting_config_reads_is_listed_in_env_example():
+    """A new QA copies .env.example to .env, so a setting missing from it can only be found by reading the code."""
+    with open(os.path.join(ROOT, "core", "config.py"), encoding="utf-8") as handle:
+        read = set(re.findall(r'os\.getenv\(\s*"([A-Z0-9_]+)"', handle.read()))
+    with open(os.path.join(ROOT, ".env.example"), encoding="utf-8") as handle:
+        listed = set(re.findall(r"^([A-Z0-9_]+)=", handle.read(), re.M))
+    internal = {"FITNESSE_PAGE_NAME", "FITNESSE_PAGE_PATH", "PLAYWRIGHT_BROWSERS_PATH", "LOCALAPPDATA"}      # set by FitNesse / the machine
+    assert read - listed - internal == set(), "add these to .env.example"
