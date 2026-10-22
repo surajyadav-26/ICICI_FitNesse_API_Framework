@@ -16,6 +16,7 @@ Columns
 
 The locators and actions live in the page object: pages/login_page.py (LoginPage).
 """
+from core import browsers
 from core.fixture_meta import input_column, output_column
 from fixtures.ui.decision_fixture import DecisionFixture
 from pages.login_page import LoginPage
@@ -28,7 +29,7 @@ class LoginTest(DecisionFixture):
     COLUMNS = (
         input_column("username", required=True, example="admin", help="User typed into the Username field"),
         input_column("password", required=True, example="admin123", secret=True, help="Typed into the Password field (masked in reports)"),
-        input_column("browser", options=("chromium", "firefox", "webkit"), help="Optional. Empty = the browser selected in the environment settings"),
+        input_column("browser", options=browsers.CHOICES, help="Optional. Empty = the browser selected in the environment settings"),
         output_column("login_result", example="Success", help='"Success", or the error text the form shows, e.g. Invalid username or password.'),
     )
 

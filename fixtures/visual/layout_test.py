@@ -23,6 +23,7 @@ import re
 
 from core import layout_compare
 from core.config import Config
+from core import browsers
 from core.fixture_meta import input_column, output_column
 from fixtures.ui.decision_fixture import DecisionFixture, RowFailure
 from fixtures.ui.sign_in import sign_in
@@ -44,7 +45,7 @@ class LayoutTest(DecisionFixture):
         input_column("password", secret=True, example="qa123", help="Optional. Masked in reports and on screen"),
         input_column("viewport", example="1366x768", help="Optional. WIDTHxHEIGHT"),
         input_column("update", options=("true", "false"), help="Optional. true accepts this run as the new baseline"),
-        input_column("browser", options=("chromium", "firefox", "webkit"), help="Optional. Empty = the environment's browser"),
+        input_column("browser", options=browsers.CHOICES, help="Optional. Empty = the environment's browser"),
         output_column("status", example="passed", help="passed, failed, new (baseline created) or updated"),
         output_column("differences", help="What moved, resized or changed colour"),
         output_column("checked", example="2", help="Number of elements measured", default=False),

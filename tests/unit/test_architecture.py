@@ -11,7 +11,7 @@ import pytest
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 
 # Folders that may exist at the top level. A new one means the change does not fit a layer (AGENTS.md section 4, rule 6).
-ALLOWED_TOP_LEVEL = {".claude", ".cursor", ".git", ".github", ".pytest_cache", ".vscode", "FitNesseRoot", "__pycache__",
+ALLOWED_TOP_LEVEL = {".claude", ".cursor", ".git", ".github", ".pytest_cache", ".venv", ".vscode", "FitNesseRoot", "__pycache__",
                      "core", "data", "fixtures", "logs", "pages", "runtime", "test-artifacts", "tests", "waferslim"}
 
 
@@ -125,3 +125,26 @@ def test_the_import_scan_really_sees_violations(tmp_path):
     sample.write_text("import fixtures.ui.ui_fixture\nfrom pages.login_page import LoginPage\n", encoding="utf-8")
     found = imports_of(str(sample))
     assert "fixtures.ui.ui_fixture" in found and "pages.login_page.LoginPage" in found
+
+
+# pip name of every third-party module the framework (not the vendored Slim server's own specs) imports
+_PIP_NAMES = {"PIL": "pillow", "dotenv": "python-dotenv", "websocket": "websocket-client", "grpc": "grpcio",
+              "grpc_tools": "grpcio-tools", "google": "protobuf", "jwt": "pyjwt", "jsonpath_ng": "jsonpath-ng",
+              "requests_oauthlib": "requests-oauthlib", "requests_toolbelt": "requests-toolbelt"}
+_LOCAL_TOP_LEVEL = {"core", "fixtures", "pages", "waferslim", "tests", "data"}
+
+
+def test_every_package_the_code_imports_is_in_requirements_txt():
+    import sys
+    text = open(os.path.join(ROOT, "requirements.txt"), encoding="utf-8").read().lower()
+    declared = {line.split(">=")[0].split("==")[0].strip() for line in text.splitlines() if line.strip() and not line.startswith("#")}
+    missing = {}
+    for path in python_files("core", "fixtures", "pages"):
+        for name in imports_of(path):
+            top = name.split(".")[0]
+            if top in sys.stdlib_module_names or top in _LOCAL_TOP_LEVEL:
+                continue
+            package = _PIP_NAMES.get(top, top).lower()
+            if package not in declared:
+                missing.setdefault(package, set()).add(relative(path))
+    assert missing == {}, f"imported but not in requirements.txt: {missing}"

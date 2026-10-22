@@ -18,6 +18,7 @@ Results: violations?, all violations?, passed checks?, needs review?, compliance
 A row whose page has more counted violations than allowed is a failed test case in Allure even without an expected cell.
 """
 from core import accessibility
+from core import browsers
 from core.fixture_meta import input_column, output_column
 from fixtures.accessibility.checker import AccessibilityError, run_check
 from fixtures.ui.decision_fixture import DecisionFixture
@@ -34,7 +35,7 @@ class AccessibilityTest(DecisionFixture):
         input_column("max_violations", example="0", help="Optional. Violations allowed before the page fails. Default 0"),
         input_column("minimum_impact", options=("minor", "moderate", "serious", "critical"),
                      help="Optional. Findings below this impact are listed but not counted. Default minor"),
-        input_column("browser", options=("chromium", "firefox", "webkit"), help="Optional. Empty = the environment's browser"),
+        input_column("browser", options=browsers.CHOICES, help="Optional. Empty = the environment's browser"),
         output_column("violations", example="0", help="Violations that count (impact at or above the minimum)"),
         output_column("status", example="PASS", help="PASS or FAIL against max violations"),
         output_column("compliance", help="Passed rules as a percentage of all checked rules", default=False),

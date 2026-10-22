@@ -14,8 +14,8 @@ import time
 
 from PIL import Image, ImageDraw
 
-CELL = 24                 # differing pixels are grouped on a grid of CELL x CELL pixels
-GAP = 2                   # cells closer than this many cells belong to the same region
+CELL = 8                  # differing pixels are grouped on a grid of CELL x CELL pixels
+GAP = 1                   # cells closer than this many cells belong to the same area
 MAX_REGIONS = 25          # regions listed; the rest are counted
 MAX_CROPS = 8             # regions shown with baseline / actual crops
 EMBED_WIDTH = 1600        # embedded screenshots are scaled down to this width
@@ -112,7 +112,8 @@ def defect_text(result, context: dict, regions: list) -> str:
     if regions:
         lines.append(f"Differences ({len(regions)} area(s)):")
         for number, region in enumerate(regions[:MAX_CROPS], 1):
-            lines.append(f"  {number}. at x={region['x']}, y={region['y']}, size {region['width']}x{region['height']} px")
+            what = f" - {region['kind']}: {region['detail']}" if region.get("kind") else ""
+            lines.append(f"  {number}. at x={region['x']}, y={region['y']}, size {region['width']}x{region['height']} px{what}")
     lines += ["", f"Test: {context.get('test') or result.test}", f"Run time: {result.timestamp}",
               "Evidence: attach this report file (baseline, actual and diff are inside it)."]
     return "\n".join(lines)
@@ -149,7 +150,9 @@ figure img, .single img { width:100%; display:block; border:1px solid var(--line
 .slide img { width:100%; display:block; } .slide input { position:absolute; left:0; right:0; bottom:-28px; width:100%; accent-color:var(--orange); }
 .slide .handle { position:absolute; top:0; bottom:0; left:50%; width:2px; background:var(--orange); pointer-events:none; }
 .region { background:#fff; border:1px solid var(--line); border-left:5px solid #DC3434; border-radius:10px; padding:12px 16px; margin-bottom:12px; }
-.region h3 { margin:0 0 8px; font-size:14px; } .pair { display:flex; gap:14px; flex-wrap:wrap; } .pair figure { flex:0 1 420px; }
+.region h3 { margin:0 0 8px; font-size:14px; }
+.what { margin:0 0 10px; font-size:13px; } .kind { display:inline-block; padding:2px 10px; border-radius:6px; font-weight:800; font-size:11px; text-transform:uppercase; margin-right:6px; background:#F7DCC5; color:#97291E; }
+.kind.colour { background:#FBDADA; color:#B3261E; } .kind.position { background:#E3E8FA; color:#3B52A8; } .kind.size { background:#FFF1C9; color:#8A6100; } .pair { display:flex; gap:14px; flex-wrap:wrap; } .pair figure { flex:0 1 420px; }
 textarea { width:100%; min-height:210px; font-family:Consolas,monospace; font-size:12px; padding:10px; border:1px solid var(--line); border-radius:8px; }
 button.copy { margin-top:8px; border:none; background:linear-gradient(90deg,var(--red),#EA761B); color:#fff; font-weight:800; border-radius:8px; padding:9px 18px; cursor:pointer; }
 .note { color:var(--slate); font-size:12px; }
@@ -210,9 +213,12 @@ def write_report(result, folder: str, context: dict = None) -> str:
         shown = regions[:MAX_CROPS]
         region_html = "<h2>What changed</h2>"
         for number, region in enumerate(shown, 1):
+            kind = region.get("kind", "")
+            what = (f"<span class='kind {esc(kind)}'>{esc(kind)}</span> {esc(region.get('detail', ''))}<br>" if kind else "")
             region_html += (
                 f"<div class='region'><h3>Area {number}: x={region['x']}, y={region['y']}, "
-                f"{region['width']}&times;{region['height']} px, {region['pixels']} pixel(s)</h3><div class='pair'>"
+                f"{region['width']}&times;{region['height']} px, {region['pixels']} pixel(s)</h3>"
+                f"<p class='what'>{what}</p><div class='pair'>"
                 f"<figure><figcaption>Baseline</figcaption><img src='{_data_uri(_crop(baseline, region))}'></figure>"
                 f"<figure><figcaption>Actual</figcaption><img src='{_data_uri(_crop(actual, region))}'></figure></div></div>")
         if len(regions) > len(shown):

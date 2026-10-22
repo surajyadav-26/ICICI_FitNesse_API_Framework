@@ -286,3 +286,16 @@ def test_column_fixture_reports_bad_input_per_row(column_fixture):
     assert outputs[0]["status"].startswith("ERROR: Unsupported WCAG version")
     assert outputs[1]["status"] == "ERROR: No url was given"
     assert outputs[2]["status"] == "FAIL"
+
+
+def test_the_report_has_a_defect_description_to_copy():
+    from core import accessibility as a
+    results = {"violations": [{"id": "image-alt", "impact": "critical", "help": "Images must have alternative text", "helpUrl": "http://fix",
+                               "tags": ["wcag2a", "wcag111"], "nodes": [{"target": ["img"], "html": "<img src='x.png'>", "failureSummary": "a\nb"}]}],
+               "passes": [1], "incomplete": []}
+    summary = a.summarize(results, "http://app/login")
+    text = a.defect_text(summary)
+    assert text.startswith("[Accessibility] http://app/login has 1 WCAG 2.1 Level AA violation(s)")
+    assert "[critical] Images must have alternative text (image-alt; wcag2a, wcag111)" in text and "element: img" in text and "http://fix" in text
+    assert "id='defect'" in a.render_html(summary) and "Copy description" in a.render_html(summary)
+    assert "id='defect'" not in a.render_html(a.summarize({"violations": [], "passes": [1], "incomplete": []}, "http://app"))

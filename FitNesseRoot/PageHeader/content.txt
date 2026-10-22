@@ -139,11 +139,14 @@ body { padding-top: 64px !important; margin-top: 0 !important; }
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
         <div class="icici-field">
           <label style="display: block !important; font-size: 11px; font-weight: 700; color: #475569; margin-bottom: 4px; text-transform: uppercase;">Browser Engine</label>
-          <select id="ici-config-browser" class="ici-env-input">
-            <option value="chromium">Chromium (Chrome)</option>
-            <option value="firefox">Firefox</option>
-            <option value="webkit">WebKit (Safari/iPhone)</option>
+          <select id="ici-config-browser" class="ici-env-input" title="Chrome and Edge installed on this PC need no download">
+            <option value="chromium">Chromium (Playwright)</option>
+            <option value="chrome">Google Chrome (installed on this PC)</option>
+            <option value="msedge">Microsoft Edge (installed on this PC)</option>
+            <option value="firefox">Firefox (Playwright)</option>
+            <option value="webkit">WebKit (Playwright)</option>
           </select>
+          <div id="ici-browser-note" style="font-size: 11px; color: #64748b; margin-top: 4px;"></div>
         </div>
         <div class="icici-field">
           <label style="display: block !important; font-size: 11px; font-weight: 700; color: #475569; margin-bottom: 4px; text-transform: uppercase;">Headless Mode</label>
@@ -1698,6 +1701,36 @@ window.ICI_APP.ready = fetch("/files/app-config.json", { cache: "no-store" })
     
     renderModalTable();
     document.getElementById("ici-env-modal").style.display = "flex";
+    window.iciMarkAvailableBrowsers();
+  };
+
+  /* Browsers: the server says which ones this machine can run. An installed Chrome / Edge needs no download; a browser that
+     is missing is greyed out (system browsers) or flagged (Playwright's), so nobody picks one that cannot start. */
+  window.iciMarkAvailableBrowsers = function() {
+    var select = document.getElementById("ici-config-browser");
+    if (!select) { return; }
+    fetch(iciStore("/browsers")).then(function(response) { return response.json(); }).then(function(data) {
+      var anyPlaywright = false, anySystem = false;
+      (data.browsers || []).forEach(function(item) {
+        var option = select.querySelector('option[value="' + item.id + '"]');
+        if (!option) { return; }
+        if (!option.dataset.label) { option.dataset.label = option.textContent; }
+        if (item.installed) {
+          option.textContent = option.dataset.label; option.disabled = false;
+          if (item.kind === "system") { anySystem = true; } else if (item.id === "chromium") { anyPlaywright = true; }
+        } else if (item.kind === "system") {
+          option.textContent = option.dataset.label + " - not found"; option.disabled = true; option.title = item.hint;
+        } else {
+          option.textContent = option.dataset.label + " - not downloaded"; option.title = item.hint;
+        }
+      });
+      var note = document.getElementById("ici-browser-note");
+      if (note) {
+        note.textContent = (!anyPlaywright && anySystem)
+          ? "Playwright's Chromium is not downloaded here, so tests use the installed Chrome or Edge automatically."
+          : "";
+      }
+    }).catch(function() {});
   };
 
   window.iciCloseManageEnvModal = function() {
@@ -2769,7 +2802,7 @@ window.ICI_APP.ready = fetch("/files/app-config.json", { cache: "no-store" })
     /* ── Step Builder catalog: c=category, l=label, s=Slim row tokens ({key} = parameter), p=parameters ──
        p entries: [key, label, type (locator|text|number|select), flag ("opt" = optional), options]            */
     var ICI_ACTIONS = [
-      {c:"Browser", l:"Open Browser", s:["open browser","{browser}"], p:[["browser","Browser","select","opt",["chromium","firefox","webkit"]]], d:"Starts the browser. Navigate to URL also starts it automatically."},
+      {c:"Browser", l:"Open Browser", s:["open browser","{browser}"], p:[["browser","Browser","select","opt",["chromium","chrome","msedge","firefox","webkit"]]], d:"Starts the browser. Navigate to URL also starts it automatically."},
       {c:"Browser", l:"Navigate to URL", s:["navigate to","{url}"], p:[["url","URL (defaults to the selected environment)","text","","https://your-app-url","${UI_BASE_URL}"]], d:"Opens the address. ${UI_BASE_URL} is the UI URL of the environment chosen in the ENV selector (API steps will use ${API_BASE_URL}); append a path, e.g. ${UI_BASE_URL}/home."},
       {c:"Browser", l:"Refresh Page", s:["refresh page"], p:[], d:"Reloads the current page."},
       {c:"Browser", l:"Go Back", s:["go back"], p:[], d:"Browser back button."},
@@ -2843,6 +2876,7 @@ window.ICI_APP.ready = fetch("/files/app-config.json", { cache: "no-store" })
       {c:"Visual Testing", l:"Ignore Visual Region", s:["ignore visual region","{locator}"], p:[["locator","Locator","locator"]], d:"Masks dynamic content (clock, ads) in every later visual comparison."},
       {c:"Visual Testing", l:"Clear Visual Ignores", s:["clear visual ignores"], p:[], d:"Stops masking the regions added earlier."},
       {c:"Visual Testing", l:"Set Visual Threshold", s:["set visual threshold","{threshold}"], p:[["threshold","Allowed difference (%)","number","","0.1"]], d:"Default tolerance for the following comparisons."},
+      {c:"Visual Testing", l:"Set Visual Reference", s:["set visual reference","{path}"], p:[["path","Reference image","text","","designs/login.png"]], d:"Chooses the design image the next comparison uses: a file inside fixtures/visual/baseline or a full path (PNG or JPEG). It is never captured or overwritten."},
       {c:"Visual Testing", l:"Update Visual Baseline", s:["update visual baseline","{name}"], p:[["name","Screenshot name","text"]], d:"Accepts the current screen as the new baseline."},
       {c:"Reusable Flow", l:"Execute Reusable Component", s:["execute reusable component","{name}","with","{parameters}"], p:[["name","Component name","text","","Login"],["parameters","Parameters","text","opt","user=qa,pass=secret"]], d:"Runs data/components/<name>.flow. Parameters become ${user}, ${pass}."}
     ];

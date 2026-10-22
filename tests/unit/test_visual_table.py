@@ -173,3 +173,94 @@ def test_sign_in_uses_the_application_login_page(monkeypatch):
     FakeLogin.outcome = lambda self: "Invalid username or password."
     with pytest.raises(Exception, match="Login as 'qa' failed: Invalid username or password"):
         module.sign_in("UI", "qa", "qa123")
+
+
+# ── checking the screen against a design the tester supplies ─────────────────
+def test_reference_only_never_captures_a_missing_reference(monkeypatch, tmp_path):
+    monkeypatch.setattr(visual_compare, "REFERENCE_DIR", str(tmp_path))
+    [out] = play(["url", "name", "reference only", "status?"], [["http://x/home", "login page", "true", ""]])
+    assert out["status"].startswith("ERROR: No reference image at fixtures/visual/baseline/login page.png")
+    assert "never captures or creates" in out["status"]
+    assert FakeUi.instances[0].opened == [] and FakeUi.instances[0].checked == []         # nothing was opened or compared
+
+
+def test_reference_only_goes_ahead_when_the_reference_exists(monkeypatch, tmp_path):
+    from PIL import Image
+    monkeypatch.setattr(visual_compare, "REFERENCE_DIR", str(tmp_path))
+    Image.new("RGB", (10, 10)).save(tmp_path / "login page.png")
+    [out] = play(["url", "name", "reference only", "status?"], [["http://x/home", "login page", "true", ""]])
+    assert out["status"] == "passed" and FakeUi.instances[0].checked == ["login page"]
+
+
+def test_the_environment_can_make_every_row_reference_only(monkeypatch, tmp_path):
+    monkeypatch.setattr(visual_compare, "REFERENCE_DIR", str(tmp_path))
+    monkeypatch.setattr("fixtures.visual.visual_test.Config.VISUAL_REQUIRE_REFERENCE", True)
+    [out] = play(["url", "name", "status?"], [["http://x/home", "login page", ""]])
+    assert out["status"].startswith("ERROR: No reference image")
+
+
+def test_viewport_auto_opens_the_page_at_the_size_of_the_reference(monkeypatch, tmp_path):
+    from PIL import Image
+    monkeypatch.setattr(visual_compare, "REFERENCE_DIR", str(tmp_path))
+    Image.new("RGB", (800, 600)).save(tmp_path / "login page.png")
+    play(["url", "name", "viewport", "status?"], [["http://x/home", "login page", "auto", ""]])
+    assert FakeUi.instances[0]._page.viewport == {"width": 800, "height": 600}
+    [out] = play(["url", "name", "viewport", "status?"], [["http://x/home", "no such design", "auto", ""]])
+    assert out["status"].startswith("ERROR: viewport auto needs the reference image")
+
+
+def test_the_differences_column_says_what_kind_of_difference_where():
+    FakeUi.next_result = result("failed", 3.2, "3.2% of pixels differ (allowed 0.1%)")
+    FakeUi.next_result.regions = [{"x": 992, "y": 744, "width": 416, "height": 89, "pixels": 900, "kind": "colour",
+                                   "detail": "#e77817 -> #c23029 (reference -> screen), same shape"},
+                                  {"x": 997, "y": 485, "width": 406, "height": 204, "pixels": 500, "kind": "position",
+                                   "detail": "moved 8 px right in the screen compared with the reference"}]
+    [out] = play(["url", "name", "differences?"], [["http://x/home", "login page", ""]])
+    assert out["differences"] == ("colour at (992, 744): #e77817 -> #c23029 (reference -> screen), same shape; "
+                                  "position at (997, 485): moved 8 px right in the screen compared with the reference")
+
+
+# ── the `reference` column ───────────────────────────────────────────────────
+def test_the_reference_column_picks_a_file_for_this_row_only(monkeypatch, tmp_path):
+    from PIL import Image
+    monkeypatch.setattr(visual_compare, "REFERENCE_DIR", str(tmp_path))
+    (tmp_path / "designs").mkdir()
+    Image.new("RGB", (10, 10)).save(tmp_path / "designs" / "login-v2.png")
+    [out] = play(["url", "name", "reference", "status?"], [["http://x/home", "login page", "designs/login-v2", ""]])
+    assert out["status"] == "passed"
+    assert FakeUi.instances[0]._visual_reference_file.endswith("login-v2.png")
+
+
+def test_a_reference_that_does_not_exist_is_an_error_row_that_says_where_it_looked(monkeypatch, tmp_path):
+    monkeypatch.setattr(visual_compare, "REFERENCE_DIR", str(tmp_path))
+    [out] = play(["url", "name", "reference", "status?"], [["http://x/home", "login page", "designs/none.png", ""]])
+    assert out["status"].startswith("ERROR: Reference image 'designs/none.png' was not found")
+    assert "fixtures/visual/baseline" in out["status"] and FakeUi.instances[0].opened == []
+
+
+def test_viewport_auto_uses_the_named_reference(monkeypatch, tmp_path):
+    from PIL import Image
+    monkeypatch.setattr(visual_compare, "REFERENCE_DIR", str(tmp_path))
+    elsewhere = tmp_path / "anywhere" / "design.jpg"
+    elsewhere.parent.mkdir()
+    Image.new("RGB", (640, 480)).save(elsewhere)
+    play(["url", "name", "reference", "viewport", "status?"], [["http://x/home", "login page", str(elsewhere), "auto", ""]])
+    assert FakeUi.instances[0]._page.viewport == {"width": 640, "height": 480}
+
+
+def test_the_script_step_sets_the_reference_for_the_next_comparison(monkeypatch, tmp_path):
+    from PIL import Image
+    from fixtures.visual.visual_steps import VisualTestingMixin
+    monkeypatch.setattr(visual_compare, "REFERENCE_DIR", str(tmp_path))
+    Image.new("RGB", (5, 5)).save(tmp_path / "design.png")
+
+    class Host(VisualTestingMixin):
+        def _ok(self, text):
+            return True
+
+    host = Host()
+    host._init_visual()
+    assert host.set_visual_reference.__wrapped__(host, "design.png") is True
+    assert host._visual_reference_file.endswith("design.png")
+    bad = host.set_visual_reference.__wrapped__(host, "nope.png")
+    assert "was not found" in str(bad)

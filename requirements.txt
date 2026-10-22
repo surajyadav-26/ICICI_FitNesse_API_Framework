@@ -28,6 +28,7 @@ protobuf>=6.33.6
 
 # Image Processing (for reports)
 Pillow>=12.3.0
+numpy>=1.26.0
 
 # OAuth2 and JWT Support
 requests-oauthlib>=2.0.0

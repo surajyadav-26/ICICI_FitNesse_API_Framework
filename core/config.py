@@ -61,6 +61,8 @@ class Config:
     UI_BROWSER = os.getenv("UI_BROWSER", "chromium")
     UI_HEADLESS = os.getenv("UI_HEADLESS", "true").lower() == "true"
     UI_BASE_URL = os.getenv("UI_BASE_URL", "")
+    # chromium (Playwright's own), chrome / msedge (installed on the machine), firefox, webkit. See core/browsers.py
+    UI_BROWSER_FALLBACK = os.getenv("UI_BROWSER_FALLBACK", "true").lower() == "true"   # use an installed Chrome / Edge when Chromium is missing
     UI_WORKERS = int(os.getenv("UI_WORKERS", "1"))
     
     # Environment-Wise UI URLs
@@ -92,6 +94,7 @@ class Config:
     VISUAL_FAIL_ON_NEW = os.getenv("VISUAL_FAIL_ON_NEW", "false").lower() == "true"  # strict mode for CI
     VISUAL_FULL_PAGE = os.getenv("VISUAL_FULL_PAGE", "true").lower() == "true"
     ACCESSIBILITY_KEEP_RUNS = int(os.getenv("ACCESSIBILITY_KEEP_RUNS", "20"))   # reports kept per page and standard
+    VISUAL_REQUIRE_REFERENCE = os.getenv("VISUAL_REQUIRE_REFERENCE", "false").lower() == "true"   # never create a baseline; the reference must exist
     LAYOUT_TOLERANCE = float(os.getenv("LAYOUT_TOLERANCE", "2"))                 # pixels a position / size may move
 
     # Mock Server

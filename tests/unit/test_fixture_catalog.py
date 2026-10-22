@@ -50,7 +50,7 @@ def test_login_columns(catalog):
     login = next(f for f in catalog["fixtures"] if f["table"] == "login test")
     columns = {c["name"]: c for c in login["columns"]}
     assert columns["username"]["required"] and columns["password"]["required"] and columns["password"]["secret"]
-    assert not columns["browser"]["required"] and columns["browser"]["options"] == ["chromium", "firefox", "webkit"]
+    assert not columns["browser"]["required"] and columns["browser"]["options"] == ["chromium", "chrome", "msedge", "firefox", "webkit"]
     assert columns["login_result"]["kind"] == "output" and columns["login_result"]["header"] == "login result?"
 
 

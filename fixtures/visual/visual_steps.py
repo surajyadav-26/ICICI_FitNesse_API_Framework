@@ -35,6 +35,7 @@ class VisualTestingMixin:
         self._visual_ignores: list = []
         self._visual_threshold = Config.VISUAL_THRESHOLD
         self._last_visual = None          # the VisualResult of the latest comparison
+        self._visual_reference_file = ""  # a named reference image for the next comparison (set visual reference)
 
     # ── Steps ─────────────────────────────────────────────────────────────────
     @step
@@ -54,6 +55,16 @@ class VisualTestingMixin:
     def verify_element_visual_match_as(self, element_name: str, name: str) -> bool:
         """| ensure | verify element visual match | LoginPage.login box | as | login-box |"""
         return self._visual_check(name, element_name, self._visual_threshold, False)
+
+    @step
+    def set_visual_reference(self, path: str) -> bool:
+        """| set visual reference | designs/login.png |  - the image the next comparison uses (a path inside
+        fixtures/visual/baseline, or a full path); it is never captured or overwritten."""
+        found = visual_compare.find_reference("", path)
+        if not found:
+            return StepError(f"Reference image '{path}' was not found (looked in fixtures/visual/baseline and as a full path)")
+        self._visual_reference_file = found
+        return self._ok(f"Use reference image '{path}' for the next visual comparison")
 
     @step
     def update_visual_baseline(self, name: str) -> bool:
@@ -93,7 +104,7 @@ class VisualTestingMixin:
     def _visual_profile(self) -> str:
         browser = "chromium"
         try:
-            browser = self._context.browser.browser_type.name
+            browser = getattr(self, "_browser_id", "") or self._context.browser.browser_type.name
         except Exception:
             pass
         size = self._page.evaluate("[window.innerWidth, window.innerHeight]")
@@ -137,9 +148,11 @@ class VisualTestingMixin:
             self._stabilize_page()
             profile = self._visual_profile()
             captured = self._capture_for_visual(element_name)
+            reference_file, self._visual_reference_file = self._visual_reference_file, ""      # used once
             result = visual_compare.check_against_baseline(
                 captured, profile, name, threshold_pct=threshold, pixel_tolerance=Config.VISUAL_PIXEL_TOLERANCE,
-                update=force_update or Config.VISUAL_UPDATE_BASELINE, test=getattr(self, "_test_name", ""))
+                update=force_update or Config.VISUAL_UPDATE_BASELINE, test=getattr(self, "_test_name", ""),
+                reference_file=reference_file)
         except Exception as error:
             logger.error(f"[Visual] Comparison failed for '{name}': {error}")
             return self._fail(f"visual_error_{name}", error)
@@ -165,11 +178,9 @@ class VisualTestingMixin:
         report_file = ""
         try:
             from core import visual_report
-            reference = os.path.isfile(visual_compare.reference_path(result.name))
             report_file = visual_report.write_report(result, folder, {
                 "url": getattr(self._page, "url", ""), "test": getattr(self, "_test_name", ""),
-                "baseline_source": (f"reference image fixtures/visual/baseline/{result.name}.png" if reference
-                                    else f"stored baseline for {result.profile}"),
+                "baseline_source": result.baseline_source or f"stored baseline for {result.profile}",
                 "pixel_tolerance": Config.VISUAL_PIXEL_TOLERANCE})
         except Exception as error:
             logger.debug(f"[Visual] HTML report skipped: {error}")

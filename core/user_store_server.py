@@ -537,6 +537,14 @@ class UserStoreHandler(BaseHTTPRequestHandler):
                 self._send_json(500, {"error": str(error)})
             return
 
+        elif self.path == "/browsers":
+            try:
+                from core import browsers
+                self._send_json(200, {"browsers": browsers.available(), "fallback": Config.UI_BROWSER_FALLBACK})
+            except Exception as error:
+                self._send_json(500, {"error": str(error)})
+            return
+
         elif self.path == "/fixtures":
             try:
                 from core import fixture_catalog

@@ -159,7 +159,7 @@ def test_optional_columns_can_be_added_and_offer_their_allowed_values(builder):
     assert [h.lower() for h in headers[:4]] == ["username", "password", "browser", "login result?"]
     browser_cell = row_inputs(builder, 1)[2]
     assert browser_cell.evaluate("e => e.tagName") == "SELECT"
-    assert browser_cell.evaluate("e => [...e.options].map(o => o.value)") == ["", "chromium", "firefox", "webkit"]
+    assert browser_cell.evaluate("e => [...e.options].map(o => o.value)") == ["", "chromium", "chrome", "msedge", "firefox", "webkit"]
     fill_by_header(builder, 1, {"username": "admin", "password": "x", "browser": "firefox"})
     assert "|admin|x|firefox|" in builder.inner_text("#ici-col-preview")
     builder.uncheck("#ici-col-list .ici-col-item:has(.h:text-is('browser')) input")

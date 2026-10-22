@@ -10,7 +10,7 @@ from core.config import Config
 from core.html_utils import clean_html_text, clean_html_url
 from core.logger import logger
 from core.allure_helper import AllureHelper
-from core import live_debug
+from core import browsers, live_debug
 from core.flow import FlowMixin, shown_value, step
 from .ui_actions import BrowserActionsMixin
 from fixtures.visual.visual_steps import VisualTestingMixin
@@ -36,6 +36,8 @@ class UiFixture(FlowMixin, BrowserActionsMixin, VisualTestingMixin):
         self._context = None
         self._page = None
         self._screenshot_counter = 0
+        self._browser_id = ""
+        self._start_error = ""
         self._last_error_html = ""
         self._allure = None
         self._test_name_override = False
@@ -92,7 +94,7 @@ class UiFixture(FlowMixin, BrowserActionsMixin, VisualTestingMixin):
         self.set_url(value)
 
     def set_browser(self, value: str) -> None:
-        """Dynamically overrides the browser engine (chromium, firefox, webkit) from the FitNesse UI."""
+        """Dynamically overrides the browser (chromium, chrome, msedge, firefox, webkit) from the FitNesse UI."""
         self._default_browser = str(value).strip().lower()
         logger.info(f"[UiFixture] Browser engine set from UI: {self._default_browser}")
 
@@ -146,24 +148,25 @@ class UiFixture(FlowMixin, BrowserActionsMixin, VisualTestingMixin):
                 self._allure = AllureHelper.for_test(self._test_name, self._suite_name)
                 self._allure.mark("ui", Browser=b_type, Mode="headless" if headless_mode else "headed")
             
-            logger.info(f"[UiFixture] Starting Playwright engine (browser: {b_type}, headless: {headless_mode})")
+            plan = browsers.resolve(b_type)
+            logger.info(f"[UiFixture] Starting Playwright engine (browser: {plan['id']}, headless: {headless_mode})")
             self._playwright = sync_playwright().start()
-            
-            if "firefox" in b_type:
-                self._browser = self._playwright.firefox.launch(headless=headless_mode)
-                self._context = self._browser.new_context(viewport={"width": 1920, "height": 1080})
-            elif "webkit" in b_type or "safari" in b_type:
-                self._browser = self._playwright.webkit.launch(headless=headless_mode)
-                self._context = self._browser.new_context(viewport={"width": 1920, "height": 1080})
-            else:
-                # Chromium supports true OS-level window maximization!
-                if not headless_mode:
-                    self._browser = self._playwright.chromium.launch(headless=headless_mode, args=["--start-maximized"])
-                    self._context = self._browser.new_context(no_viewport=True)
-                else:
-                    self._browser = self._playwright.chromium.launch(headless=headless_mode)
-                    self._context = self._browser.new_context(viewport={"width": 1920, "height": 1080})
-                
+            try:
+                self._launch(plan, headless_mode)
+            except Exception as launch_error:
+                fallback = browsers.fallback_for(plan["id"], launch_error) if Config.UI_BROWSER_FALLBACK else ""
+                if not fallback:
+                    if browsers.is_missing_browser_error(launch_error) or plan["channel"]:
+                        raise RuntimeError(browsers.missing_message(plan["id"])) from launch_error
+                    raise
+                logger.warning(f"[UiFixture] {browsers.missing_message('chromium')} Using the installed {fallback} instead.")
+                plan = browsers.resolve(fallback)
+                self._launch(plan, headless_mode)
+                if self._allure:
+                    self._allure.add_parameters({"Browser used": f"{plan['id']} (Playwright Chromium is not installed)"})
+            self._browser_id = plan["id"]
+            b_type = plan["id"]
+
             self._page = self._context.new_page()
             self._frame = None
             self._attach_page_listeners(self._page)
@@ -178,8 +181,23 @@ class UiFixture(FlowMixin, BrowserActionsMixin, VisualTestingMixin):
             return True
         except Exception as e:
             logger.error(f"[UiFixture] Failed to start browser: {e}")
+            self._start_error = str(e).splitlines()[0] if str(e) else e.__class__.__name__
             self.close_browser()
             return False
+
+    def _launch(self, plan: dict, headless_mode: bool) -> None:
+        """Starts one browser (Playwright's own, or the installed Chrome / Edge through its channel) and a context."""
+        engine = getattr(self._playwright, plan["engine"])
+        options = {"headless": headless_mode}
+        if plan["channel"]:
+            options["channel"] = plan["channel"]
+        if plan["engine"] == "chromium" and not headless_mode:
+            # Chromium-based browsers support true OS-level window maximization
+            self._browser = engine.launch(args=["--start-maximized"], **options)
+            self._context = self._browser.new_context(no_viewport=True)
+        else:
+            self._browser = engine.launch(**options)
+            self._context = self._browser.new_context(viewport={"width": 1920, "height": 1080})
 
     def startBrowser(self, *args) -> bool:
         return self.start_browser(*args)

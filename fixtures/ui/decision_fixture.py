@@ -207,7 +207,8 @@ class DecisionFixture:
         if row.has("browser"):
             self._ui.set_browser(row.browser)     # otherwise the browser selected in the environment settings
         if self._ui.start_browser() is False:
-            raise RowFailure("The browser could not be started")
+            reason = getattr(self._ui, "_start_error", "")
+            raise RowFailure("The browser could not be started" + (f": {reason}" if reason else ""))
         allure = getattr(self._ui, "_allure", None)
         if allure is not None and hasattr(allure, "add_parameters"):
             allure.add_parameters({key: value for key, value in row.masked().items()})

@@ -1185,3 +1185,62 @@ A suite with hundreds of visual rows stays usable:
   each other, also when they run in parallel.
 - **Suite:** `FrontPage.AccessibilityTesting.LoginTest` checks the login page against WCAG 2.1 AA. Add a row per page, or a
   page per area, and run with `--parallel N` for a long list.
+
+
+### Setting up a new machine
+
+1. **Python 3.10 or later and Java 17 or later**, both on the `PATH`. FitNesse starts the Slim server with the plain `python`
+   command, so the packages must be installed for that Python (not only inside a virtual environment you did not activate).
+2. `pip install -r requirements.txt` (or run `setup_env.bat`, or just `start_server.bat`, which installs them when a
+   package the framework imports is missing).
+3. `python -m playwright install chromium` once. This downloads the browser; `requirements.txt` cannot do it.
+4. Optional: the Allure command line (`npm install -g allure-commandline`) for the Allure report. Everything else works without it.
+
+`tests/unit/test_architecture.py` fails when the code imports a package that is not in `requirements.txt`, so the list cannot
+drift again.
+
+
+### Browsers: Playwright's own, or the Chrome / Edge already installed
+
+The browser drop-down (Manage Configurations > Config), the `browser` column of every table and `UI_BROWSER` in `.env` take:
+
+| Value | Browser | Needs a download? |
+|---|---|---|
+| `chromium` | Playwright's Chromium (default) | `python -m playwright install chromium` |
+| `chrome` | Google Chrome installed on the PC | no |
+| `msedge` | Microsoft Edge installed on the PC | no |
+| `firefox`, `webkit` | Playwright's builds | `python -m playwright install firefox` / `webkit` |
+
+- If Playwright's Chromium has not been downloaded and `UI_BROWSER_FALLBACK=true` (the default), a test that asked for
+  `chromium` uses the installed Chrome or Edge, and the Allure result shows `Browser used`. Set it to `false` to fail with a
+  clear message instead.
+- The drop-down greys out Chrome / Edge when they are not found on the machine that runs the tests, and flags Playwright's
+  browsers that are not downloaded.
+- Visual baselines are kept per browser (`chrome-1600x1043`, `chromium-1600x1043`, ...): an installed Chrome renders slightly
+  differently from Playwright's Chromium, so each has its own.
+- **System Firefox and Safari cannot be used.** Playwright only drives its own patched builds of those two, so for Firefox
+  the drop-down value is Playwright's Firefox, which has to be downloaded.
+
+
+### Checking a screen against a design you supply
+
+Put the design (or a screenshot of the approved screen) at `fixtures/visual/baseline/<name>.png` and use a `visual test` row
+with `reference only` set to `true` (or `VISUAL_REQUIRE_REFERENCE=true` in `.env` for every row). Nothing is captured or created:
+a missing image is an error row, and the run only compares the current screen with your image.
+
+```
+|visual test|
+|url           |name      |viewport|reference only|threshold|status?|differences?|
+|${UI_BASE_URL}|login page|auto    |true          |1        |passed |            |
+```
+
+- How to pass the image: name it `<name>.png`, `.jpg` or `.jpeg` in `fixtures/visual/baseline/`, **or** add a `reference` column
+  with a file in that folder (`designs/login-v2.png`, extension optional) or a full path (`C:\designs\login.jpg`), **or** use the
+  step `| set visual reference | designs/login.png |` before `verify visual match`. A named design is never overwritten.
+- `viewport` = `auto` opens the page at the size of your image; a different shape of the same screen is scaled to fit.
+- Every differing area is named the way a tester would say it, in the report, the `differences?` column and the defect text:
+  **position** (`moved 14 px right`), **size** (`width +40 px, the element grew on the right`), **colour**
+  (`#e77817 -> #c23029`, also noted next to a size or position change) and **content** (text, an icon or a picture differs, or
+  an element is present in only one of the two). Each area comes with the reference and the screen side by side.
+- `threshold` is the share of pixels allowed to differ. A design export and a browser never match pixel for pixel (text
+  smoothing), so start with 1 to 3 and lower it as you learn the noise; the areas listed are the ones to look at.

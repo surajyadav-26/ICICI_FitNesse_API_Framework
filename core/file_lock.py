@@ -36,7 +36,7 @@ class FileLock:
                 os.close(handle)
                 self._held = True
                 return True
-            except FileExistsError:
+            except (FileExistsError, PermissionError):      # PermissionError: Windows, the holder is deleting it
                 try:
                     if time.time() - os.path.getmtime(self.path) > self.stale_after:
                         os.remove(self.path)              # left behind by a process that died

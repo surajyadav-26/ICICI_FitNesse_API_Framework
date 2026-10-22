@@ -46,6 +46,7 @@ class VisualResult:
     test: str = ""
     message: str = ""
     regions: list = field(default_factory=list)      # boxes around the differing areas
+    baseline_source: str = ""                        # the reference file or stored baseline that was compared with
 
     def to_dict(self) -> dict:
         data = asdict(self)
@@ -72,9 +73,39 @@ def baseline_path(profile: str, name: str) -> str:
     return os.path.join(BASELINE_DIR, clean_profile(profile), f"{clean_name(name)}.png")
 
 
+REFERENCE_EXTENSIONS = (".png", ".jpg", ".jpeg")
+
+
+def find_reference(name: str = "", explicit: str = "") -> str:
+    """
+    The supplied reference image, or "" when there is none.
+      explicit  a file the tester named: a path inside fixtures/visual/baseline (designs/login.png, with or without the
+                extension) or a full path anywhere on the machine
+      name      otherwise <name>.png / .jpg / .jpeg inside fixtures/visual/baseline
+    """
+    explicit = str(explicit or "").strip().strip('"')
+    if explicit:
+        candidate = explicit if os.path.isabs(explicit) else os.path.join(REFERENCE_DIR, explicit)
+        tries = [candidate] if os.path.splitext(candidate)[1].lower() in REFERENCE_EXTENSIONS else [candidate + e for e in REFERENCE_EXTENSIONS]
+        return next((path for path in tries if os.path.isfile(path)), "")
+    if not name:
+        return ""
+    return next((path for path in (os.path.join(REFERENCE_DIR, clean_name(name) + e) for e in REFERENCE_EXTENSIONS)
+                 if os.path.isfile(path)), "")
+
+
 def reference_path(name: str) -> str:
-    """The hand-supplied reference image for a name (it may not exist)."""
-    return os.path.join(REFERENCE_DIR, f"{clean_name(name)}.png")
+    """The hand-supplied reference image for a name; <name>.png when there is none yet."""
+    return find_reference(name) or os.path.join(REFERENCE_DIR, f"{clean_name(name)}.png")
+
+
+def _as_png(source: str, target: str) -> None:
+    """Copies an image to a .png file, converting a JPEG reference so every report and the browser see a real PNG."""
+    if source.lower().endswith(".png"):
+        shutil.copyfile(source, target)
+    else:
+        with Image.open(source) as image:
+            image.convert("RGB").save(target)
 
 
 def active_baseline(profile: str, name: str) -> str:
@@ -132,8 +163,10 @@ def compare_images(baseline_file: str, actual_file: str, diff_file: str, pixel_t
     try:
         from core import visual_report
         regions = visual_report.find_regions(mask) if diff_pixels else []
-    except Exception:                       # the numbers matter more than the boxes
+    except Exception as error:              # the numbers matter more than the boxes
         regions = []
+        from core.logger import logger
+        logger.warning(f"[Visual] The differing areas are not listed ({error}); run: pip install -r requirements.txt")
 
     faded = ImageEnhance.Brightness(ImageEnhance.Color(canvas_a).enhance(0.35)).enhance(1.35)
     highlight = Image.new("RGB", (width, height), (231, 40, 40))
@@ -152,7 +185,8 @@ def compare_images(baseline_file: str, actual_file: str, diff_file: str, pixel_t
 
 
 def check_against_baseline(actual_file: str, profile: str, name: str, threshold_pct: float = 0.1,
-                           pixel_tolerance: int = 10, update: bool = False, test: str = "") -> VisualResult:
+                           pixel_tolerance: int = 10, update: bool = False, test: str = "",
+                           reference_file: str = "") -> VisualResult:
     """
     Compares actual_file with the stored baseline.
       * no baseline yet  -> the screenshot becomes the baseline, status "new"
@@ -160,8 +194,17 @@ def check_against_baseline(actual_file: str, profile: str, name: str, threshold_
       * otherwise        -> pixel comparison, "passed" when mismatch <= threshold_pct, else "failed"
     Artifacts for the review page are always written to the result folder.
     """
-    base_file = active_baseline(profile, name)
-    is_reference = os.path.abspath(base_file) == os.path.abspath(reference_path(name))
+    if reference_file:
+        if not os.path.isfile(reference_file):
+            raise FileNotFoundError(f"Reference image not found: {reference_file}")
+        base_file, update = reference_file, False                 # a named reference is never overwritten
+        is_reference = True
+    else:
+        base_file = active_baseline(profile, name)
+        is_reference = os.path.abspath(base_file) == os.path.abspath(reference_path(name))
+    source = ("reference image " + (os.path.relpath(base_file, REFERENCE_DIR).replace(os.sep, "/")
+                                    if not os.path.relpath(base_file, REFERENCE_DIR).startswith("..") else base_file)
+              if is_reference else f"stored baseline ({profile})")
     folder = result_dir(profile, name)
     os.makedirs(folder, exist_ok=True)
     shutil.copyfile(actual_file, os.path.join(folder, "actual.png"))
@@ -187,9 +230,17 @@ def check_against_baseline(actual_file: str, profile: str, name: str, threshold_
     shown_baseline = os.path.join(folder, "baseline.png")
     scaled = is_reference and _scaled_reference(base_file, actual_file, shown_baseline)
     if not scaled:
-        shutil.copyfile(base_file, shown_baseline)
+        _as_png(base_file, shown_baseline)
     measured = compare_images(shown_baseline, actual_file, os.path.join(folder, "diff.png"), pixel_tolerance)
     passed = measured["mismatch_pct"] <= threshold_pct and not measured["size_mismatch"]
+    if measured["regions"] and not measured["size_mismatch"]:
+        try:                                    # name each area the way a tester would: colour, position, size, content
+            from core import visual_regions
+            with Image.open(shown_baseline) as reference_image, Image.open(actual_file) as actual_image:
+                visual_regions.describe(reference_image, actual_image, measured["regions"], pixel_tolerance,
+                                        lossy=base_file.lower().endswith((".jpg", ".jpeg")))
+        except Exception:
+            pass
     if passed:
         message = "Matches the reference image (scaled to the page)" if scaled else "Matches baseline"
     elif measured["size_mismatch"]:
@@ -200,7 +251,7 @@ def check_against_baseline(actual_file: str, profile: str, name: str, threshold_
         message = f"{measured['mismatch_pct']}% of pixels differ (allowed {threshold_pct}%)"
     return finish(VisualResult("passed" if passed else "failed", name, profile, measured["mismatch_pct"], measured["diff_pixels"],
                                measured["total_pixels"], measured["baseline_size"], measured["actual_size"],
-                               measured["size_mismatch"], threshold_pct, stamp, test, message, measured["regions"]))
+                               measured["size_mismatch"], threshold_pct, stamp, test, message, measured["regions"], source))
 
 
 # ── Results index + approval (used by the Visual Review page) ────────────────
@@ -241,7 +292,11 @@ def approve(profile: str, name: str) -> dict:
         raise FileNotFoundError(f"No screenshot to approve for {profile}/{name}")
     target = active_baseline(profile, name)
     os.makedirs(os.path.dirname(target), exist_ok=True)
-    shutil.copyfile(actual, target)
+    if target.lower().endswith((".jpg", ".jpeg")):
+        with Image.open(actual) as image:
+            image.convert("RGB").save(target)
+    else:
+        shutil.copyfile(actual, target)
     shutil.copyfile(actual, os.path.join(folder, "baseline.png"))
     diff = os.path.join(folder, "diff.png")
     if os.path.exists(diff):

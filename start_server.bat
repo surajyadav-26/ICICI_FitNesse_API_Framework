@@ -21,10 +21,20 @@ if not exist ".env" (
     copy ".env.example" ".env" >nul
 )
 
-rem ── Check for Python and install project requirements (no virtual environment) ──
+rem ── Use the project's .venv when it exists (create it with: python -m venv .venv). Putting it first on PATH makes every
+rem    "python" below, and the Slim processes FitNesse starts, use it. Without a .venv the Python on PATH is used ──
+if exist "%~dp0.venv\Scripts\python.exe" (
+    set "VIRTUAL_ENV=%~dp0.venv"
+    set "PATH=%~dp0.venv\Scripts;%PATH%"
+    echo [INFO] Using the virtual environment: %~dp0.venv
+) else (
+    echo [INFO] No .venv found - using the Python on PATH
+)
+
+rem ── Check for Python and install project requirements ──
 python --version >nul 2>&1
 if errorlevel 1 goto no_python
-python -c "import waferslim, requests, dotenv, playwright" >nul 2>&1
+python -c "import waferslim, requests, dotenv, playwright, PIL, numpy, faker, websocket, grpc, cryptography" >nul 2>&1
 if errorlevel 1 (
     echo [INFO] Installing required libraries from requirements.txt...
     python -m pip install -r requirements.txt --quiet

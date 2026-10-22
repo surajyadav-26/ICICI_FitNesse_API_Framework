@@ -135,6 +135,22 @@ def report_url(path: str) -> str:
     return "/" + relative
 
 
+def defect_text(summary: dict) -> str:
+    """A bug description a tester can paste as it is: the page, the standard, and each violation with where it is and how to fix it."""
+    lines = [f"[Accessibility] {summary['url']} has {summary['violationCount']} WCAG {summary['wcagVersion']} Level {summary['wcagLevel']} "
+             f"violation(s) on {summary['affectedElements']} element(s)",
+             "", f"Page: {summary['url']}", f"Standard: WCAG {summary['wcagVersion']} Level {summary['wcagLevel']} (checked with axe-core)",
+             f"Run time: {summary['timestamp']}", "Violations:"]
+    for number, violation in enumerate(summary["violations"], 1):
+        lines.append(f"  {number}. [{violation['impact']}] {violation['help']} ({violation['id']}; {', '.join(violation['wcagTags'])})")
+        for node in violation["nodes"][:5]:
+            lines.append(f"       element: {node['target']}  {node['html'][:120]}")
+        if len(violation["nodes"]) > 5:
+            lines.append(f"       ... and {len(violation['nodes']) - 5} more element(s)")
+        lines.append(f"       how to fix: {violation['helpUrl']}")
+    return "\n".join(lines)
+
+
 def render_html(summary: dict) -> str:
     esc = html.escape
     status_class = "pass" if summary["status"] == "PASS" else "fail"
@@ -150,6 +166,11 @@ def render_html(summary: dict) -> str:
                  f"<td>{esc(', '.join(violation['wcagTags']))}</td><td><ul>{elements}{more}</ul></td></tr>")
     if not rows:
         rows = "<tr><td colspan='4' style='text-align:center;padding:24px'>No violations found.</td></tr>"
+    defect_block = ("<h2 style='font-size:14px;margin:26px 0 8px;color:#97291E;text-transform:uppercase'>Defect description</h2>"
+                    f"<textarea id='defect' readonly>{esc(defect_text(summary))}</textarea><br>"
+                    "<button class='copy' onclick=\"var b=document.getElementById('defect');b.select();document.execCommand('copy')\">"
+                    "Copy description</button><p><small>Paste this into the defect; the report file can be attached as evidence.</small></p>"
+                    ) if summary["violations"] else ""
     impacts = " ".join(f"<span class='impact {impact}'>{impact}: {count}</span>" for impact, count in summary["byImpact"].items())
     return f"""<!DOCTYPE html>
 <html lang="en"><head><meta charset="UTF-8"><title>{Config.APP_NAME} - Accessibility Report</title>
@@ -168,6 +189,8 @@ th {{ text-align:left; background:#FCEEE2; font-size:11px; text-transform:upperc
 td {{ vertical-align:top; padding:12px; border-top:1px solid #E5E8EB; font-size:13px; }}
 ul {{ margin:0; padding-left:18px; }} pre {{ margin:4px 0; background:#F9F9F9; padding:6px; border-radius:6px; white-space:pre-wrap; word-break:break-all; font-size:11px; }}
 code {{ color:#97291E; font-size:12px; }} a {{ color:#C23029; }}
+textarea {{ width:100%; min-height:200px; font-family:Consolas,monospace; font-size:12px; padding:10px; border:1px solid #E5E8EB; border-radius:8px; box-sizing:border-box; }}
+button.copy {{ margin-top:8px; border:none; background:linear-gradient(90deg,#C23029,#EA761B); color:#fff; font-weight:800; border-radius:8px; padding:9px 18px; cursor:pointer; }}
 .impact {{ display:inline-block; padding:2px 10px; border-radius:6px; font-size:11px; font-weight:800; margin-right:6px; }}
 .impact.critical {{ background:#FBDADA; color:#B3261E; }} .impact.serious {{ background:#F7DCC5; color:#97291E; }}
 .impact.moderate {{ background:#FFF1C9; color:#8A6100; }} .impact.minor {{ background:#E3E8FA; color:#3B52A8; }}
@@ -186,4 +209,5 @@ allowed {summary['maxViolations']}</p></header>
 </div>
 <p>{impacts}</p>
 <table><tr><th>Impact</th><th>Rule</th><th>WCAG</th><th>Affected elements</th></tr>{rows}</table>
+{defect_block}
 </main></body></html>"""
