@@ -1189,12 +1189,29 @@ A suite with hundreds of visual rows stays usable:
 
 ### Setting up a new machine
 
-1. **Python 3.10 or later and Java 17 or later**, both on the `PATH`. FitNesse starts the Slim server with the plain `python`
-   command, so the packages must be installed for that Python (not only inside a virtual environment you did not activate).
-2. `pip install -r requirements.txt` (or run `setup_env.bat`, or just `start_server.bat`, which installs them when a
-   package the framework imports is missing).
-3. `python -m playwright install chromium` once. This downloads the browser; `requirements.txt` cannot do it.
-4. Optional: the Allure command line (`npm install -g allure-commandline`) for the Allure report. Everything else works without it.
+**Quickest: double-click `setup_env.bat`**, then edit `.env`, then double-click `start_server.bat`. It does the steps below for you.
+
+By hand, in PowerShell or Command Prompt, from the framework folder:
+
+1. Install **Python 3.10 or later and Java 17 or later**, both on the `PATH`.
+2. Create the virtual environment (your own copy of the packages; do this once per laptop):
+   ```
+   python -m venv .venv
+   ```
+3. Install the packages into it:
+   ```
+   .\.venv\Scripts\python.exe -m pip install -r requirements.txt
+   ```
+   (or activate it first with `.\.venv\Scripts\activate` and use plain `pip install -r requirements.txt`)
+4. Create your settings file: `copy .env.example .env`, then open `.env` and set your application URLs and credentials.
+5. Download the browser once: `.\.venv\Scripts\python.exe -m playwright install chromium`. Skip this when Google Chrome or
+   Microsoft Edge is installed; choose it in the browser drop-down instead.
+6. Start the servers with `start_server.bat`. When a `.venv` folder exists it uses it (FitNesse's Slim processes too), so you do not
+   have to activate it; without a `.venv` it uses the Python on the `PATH`.
+7. Optional: the Allure command line (`npm install -g allure-commandline`) for the Allure report. Everything else works without it.
+
+Do not copy a `.venv` folder from another laptop: it records the path of the Python it was made with and will not run elsewhere.
+Each person creates their own with the command above.
 
 `tests/unit/test_architecture.py` fails when the code imports a package that is not in `requirements.txt`, so the list cannot
 drift again.
